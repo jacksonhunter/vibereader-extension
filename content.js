@@ -309,6 +309,24 @@ class MatrixReader {
             img.parentNode.replaceChild(placeholder, img);
         });
         
+        // Process videos with preview placeholders
+        const videos = tempDiv.querySelectorAll('video');
+        videos.forEach(video => {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'video-placeholder';
+            placeholder.setAttribute('data-src', video.src);
+            placeholder.setAttribute('data-controls', video.controls ? 'true' : 'false');
+            placeholder.setAttribute('data-alt', video.title || 'Video');
+            placeholder.innerHTML = `
+                <div class="video-icon">🎬</div>
+                <div class="video-info">
+                    <div class="video-filename">${this.extractFilename(video.src)}</div>
+                    <div class="video-hover-hint">CLICK TO LOAD VIDEO</div>
+                </div>
+            `;
+            video.parentNode.replaceChild(placeholder, video);
+        });
+        
         // Process lists
         const lists = tempDiv.querySelectorAll('ul, ol');
         lists.forEach(list => {
@@ -840,7 +858,54 @@ class MatrixReader {
         console.log('🎬 Looking for videos to load...');
         let loadedCount = 0;
         
-        // Find video links
+        // Find Matrix Reader video placeholders
+        const videoPlaceholders = container.querySelectorAll('.video-placeholder');
+        console.log(`Found ${videoPlaceholders.length} video placeholders`);
+        
+        // Convert placeholders to actual videos
+        videoPlaceholders.forEach(placeholder => {
+            const src = placeholder.getAttribute('data-src');
+            const controls = placeholder.getAttribute('data-controls') === 'true';
+            const alt = placeholder.getAttribute('data-alt') || 'Inline loaded video';
+            
+            if (src) {
+                console.log(`Loading video: ${src}`);
+                
+                // Create actual video element
+                const video = document.createElement('video');
+                video.src = src;
+                video.controls = controls;
+                video.style.cssText = `
+                    max-width: 100%;
+                    height: auto;
+                    border: 2px solid #00ffff;
+                    border-radius: 8px;
+                    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+                    margin: 20px 0;
+                    display: block;
+                    background: rgba(0, 0, 0, 0.9);
+                `;
+                
+                // Create container for the video with info
+                const container = document.createElement('div');
+                container.className = 'inline-loaded-video';
+                container.innerHTML = `
+                    <div style="color: #00ffff; font-size: 12px; margin-bottom: 10px;">
+                        🎬 LOADED: ${this.extractFilename(src)}
+                    </div>
+                `;
+                container.appendChild(video);
+                
+                // Replace placeholder with actual video
+                placeholder.parentNode.replaceChild(container, placeholder);
+                
+                // Apply additional styling
+                this.enhanceInlineVideo(video);
+                loadedCount++;
+            }
+        });
+        
+        // Also look for regular video links that weren't processed
         const videoLinks = container.querySelectorAll('a[href$=".mp4"], a[href$=".webm"], a[href$=".ogg"], a[href$=".mov"], a[href$=".avi"]');
         console.log(`Found ${videoLinks.length} video links`);
         

@@ -653,6 +653,59 @@
 }
 
 /* ============================================================================ */
+/* VIDEO PLACEHOLDER STYLES */
+/* ============================================================================ */
+
+.video-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  margin: 1.5rem 0;
+  background: linear-gradient(135deg, 
+    rgba(var(--bg-terminal), 0.9) 0%, 
+    rgba(var(--bg-secondary), 0.7) 100%);
+  border: 2px solid var(--secondary);
+  border-left: 4px solid var(--accent);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.video-placeholder:hover {
+  border-color: var(--secondary);
+  box-shadow: 
+    0 0 20px var(--glow-secondary),
+    inset 0 0 20px rgba(var(--secondary), 0.1);
+  transform: translateY(-2px);
+}
+
+.video-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 0 8px var(--secondary));
+}
+
+.video-info {
+  flex: 1;
+}
+
+.video-filename {
+  color: var(--text-bright);
+  font-weight: bold;
+  font-size: 14px;
+  text-shadow: 0 0 5px var(--text-bright);
+  margin-bottom: 5px;
+}
+
+.video-hover-hint {
+  color: var(--text-accent);
+  font-size: 11px;
+  font-style: italic;
+  text-shadow: 0 0 3px var(--text-accent);
+  animation: hint-pulse 3s ease-in-out infinite;
+}
+
+/* ============================================================================ */
 /* CONTROL PANEL */
 /* ============================================================================ */
 
