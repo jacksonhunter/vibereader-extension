@@ -1,4 +1,3 @@
-# Matrix Reader Firefox Extension
 
 ## Project Overview
 Matrix Reader is a Firefox browser extension that transforms any webpage into a **90s cyberpunk retrofuture reading experience**. It provides an immersive interface with synthwave aesthetics, terminal-style side panels, and Imagus-style image previews.
