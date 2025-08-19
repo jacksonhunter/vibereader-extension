@@ -69,6 +69,21 @@ class MatrixReader {
         
         console.log('🔥 Activating VibeReader Mode...');
         
+        // Check if we should wait for dynamic content
+        if (this.shouldWaitForDynamicContent()) {
+            console.log('⏳ Waiting for dynamic content to load...');
+            this.waitForDynamicContent();
+            return;
+        }
+        
+        this.activateWithContent();
+    }
+    
+    activateWithContent() {
+        if (this.isActive) return;
+        
+        console.log('🔥 VibeReader activating with content...');
+        
         // Extract readable content using Readability
         const documentClone = document.cloneNode(true);
         const reader = new Readability(documentClone);
@@ -1457,6 +1472,173 @@ class MatrixReader {
         
         // Replace placeholder with expanded table
         placeholder.parentNode.replaceChild(expandedContainer, placeholder);
+    }
+    
+    // ============================================================================
+    // DYNAMIC CONTENT DETECTION SYSTEM
+    // ============================================================================
+    
+    shouldWaitForDynamicContent() {
+        // Check if we have low quality content that suggests dynamic loading
+        const currentQuality = this.assessContentQuality();
+        const hostname = window.location.hostname;
+        
+        // Sites known to load content dynamically
+        const dynamicSites = [
+            'ecfr.gov',
+            'reddit.com', 
+            'gemini.google.com',
+            'docs.google.com',
+            'medium.com'
+        ];
+        
+        const isDynamicSite = dynamicSites.some(site => hostname.includes(site));
+        const hasLowQuality = currentQuality.score < 0.5;
+        
+        return isDynamicSite || hasLowQuality;
+    }
+    
+    waitForDynamicContent() {
+        let attempts = 0;
+        const maxAttempts = 10;
+        const checkInterval = 1000; // 1 second
+        
+        // Strategy 1: MutationObserver for real-time detection
+        const observer = new MutationObserver((mutations) => {
+            // Check if meaningful content was added
+            const hasSignificantChange = mutations.some(mutation => {
+                return mutation.addedNodes.length > 0 && 
+                       Array.from(mutation.addedNodes).some(node => 
+                           node.nodeType === Node.ELEMENT_NODE && 
+                           (node.textContent?.length > 100 || 
+                            node.querySelector('p, div, table, article'))
+                       );
+            });
+            
+            if (hasSignificantChange && this.hasQualityContent()) {
+                console.log('🔍 Dynamic content detected via MutationObserver');
+                observer.disconnect();
+                this.activateWithContent();
+            }
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: false
+        });
+        
+        // Strategy 2: Progressive polling fallback
+        const checkContent = () => {
+            attempts++;
+            
+            if (this.hasQualityContent()) {
+                console.log(`🔍 Quality content detected after ${attempts} attempts`);
+                observer.disconnect();
+                this.activateWithContent();
+                return;
+            }
+            
+            if (attempts < maxAttempts) {
+                // Exponential backoff: 1s, 2s, 3s, 5s, 8s, 13s...
+                const delay = Math.min(attempts * 1000, 5000);
+                setTimeout(checkContent, delay);
+            } else {
+                console.log('⏰ Timeout waiting for dynamic content, activating with current content');
+                observer.disconnect();
+                this.activateWithContent();
+            }
+        };
+        
+        // Start polling after initial delay
+        setTimeout(checkContent, checkInterval);
+    }
+    
+    hasQualityContent() {
+        const quality = this.assessContentQuality();
+        return quality.score > 0.7 && quality.hasRealContent;
+    }
+    
+    assessContentQuality() {
+        const bodyText = document.body.textContent.trim();
+        const textLength = bodyText.length;
+        
+        // Site-specific content detection
+        const hostname = window.location.hostname;
+        let hasRealContent = false;
+        let score = 0;
+        
+        if (hostname.includes('ecfr.gov')) {
+            // Look for regulatory content patterns
+            hasRealContent = !!(
+                document.querySelector('[id^="p-"]') ||
+                document.querySelector('.indent-1, .indent-2') ||
+                bodyText.includes('CFR') ||
+                document.querySelector('table.table')
+            );
+            score = hasRealContent ? 0.8 : 0.2;
+            
+        } else if (hostname.includes('reddit.com')) {
+            // Look for post content
+            hasRealContent = !!(
+                document.querySelector('[data-testid="post-content"]') ||
+                document.querySelector('.Post') ||
+                document.querySelector('[data-click-id="text"]')
+            );
+            score = hasRealContent ? 0.8 : 0.3;
+            
+        } else if (hostname.includes('gemini.google.com')) {
+            // Look for conversation content
+            hasRealContent = !!(
+                document.querySelector('[data-test-id]') ||
+                document.querySelector('.conversation-turn') ||
+                textLength > 1000
+            );
+            score = hasRealContent ? 0.8 : 0.2;
+            
+        } else {
+            // Generic content quality assessment
+            const hasStructure = !!(
+                document.querySelector('article') ||
+                document.querySelector('main') ||
+                document.querySelector('.content') ||
+                document.querySelector('#content')
+            );
+            
+            const hasText = textLength > 1500;
+            const notJustNavigation = !this.isOnlyNavigation(bodyText);
+            
+            hasRealContent = hasStructure && hasText && notJustNavigation;
+            score = hasRealContent ? 0.8 : (textLength > 500 ? 0.5 : 0.2);
+        }
+        
+        return {
+            score,
+            hasRealContent,
+            textLength,
+            hostname
+        };
+    }
+    
+    isOnlyNavigation(text) {
+        const navigationKeywords = [
+            'navigate by entering',
+            'search box',
+            'click here',
+            'menu',
+            'login',
+            'sign in',
+            'loading',
+            'please wait'
+        ];
+        
+        const lowerText = text.toLowerCase();
+        const keywordMatches = navigationKeywords.filter(keyword => 
+            lowerText.includes(keyword)
+        ).length;
+        
+        // If more than half the content is navigation keywords, it's likely just navigation
+        return keywordMatches > 2 && text.length < 2000;
     }
 }
 
