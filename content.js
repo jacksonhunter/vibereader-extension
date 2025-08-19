@@ -249,9 +249,9 @@ class MatrixReader {
                     <span class="btn-icon">🎨</span>
                     <span class="btn-text">THEME</span>
                 </button>
-                <button class="control-btn preview-btn" id="toggle-preview" title="Toggle Image Preview">
-                    <span class="btn-icon">👁️</span>
-                    <span class="btn-text">PREVIEW</span>
+                <button class="control-btn preview-btn" id="toggle-preview" title="Inline Load All Media">
+                    <span class="btn-icon">📥</span>
+                    <span class="btn-text">LOAD ALL</span>
                 </button>
             </div>
         `;
@@ -657,44 +657,201 @@ class MatrixReader {
     }
 
     initRetrofutureControlPanel() {
-        // Exit button
-        const exitBtn = document.getElementById('exit-reader');
-        if (exitBtn) {
-            exitBtn.addEventListener('click', () => {
-                this.deactivate();
-            });
-        }
-        
-        // Theme cycle button
-        const themeBtn = document.getElementById('theme-cycle');
-        if (themeBtn) {
-            themeBtn.addEventListener('click', () => {
-                this.cycleTheme();
-            });
-        }
-        
-        // Preview toggle button
-        const previewBtn = document.getElementById('toggle-preview');
-        if (previewBtn) {
-            previewBtn.addEventListener('click', () => {
-                this.settings.imagePreview = !this.settings.imagePreview;
-                this.saveSettings();
-                
-                const btnText = previewBtn.querySelector('.btn-text');
-                if (btnText) {
-                    btnText.textContent = this.settings.imagePreview ? 'PREVIEW ON' : 'PREVIEW OFF';
-                }
-                
-                // Toggle image preview system
-                if (this.settings.imagePreview && !this.imagePreview) {
-                    this.imagePreview = new ImagePreview();
-                } else if (!this.settings.imagePreview && this.imagePreview) {
-                    this.imagePreview.destroy();
-                    this.imagePreview = null;
-                }
-            });
-        }
+    const exitBtn = document.getElementById('exit-reader');
+    const themeBtn = document.getElementById('theme-cycle');
+    const previewBtn = document.getElementById('toggle-preview');
+    
+    if (exitBtn) {
+        exitBtn.addEventListener('click', () => {
+            this.deactivate();
+        });
     }
+    
+    if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+            this.cycleTheme();
+        });
+    }
+    
+    if (previewBtn) {
+        // Change preview button to inline load all media instead of toggling previews
+        previewBtn.addEventListener('click', () => {
+            this.inlineLoadAllMedia();
+            
+            // Update button text to indicate action completed
+            const btnText = previewBtn.querySelector('.btn-text');
+            const btnIcon = previewBtn.querySelector('.btn-icon');
+            if (btnText && btnIcon) {
+                btnText.textContent = 'LOADED';
+                btnIcon.textContent = '✅';
+                previewBtn.disabled = true;
+                previewBtn.style.opacity = '0.6';
+            }
+        });
+    }
+}
+
+// New method to inline load all images and videos
+inlineLoadAllMedia() {
+    console.log('🖼️ Inline loading all media...');
+    
+    // Find all media elements in the content
+    const contentArea = document.querySelector('.document-viewer');
+    if (!contentArea) return;
+    
+    // Handle images
+    this.inlineLoadImages(contentArea);
+    
+    // Handle videos
+    this.inlineLoadVideos(contentArea);
+    
+    console.log('✅ All media loaded inline');
+}
+
+inlineLoadImages(container) {
+    // Find all image elements and image links
+    const images = container.querySelectorAll('img');
+    const imageLinks = container.querySelectorAll('a[href$=".jpg"], a[href$=".jpeg"], a[href$=".png"], a[href$=".gif"], a[href$=".webp"], a[href$=".bmp"], a[href$=".svg"]');
+    
+    // Process existing images - ensure they're visible and loaded
+    images.forEach(img => {
+        this.enhanceInlineImage(img);
+    });
+    
+    // Convert image links to inline images
+    imageLinks.forEach(link => {
+        this.convertLinkToInlineImage(link);
+    });
+    
+    // Also look for lazy-loaded images
+    const lazyImages = container.querySelectorAll('[data-src], [data-lazy-src], [data-original]');
+    lazyImages.forEach(img => {
+        const src = img.getAttribute('data-src') || 
+                   img.getAttribute('data-lazy-src') || 
+                   img.getAttribute('data-original');
+        if (src) {
+            img.src = src;
+            this.enhanceInlineImage(img);
+        }
+    });
+}
+
+enhanceInlineImage(img) {
+    // Add retrofuture styling to inline images
+    img.style.cssText += `
+        max-width: 100%;
+        height: auto;
+        border: 2px solid #ff1493;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(255, 20, 147, 0.5);
+        margin: 20px 0;
+        display: block;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px;
+    `;
+    
+    // Add loading indicator while image loads
+    if (!img.complete) {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'inline-image-loading';
+        loadingDiv.innerHTML = `
+            <div style="color: #00ffff; text-align: center; padding: 20px;">
+                <div class="loading-spinner" style="width: 20px; height: 20px; border: 2px solid rgba(0,255,255,0.3); border-top: 2px solid #00ffff; border-radius: 50%; margin: 0 auto 10px; animation: spin 1s linear infinite;"></div>
+                LOADING IMAGE...
+            </div>
+        `;
+        
+        img.parentNode.insertBefore(loadingDiv, img);
+        
+        img.onload = () => {
+            loadingDiv.remove();
+        };
+        
+        img.onerror = () => {
+            loadingDiv.innerHTML = `<div style="color: #ff1493; text-align: center; padding: 20px;">⚠️ IMAGE LOAD ERROR</div>`;
+        };
+    }
+}
+
+convertLinkToInlineImage(link) {
+    const img = document.createElement('img');
+    img.src = link.href;
+    img.alt = link.textContent || 'Inline loaded image';
+    
+    // Create a container for the image with info
+    const container = document.createElement('div');
+    container.className = 'inline-loaded-image';
+    container.innerHTML = `
+        <div style="color: #ff1493; font-size: 12px; margin-bottom: 10px;">
+            📎 LOADED: ${link.href.split('/').pop()}
+        </div>
+    `;
+    container.appendChild(img);
+    
+    // Replace the link with the image
+    link.parentNode.replaceChild(container, link);
+    
+    // Apply styling
+    this.enhanceInlineImage(img);
+}
+
+inlineLoadVideos(container) {
+    // Find video links
+    const videoLinks = container.querySelectorAll('a[href$=".mp4"], a[href$=".webm"], a[href$=".ogg"], a[href$=".mov"], a[href$=".avi"]');
+    
+    videoLinks.forEach(link => {
+        this.convertLinkToInlineVideo(link);
+    });
+    
+    // Enhance existing videos
+    const videos = container.querySelectorAll('video');
+    videos.forEach(video => {
+        this.enhanceInlineVideo(video);
+    });
+}
+
+convertLinkToInlineVideo(link) {
+    const video = document.createElement('video');
+    video.src = link.href;
+    video.controls = true;
+    video.style.cssText = `
+        max-width: 100%;
+        height: auto;
+        border: 2px solid #00ffff;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        margin: 20px 0;
+        display: block;
+        background: rgba(0, 0, 0, 0.9);
+    `;
+    
+    // Create container with info
+    const container = document.createElement('div');
+    container.className = 'inline-loaded-video';
+    container.innerHTML = `
+        <div style="color: #00ffff; font-size: 12px; margin-bottom: 10px;">
+            🎬 LOADED: ${link.href.split('/').pop()}
+        </div>
+    `;
+    container.appendChild(video);
+    
+    // Replace link with video
+    link.parentNode.replaceChild(container, link);
+}
+
+enhanceInlineVideo(video) {
+    video.style.cssText += `
+        max-width: 100%;
+        height: auto;
+        border: 2px solid #00ffff;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        margin: 20px 0;
+        display: block;
+        background: rgba(0, 0, 0, 0.9);
+    `;
+    video.controls = true;
+}
 
     initGlitchEffects() {
         const glitchElements = document.querySelectorAll('.glitch');
