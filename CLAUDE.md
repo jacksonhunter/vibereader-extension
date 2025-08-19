@@ -130,6 +130,7 @@ zip -r matrix-reader.xpi * -x "*.DS_Store" "*.git*" "README.md"
 - Some pages may block content extraction for security
 - CORS policies can prevent image preview on external images
 - Performance impact on pages with many images/videos
+- Complex tables with merged cells may need manual review after expansion
 
 ## 🟢 CURRENT FEATURES (Implemented)
 
@@ -161,6 +162,13 @@ zip -r matrix-reader.xpi * -x "*.DS_Store" "*.git*" "README.md"
 - ✅ **Image Enhancement** - Neon borders and styling for loaded media
 - ✅ **Video Support** - Inline video loading and enhancement
 - ✅ **Lazy Image Loading** - Support for data-src attributes
+
+### Table Handling
+- ✅ **Complex Table Detection** - Automatically detects tables >8 rows, >6 columns, or with nested content
+- ✅ **Table Placeholders** - Click-to-expand placeholders for complex tables (like images)
+- ✅ **Original Table Preservation** - Stores original HTML for perfect reconstruction
+- ✅ **Cyberpunk Table Styling** - Retrofuture styling for both simple and expanded tables
+- ✅ **Simple Table Enhancement** - Basic tables get cyberpunk styling without placeholders
 
 ### Settings & Controls
 - ✅ **Popup Settings Panel** - Full configuration interface
