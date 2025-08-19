@@ -1,0 +1,56 @@
+{
+  "manifest_version": 2,
+  "name": "Matrix Reader - Synthwave Mode",
+  "version": "1.0.0",
+  "description": "Transform any webpage into a cyberpunk matrix reader experience with ASCII art and synthwave aesthetics",
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "<all_urls>"
+  ],
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "lib/readability.js",
+        "lib/image-preview.js",
+        "content.js"
+      ],
+      "css": [
+        "styles/retrofuture-theme.css"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  
+  "browser_action": {
+    "default_title": "Toggle Matrix Reader Mode",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  
+  "web_accessible_resources": [
+    "styles/*",
+    "fonts/*",
+    "assets/*"
+  ],
+  
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png", 
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Reader Settings</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="matrix-popup">
+        <!-- Header -->
+        <div class="popup-header">
+            <h1 class="popup-title glitch" data-text="MATRIX READER">MATRIX READER</h1>
+            <div class="version-info">v1.0.0 - CYBERPUNK MODE</div>
+        </div>
+        
+        <!-- Status Display -->
+        <div class="status-section">
+            <div class="status-indicator" id="status-indicator">
+                <span class="status-icon" id="status-icon">⚡</span>
+                <span class="status-text" id="status-text">STANDBY</span>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="actions-section">
+            <button class="action-btn primary" id="toggle-btn">
+                <span class="btn-icon">🔥</span>
+                <span class="btn-text">ACTIVATE MATRIX</span>
+            </button>
+            
+            <div class="quick-actions">
+                <button class="action-btn secondary" id="theme-btn" title="Cycle Theme">
+                    <span class="btn-icon">🎨</span>
+                    <span class="btn-text">THEME</span>
+                </button>
+                <button class="action-btn secondary" id="settings-btn" title="Settings">
+                    <span class="btn-icon">⚙️</span>
+                    <span class="btn-text">CONFIG</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Settings Panel -->
+        <div class="settings-panel" id="settings-panel">
+            <div class="settings-header">
+                <h3>⚡ CONFIGURATION ⚡</h3>
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">
+                    <span class="label-text">🎭 Visual Theme</span>
+                    <select class="setting-select" id="theme-select">
+                        <option value="nightdrive">Nightdrive Enhanced</option>
+                        <option value="neon-surge">Neon Surge</option>
+                        <option value="outrun-storm">Outrun Storm</option>
+                        <option value="strange-days">Strange Days</option>
+                    </select>
+                </label>
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">
+                    <span class="label-text">📸 ASCII Images</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="ascii-images" class="toggle-input">
+                        <span class="toggle-slider"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">
+                    <span class="label-text">📜 Side Scrolls</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="side-scrolls" class="toggle-input">
+                        <span class="toggle-slider"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">
+                    <span class="label-text">🌧️ Matrix Rain</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="matrix-rain" class="toggle-input">
+                        <span class="toggle-slider"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">
+                    <span class="label-text">🚀 Auto-Activate</span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="auto-activate" class="toggle-input">
+                        <span class="toggle-slider"></span>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="settings-footer">
+                <button class="action-btn secondary" id="reset-settings">
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-text">RESET</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Info Section -->
+        <div class="info-section">
+            <div class="shortcut-info">
+                <span class="shortcut-label">🔥 Hotkey:</span>
+                <code class="shortcut-code">Ctrl + Shift + M</code>
+            </div>
+            
+            <div class="footer-links">
+                <a href="#" class="footer-link" id="help-link">📖 Help</a>
+                <a href="#" class="footer-link" id="about-link">ℹ️ About</a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>
