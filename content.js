@@ -344,6 +344,30 @@ class MatrixReader {
             code.classList.add('retrofuture-code');
         });
         
+        // Process tables with placeholder system (for complex tables)
+        const tables = tempDiv.querySelectorAll('table');
+        tables.forEach((table, index) => {
+            if (this.shouldCreateTablePlaceholder(table)) {
+                // Complex tables get placeholders (like images)
+                const placeholder = this.createTablePlaceholder(table, index);
+                table.parentNode.replaceChild(placeholder, table);
+            } else {
+                // Simple tables get basic retrofuture styling
+                table.classList.add('retrofuture-table', 'simple-table');
+                
+                // Style headers
+                const headers = table.querySelectorAll('th');
+                headers.forEach(th => th.classList.add('retrofuture-th'));
+                
+                // Style rows and cells
+                const rows = table.querySelectorAll('tr');
+                rows.forEach(row => row.classList.add('retrofuture-tr'));
+                
+                const cells = table.querySelectorAll('td');
+                cells.forEach(td => td.classList.add('retrofuture-td'));
+            }
+        });
+        
         return tempDiv.innerHTML;
     }
     
@@ -1337,6 +1361,102 @@ class MatrixReader {
             this.deactivate();
             setTimeout(() => this.activate(), 100);
         }
+    }
+    
+    // DOM-based table handling for complex tables
+    shouldCreateTablePlaceholder(table) {
+        const rows = table.querySelectorAll('tr');
+        const cells = table.querySelectorAll('td, th');
+        
+        // Complex table indicators:
+        const rowCount = rows.length;
+        const columnCount = table.rows[0]?.cells.length || 0;
+        const hasComplexCells = Array.from(cells).some(cell => 
+            cell.querySelector('div, span, a, img') || 
+            cell.textContent.length > 100
+        );
+        const hasComplexStructure = table.classList.length > 2 || 
+                                   table.querySelector('thead, tbody, tfoot') ||
+                                   table.getAttribute('style');
+        
+        // Large tables or complex content should get placeholders
+        return rowCount > 8 || columnCount > 6 || hasComplexCells || hasComplexStructure;
+    }
+    
+    // Create table placeholder (similar to image placeholders)
+    createTablePlaceholder(table, index) {
+        const rows = table.querySelectorAll('tr').length;
+        const cols = table.rows[0]?.cells.length || 0;
+        
+        const placeholder = document.createElement('div');
+        placeholder.className = 'table-placeholder';
+        placeholder.setAttribute('data-table-index', index);
+        placeholder.setAttribute('data-original-html', table.outerHTML);
+        
+        placeholder.innerHTML = `
+            <div class="table-icon">📊</div>
+            <div class="table-info">
+                <div class="table-filename">TABLE ${index + 1}</div>
+                <div class="table-stats">${rows} ROWS × ${cols} COLS</div>
+                <div class="table-hover-hint">CLICK TO EXPAND TABLE</div>
+            </div>
+        `;
+        
+        // Add click handler
+        placeholder.addEventListener('click', () => {
+            this.expandTablePlaceholder(placeholder);
+        });
+        
+        return placeholder;
+    }
+    
+    // Expand table placeholder on click
+    expandTablePlaceholder(placeholder) {
+        const originalHtml = placeholder.getAttribute('data-original-html');
+        if (!originalHtml) return;
+        
+        // Create expanded container
+        const expandedContainer = document.createElement('div');
+        expandedContainer.className = 'expanded-table-container';
+        
+        // Parse and style the original table
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = originalHtml;
+        const table = tempDiv.querySelector('table');
+        
+        if (table) {
+            table.classList.add('retrofuture-table', 'expanded-table');
+            
+            // Style headers
+            const headers = table.querySelectorAll('th');
+            headers.forEach(th => th.classList.add('retrofuture-th'));
+            
+            // Style rows and cells
+            const rows = table.querySelectorAll('tr');
+            rows.forEach(row => row.classList.add('retrofuture-tr'));
+            
+            const cells = table.querySelectorAll('td');
+            cells.forEach(td => td.classList.add('retrofuture-td'));
+        }
+        
+        expandedContainer.innerHTML = `
+            <div class="table-header">
+                <div class="table-title">📊 TABLE DATA</div>
+                <button class="table-close-btn">✕</button>
+            </div>
+            <div class="table-content">
+                ${tempDiv.innerHTML}
+            </div>
+        `;
+        
+        // Add close handler
+        const closeBtn = expandedContainer.querySelector('.table-close-btn');
+        closeBtn.addEventListener('click', () => {
+            expandedContainer.parentNode.replaceChild(placeholder, expandedContainer);
+        });
+        
+        // Replace placeholder with expanded table
+        placeholder.parentNode.replaceChild(expandedContainer, placeholder);
     }
 }
 

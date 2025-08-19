@@ -904,10 +904,172 @@
   }
 }
 
+/* ============================================================================ */
+/* TABLE PLACEHOLDERS & EXPANDED TABLES */
+/* ============================================================================ */
+.table-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  margin: 1.5rem 0;
+  background: linear-gradient(135deg, 
+    rgba(var(--bg-terminal), 0.9) 0%, 
+    rgba(var(--bg-secondary), 0.7) 100%);
+  border: 2px solid var(--secondary);
+  border-left: 4px solid var(--accent);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+.table-placeholder:hover {
+  border-color: var(--accent);
+  box-shadow: 
+    0 0 20px var(--glow-accent),
+    inset 0 0 20px rgba(var(--accent), 0.1);
+  transform: translateY(-2px);
+}
+
+.table-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 0 8px var(--secondary));
+}
+
+.table-info {
+  flex: 1;
+}
+
+.table-filename {
+  font-family: 'VT323', monospace;
+  font-size: 1.3rem;
+  color: var(--text-accent);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px var(--glow-secondary);
+}
+
+.table-stats {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.table-hover-hint {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+/* Expanded Table Container */
+.expanded-table-container {
+  margin: 1.5rem 0;
+  background: var(--bg-secondary);
+  border: 2px solid var(--secondary);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 30px var(--glow-secondary);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(90deg, var(--bg-tertiary), var(--bg-secondary));
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.table-title {
+  font-family: 'VT323', monospace;
+  font-size: 1.2rem;
+  color: var(--text-accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px var(--glow-secondary);
+}
+
+.table-close-btn {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  color: var(--primary);
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.table-close-btn:hover {
+  background: var(--primary);
+  color: var(--bg-primary);
+  box-shadow: 0 0 15px var(--glow-primary);
+}
+
+.table-content {
+  padding: 20px;
+  overflow-x: auto;
+}
+
+/* Retrofuture Table Styling */
+.retrofuture-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Share Tech Mono', monospace;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+}
+
+.retrofuture-table.expanded-table {
+  box-shadow: inset 0 0 20px rgba(var(--secondary), 0.1);
+}
+
+.retrofuture-th {
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+  color: var(--text-accent);
+  padding: 12px 15px;
+  text-align: left;
+  border: 1px solid var(--border-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
+  text-shadow: 0 0 5px var(--glow-secondary);
+}
+
+.retrofuture-tr:nth-child(even) {
+  background: rgba(var(--bg-secondary), 0.3);
+}
+
+.retrofuture-tr:hover {
+  background: rgba(var(--accent), 0.1);
+  box-shadow: inset 0 0 10px rgba(var(--accent), 0.2);
+}
+
+.retrofuture-td {
+  padding: 10px 15px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  vertical-align: top;
+}
+
+.retrofuture-table.simple-table {
+  margin: 1rem 0;
+  border: 1px solid var(--border-secondary);
+  box-shadow: 0 0 15px rgba(var(--secondary), 0.3);
+}
+
 /* Focus styles for keyboard navigation */
 .control-btn:focus,
 .retrofuture-link:focus,
-.image-placeholder:focus {
+.image-placeholder:focus,
+.table-placeholder:focus {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
