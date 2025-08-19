@@ -657,37 +657,52 @@ class MatrixReader {
     }
 
     initRetrofutureControlPanel() {
-    const exitBtn = document.getElementById('exit-reader');
-    const themeBtn = document.getElementById('theme-cycle');
-    const previewBtn = document.getElementById('toggle-preview');
-    
-    if (exitBtn) {
-        exitBtn.addEventListener('click', () => {
-            this.deactivate();
-        });
-    }
-    
-    if (themeBtn) {
-        themeBtn.addEventListener('click', () => {
-            this.cycleTheme();
-        });
-    }
-    
-    if (previewBtn) {
-        // Change preview button to inline load all media instead of toggling previews
-        previewBtn.addEventListener('click', () => {
-            this.inlineLoadAllMedia();
-            
-            // Update button text to indicate action completed
-            const btnText = previewBtn.querySelector('.btn-text');
-            const btnIcon = previewBtn.querySelector('.btn-icon');
-            if (btnText && btnIcon) {
-                btnText.textContent = 'LOADED';
-                btnIcon.textContent = '✅';
-                previewBtn.disabled = true;
-                previewBtn.style.opacity = '0.6';
-            }
-        });
+        const exitBtn = document.getElementById('exit-reader');
+        const themeBtn = document.getElementById('theme-cycle');
+        const previewBtn = document.getElementById('toggle-preview');
+        
+        if (exitBtn) {
+            exitBtn.addEventListener('click', () => {
+                this.deactivate();
+            });
+        }
+        
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => {
+                this.cycleTheme();
+            });
+        }
+        
+        if (previewBtn) {
+            // Change preview button to inline load all media instead of toggling previews
+            previewBtn.addEventListener('click', () => {
+                const btnText = previewBtn.querySelector('.btn-text');
+                const btnIcon = previewBtn.querySelector('.btn-icon');
+                
+                // Show loading state
+                if (btnText && btnIcon) {
+                    btnText.textContent = 'LOADING...';
+                    btnIcon.textContent = '⏳';
+                    previewBtn.disabled = true;
+                }
+                
+                // Load media and update button based on results
+                const loadedCount = this.inlineLoadAllMedia();
+                
+                setTimeout(() => {
+                    if (btnText && btnIcon) {
+                        if (loadedCount > 0) {
+                            btnText.textContent = `LOADED ${loadedCount}`;
+                            btnIcon.textContent = '✅';
+                        } else {
+                            btnText.textContent = 'NO MEDIA';
+                            btnIcon.textContent = '📭';
+                        }
+                        previewBtn.disabled = false;
+                    }
+                }, 1000); // Give time for media to load
+            });
+        }
     }
 
     // New method to inline load all images and videos
@@ -696,43 +711,70 @@ class MatrixReader {
         
         // Find all media elements in the content
         const contentArea = document.querySelector('.document-viewer');
-        if (!contentArea) return;
+        if (!contentArea) return 0;
         
         // Handle images
-        this.inlineLoadImages(contentArea);
+        const imageCount = this.inlineLoadImages(contentArea);
         
-        // Handle videos
-        this.inlineLoadVideos(contentArea);
+        // Handle videos  
+        const videoCount = this.inlineLoadVideos(contentArea);
         
-        console.log('✅ All media loaded inline');
+        const totalLoaded = imageCount + videoCount;
+        console.log(`✅ Loaded ${totalLoaded} media items inline`);
+        return totalLoaded;
     }
 
     inlineLoadImages(container) {
-        // Find all image elements and image links
-        const images = container.querySelectorAll('img');
-        const imageLinks = container.querySelectorAll('a[href$=".jpg"], a[href$=".jpeg"], a[href$=".png"], a[href$=".gif"], a[href$=".webp"], a[href$=".bmp"], a[href$=".svg"]');
+        console.log('🔍 Looking for images to load...');
+        let loadedCount = 0;
         
-        // Process existing images - ensure they're visible and loaded
-        images.forEach(img => {
-            this.enhanceInlineImage(img);
-        });
+        // Find Matrix Reader image placeholders
+        const imagePlaceholders = container.querySelectorAll('.image-placeholder');
+        console.log(`Found ${imagePlaceholders.length} image placeholders`);
         
-        // Convert image links to inline images
-        imageLinks.forEach(link => {
-            this.convertLinkToInlineImage(link);
-        });
-        
-        // Also look for lazy-loaded images
-        const lazyImages = container.querySelectorAll('[data-src], [data-lazy-src], [data-original]');
-        lazyImages.forEach(img => {
-            const src = img.getAttribute('data-src') || 
-                       img.getAttribute('data-lazy-src') || 
-                       img.getAttribute('data-original');
+        // Convert placeholders to actual images
+        imagePlaceholders.forEach(placeholder => {
+            const src = placeholder.getAttribute('data-src');
+            const alt = placeholder.getAttribute('data-alt') || 'Inline loaded image';
+            
             if (src) {
+                console.log(`Loading image: ${src}`);
+                
+                // Create actual img element
+                const img = document.createElement('img');
                 img.src = src;
+                img.alt = alt;
+                
+                // Create container for the image with info
+                const container = document.createElement('div');
+                container.className = 'inline-loaded-image';
+                container.innerHTML = `
+                    <div style="color: #ff1493; font-size: 12px; margin-bottom: 10px;">
+                        📸 LOADED: ${this.extractFilename(src)}
+                    </div>
+                `;
+                container.appendChild(img);
+                
+                // Replace placeholder with actual image
+                placeholder.parentNode.replaceChild(container, placeholder);
+                
+                // Apply retrofuture styling
                 this.enhanceInlineImage(img);
+                loadedCount++;
             }
         });
+        
+        // Also look for regular image links that weren't processed
+        const imageLinks = container.querySelectorAll('a[href$=".jpg"], a[href$=".jpeg"], a[href$=".png"], a[href$=".gif"], a[href$=".webp"], a[href$=".bmp"], a[href$=".svg"]');
+        console.log(`Found ${imageLinks.length} image links`);
+        
+        imageLinks.forEach(link => {
+            this.convertLinkToInlineImage(link);
+            loadedCount++;
+        });
+        
+        console.log(`Loaded ${loadedCount} images`);
+        return loadedCount;
     }
 
     enhanceInlineImage(img) {
@@ -795,18 +837,26 @@ class MatrixReader {
     }
 
     inlineLoadVideos(container) {
-    // Find video links
-    const videoLinks = container.querySelectorAll('a[href$=".mp4"], a[href$=".webm"], a[href$=".ogg"], a[href$=".mov"], a[href$=".avi"]');
-    
-    videoLinks.forEach(link => {
-        this.convertLinkToInlineVideo(link);
-    });
-    
-    // Enhance existing videos
-    const videos = container.querySelectorAll('video');
-    videos.forEach(video => {
-        this.enhanceInlineVideo(video);
-    });
+        console.log('🎬 Looking for videos to load...');
+        let loadedCount = 0;
+        
+        // Find video links
+        const videoLinks = container.querySelectorAll('a[href$=".mp4"], a[href$=".webm"], a[href$=".ogg"], a[href$=".mov"], a[href$=".avi"]');
+        console.log(`Found ${videoLinks.length} video links`);
+        
+        videoLinks.forEach(link => {
+            this.convertLinkToInlineVideo(link);
+            loadedCount++;
+        });
+        
+        // Enhance existing videos
+        const videos = container.querySelectorAll('video');
+        videos.forEach(video => {
+            this.enhanceInlineVideo(video);
+        });
+        
+        console.log(`Loaded ${loadedCount} videos`);
+        return loadedCount;
     }
 
     convertLinkToInlineVideo(link) {
