@@ -18,6 +18,13 @@ Transform any webpage into a **90s cyberpunk retrofuture reading experience** wi
 - **File information** display with dimensions and filename
 - **Keyboard shortcuts** (Escape to close previews)
 
+### 📊 **Advanced Table Handling**
+- **Complex table detection** automatically identifies large or nested tables
+- **Click-to-expand placeholders** for complex tables (similar to images)
+- **Original table preservation** maintains perfect formatting
+- **Cyberpunk table styling** with retrofuture aesthetics
+- **Simple table enhancement** for basic tables without placeholders
+
 ### 🎯 **Reading Experience**
 - **Readability.js integration** for clean content extraction
 - **Enhanced typography** with neon glow effects
@@ -91,11 +98,17 @@ Transform any webpage into a **90s cyberpunk retrofuture reading experience** wi
    - **Move cursor away** to hide preview
    - **Press Escape** to force close preview
 
-4. **Theme Switching**
+4. **Table Interaction**
+   - **Complex tables** automatically show as clickable placeholders
+   - **Click table placeholder** to expand and view full table
+   - **Click close button** (✕) to collapse back to placeholder
+   - **Simple tables** get cyberpunk styling automatically
+
+5. **Theme Switching**
    - Click **🎨 THEME** button to cycle themes
    - Or use the popup settings panel
 
-5. **Exit Matrix Mode**
+6. **Exit Matrix Mode**
    - Click **⚡ DISCONNECT** button, OR
    - Press **Ctrl+Shift+M** again
 
@@ -152,6 +165,12 @@ Click the Matrix Reader icon to open settings:
 - Some images may be blocked by CORS policies
 - Check that images have supported formats (jpg, png, gif, webp)
 
+### **Table Issues**
+- Complex tables (>8 rows or >6 columns) automatically become placeholders
+- Tables with merged cells may need manual review after expansion
+- If table placeholder won't expand, try refreshing the page
+- Simple tables get basic styling without placeholder functionality
+
 ### **Performance Issues**
 - Disable **Matrix Rain** effect in settings
 - Reduce **Terminal Panels** if on mobile device
@@ -162,10 +181,109 @@ Click the Matrix Reader icon to open settings:
 ## 🛠️ Technical Details
 
 ### **Architecture**
-- **Content Script**: Main functionality and UI transformation
-- **Background Script**: Extension lifecycle and browser integration  
-- **Popup Interface**: Settings and quick controls
-- **CSS Themes**: Modular synthwave aesthetic system
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    VIBE READER EXTENSION                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────┐    ┌──────────────────────────────────────┐ │
+│  │  manifest.json  │    │           BACKGROUND SCRIPT          │ │
+│  │                 │    │         (background.js)              │ │
+│  │ • Permissions   │◄───┤                                      │ │
+│  │ • Content CSP   │    │ • Extension lifecycle management     │ │
+│  │ • Browser action│    │ • Tab state tracking (ON/OFF)       │ │
+│  │ • Keyboard      │    │ • Message passing coordinator       │ │
+│  │   shortcuts     │    │ • Browser badge updates             │ │
+│  └─────────────────┘    │ • Settings persistence               │ │
+│                         └──────────────────┬───────────────────┘ │
+│                                           │                     │
+│  ┌─────────────────────────────────────────▼─────────────────┐   │
+│  │                 CONTENT SCRIPT                           │   │
+│  │                (content.js - 1400+ lines)               │   │
+│  │                                                         │   │
+│  │  ┌─────────────────┐  ┌─────────────────────────────────┐ │   │
+│  │  │  MatrixReader   │  │      Content Processing         │ │   │
+│  │  │     Class       │  │                                 │ │   │
+│  │  │                 │  │ • Readability.js integration   │ │   │
+│  │  │ • Page transform│  │ • HTML parsing & cleanup       │ │   │
+│  │  │ • State mgmt    │  │ • Content extraction           │ │   │
+│  │  │ • UI generation │  │ • Image/video detection        │ │   │
+│  │  │ • Event handling│  │ • Table complexity analysis    │ │   │
+│  │  └─────────────────┘  └─────────────────────────────────┘ │   │
+│  │                                                         │   │
+│  │  ┌─────────────────────────────────────────────────────┐ │   │
+│  │  │           PLACEHOLDER SYSTEM                        │ │   │
+│  │  │                                                     │ │   │
+│  │  │ ┌─────────────┐    ┌─────────────────────────────┐ │ │   │
+│  │  │ │   Images    │    │          Tables             │ │ │   │
+│  │  │ │             │    │                             │ │ │   │
+│  │  │ │ • Preview   │    │ • Complexity detection      │ │ │   │
+│  │  │ │   hints     │    │   (rows, cols, nesting)     │ │ │   │
+│  │  │ │ • Hover     │    │ • Click-to-expand           │ │ │   │
+│  │  │ │   loading   │    │ • Original HTML preservation│ │ │   │
+│  │  │ │ • Load All  │    │ • Cyberpunk styling         │ │ │   │
+│  │  │ │   button    │    │ • Close/collapse            │ │ │   │
+│  │  │ └─────────────┘    └─────────────────────────────┘ │ │   │
+│  │  └─────────────────────────────────────────────────────┘ │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                     LIBRARIES                               │ │
+│  │                                                             │ │
+│  │  ┌─────────────────┐    ┌─────────────────────────────────┐ │ │
+│  │  │ readability.js  │    │       image-preview.js          │ │ │
+│  │  │                 │    │                                 │ │ │
+│  │  │ • Mozilla's     │    │ • Imagus-style hover preview   │ │ │
+│  │  │   content       │    │ • Smart positioning            │ │ │
+│  │  │   extraction    │    │ • Viewport bounds detection    │ │ │
+│  │  │ • Article       │    │ • Keyboard navigation          │ │ │
+│  │  │   parsing       │    │ • Loading states               │ │ │
+│  │  │ • Clean HTML    │    │ • CORS handling                │ │ │
+│  │  └─────────────────┘    └─────────────────────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                   POPUP INTERFACE                           │ │
+│  │              (popup.html/css/js)                            │ │
+│  │                                                             │ │
+│  │ • Settings panel with theme selection                      │ │
+│  │ • Toggle switches for features                             │ │
+│  │ • Real-time setting sync                                   │ │
+│  │ • Browser storage integration                              │ │
+│  │ • Reset to defaults functionality                          │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                  THEMING SYSTEM                             │ │
+│  │              (retrofuture-theme.css)                       │ │
+│  │                                                             │ │
+│  │ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────────┐ │ │
+│  │ │ CSS Custom  │ │   Themes    │ │    Component Styles     │ │ │
+│  │ │ Properties  │ │             │ │                         │ │ │
+│  │ │             │ │ • Nightdrive│ │ • Terminal panels       │ │ │
+│  │ │ • Colors    │ │ • Neon Surge│ │ • Control buttons       │ │ │
+│  │ │ • Glows     │ │ • Outrun    │ │ • Image placeholders    │ │ │
+│  │ │ • Borders   │ │   Storm     │ │ • Table placeholders    │ │ │
+│  │ │ • Fonts     │ │ • Strange   │ │ • Expanded tables       │ │ │
+│  │ │ • Animations│ │   Days      │ │ • Typography            │ │ │
+│  │ └─────────────┘ └─────────────┘ └─────────────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+      DATA FLOW:
+      
+      1. User activates extension (keyboard/icon)
+      2. Background script receives activation
+      3. Content script loads Readability.js
+      4. Content extracted & processed
+      5. Images → placeholders with hover
+      6. Tables → complexity analysis → placeholders or styling
+      7. Cyberpunk UI generated with current theme
+      8. Settings sync'd from browser storage
+      9. User interactions handled in real-time
+```
 
 ### **Libraries Used**
 - **Readability.js** - Mozilla's content extraction library
