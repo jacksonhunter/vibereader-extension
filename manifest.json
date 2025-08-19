@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "Matrix Reader - Synthwave Mode",
+  "name": "VibeReader - Synthwave Mode",
   "version": "1.0.0",
-  "description": "Transform any webpage into a cyberpunk matrix reader experience with ASCII art and synthwave aesthetics",
+  "description": "Transform any webpage into a cyberpunk vibe reader experience with ASCII art and synthwave aesthetics",
   
   "permissions": [
     "activeTab",
@@ -31,7 +31,7 @@
   },
   
   "browser_action": {
-    "default_title": "Toggle Matrix Reader Mode",
+    "default_title": "Toggle VibeReader Mode",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",

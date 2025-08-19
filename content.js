@@ -67,7 +67,7 @@ class MatrixReader {
     activate() {
         if (this.isActive) return;
         
-        console.log('🔥 Activating Matrix Reader Mode...');
+        console.log('🔥 Activating VibeReader Mode...');
         
         // Extract readable content using Readability
         const documentClone = document.cloneNode(true);
@@ -101,7 +101,7 @@ class MatrixReader {
     deactivate() {
         if (!this.isActive) return;
         
-        console.log('🌙 Deactivating Matrix Reader Mode...');
+        console.log('🌙 Deactivating VibeReader Mode...');
         
         // Restore original content
         if (this.originalContent) {
@@ -129,7 +129,7 @@ class MatrixReader {
         document.head.innerHTML = `
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Matrix Reader: ${article.title}</title>
+            <title>VibeReader: ${article.title}</title>
         `;
         
         // Create main container
@@ -168,7 +168,7 @@ class MatrixReader {
             <header class="retrofuture-header">
                 <div class="header-bar">
                     <div class="header-left">
-                        <span class="logo">◢◣ CYBER READER ◤◥</span>
+                        <span class="logo">◢◣ VIBE READER ◤◥</span>
                         <span class="separator">|</span>
                         <span class="protocol">NEURO-LINK://</span>
                     </div>
@@ -689,55 +689,54 @@ class MatrixReader {
             }
         });
     }
-}
 
-// New method to inline load all images and videos
-inlineLoadAllMedia() {
-    console.log('🖼️ Inline loading all media...');
-    
-    // Find all media elements in the content
-    const contentArea = document.querySelector('.document-viewer');
-    if (!contentArea) return;
-    
-    // Handle images
-    this.inlineLoadImages(contentArea);
-    
-    // Handle videos
-    this.inlineLoadVideos(contentArea);
-    
-    console.log('✅ All media loaded inline');
-}
+    // New method to inline load all images and videos
+    inlineLoadAllMedia() {
+        console.log('🖼️ Inline loading all media...');
+        
+        // Find all media elements in the content
+        const contentArea = document.querySelector('.document-viewer');
+        if (!contentArea) return;
+        
+        // Handle images
+        this.inlineLoadImages(contentArea);
+        
+        // Handle videos
+        this.inlineLoadVideos(contentArea);
+        
+        console.log('✅ All media loaded inline');
+    }
 
-inlineLoadImages(container) {
-    // Find all image elements and image links
-    const images = container.querySelectorAll('img');
-    const imageLinks = container.querySelectorAll('a[href$=".jpg"], a[href$=".jpeg"], a[href$=".png"], a[href$=".gif"], a[href$=".webp"], a[href$=".bmp"], a[href$=".svg"]');
-    
-    // Process existing images - ensure they're visible and loaded
-    images.forEach(img => {
-        this.enhanceInlineImage(img);
-    });
-    
-    // Convert image links to inline images
-    imageLinks.forEach(link => {
-        this.convertLinkToInlineImage(link);
-    });
-    
-    // Also look for lazy-loaded images
-    const lazyImages = container.querySelectorAll('[data-src], [data-lazy-src], [data-original]');
-    lazyImages.forEach(img => {
-        const src = img.getAttribute('data-src') || 
-                   img.getAttribute('data-lazy-src') || 
-                   img.getAttribute('data-original');
-        if (src) {
-            img.src = src;
+    inlineLoadImages(container) {
+        // Find all image elements and image links
+        const images = container.querySelectorAll('img');
+        const imageLinks = container.querySelectorAll('a[href$=".jpg"], a[href$=".jpeg"], a[href$=".png"], a[href$=".gif"], a[href$=".webp"], a[href$=".bmp"], a[href$=".svg"]');
+        
+        // Process existing images - ensure they're visible and loaded
+        images.forEach(img => {
             this.enhanceInlineImage(img);
-        }
-    });
-}
+        });
+        
+        // Convert image links to inline images
+        imageLinks.forEach(link => {
+            this.convertLinkToInlineImage(link);
+        });
+        
+        // Also look for lazy-loaded images
+        const lazyImages = container.querySelectorAll('[data-src], [data-lazy-src], [data-original]');
+        lazyImages.forEach(img => {
+            const src = img.getAttribute('data-src') || 
+                       img.getAttribute('data-lazy-src') || 
+                       img.getAttribute('data-original');
+            if (src) {
+                img.src = src;
+                this.enhanceInlineImage(img);
+            }
+        });
+    }
 
-enhanceInlineImage(img) {
-    // Add retrofuture styling to inline images
+    enhanceInlineImage(img) {
+        // Add retrofuture styling to inline images
     img.style.cssText += `
         max-width: 100%;
         height: auto;
@@ -771,9 +770,9 @@ enhanceInlineImage(img) {
             loadingDiv.innerHTML = `<div style="color: #ff1493; text-align: center; padding: 20px;">⚠️ IMAGE LOAD ERROR</div>`;
         };
     }
-}
+    }
 
-convertLinkToInlineImage(link) {
+    convertLinkToInlineImage(link) {
     const img = document.createElement('img');
     img.src = link.href;
     img.alt = link.textContent || 'Inline loaded image';
@@ -793,9 +792,9 @@ convertLinkToInlineImage(link) {
     
     // Apply styling
     this.enhanceInlineImage(img);
-}
+    }
 
-inlineLoadVideos(container) {
+    inlineLoadVideos(container) {
     // Find video links
     const videoLinks = container.querySelectorAll('a[href$=".mp4"], a[href$=".webm"], a[href$=".ogg"], a[href$=".mov"], a[href$=".avi"]');
     
@@ -808,9 +807,9 @@ inlineLoadVideos(container) {
     videos.forEach(video => {
         this.enhanceInlineVideo(video);
     });
-}
+    }
 
-convertLinkToInlineVideo(link) {
+    convertLinkToInlineVideo(link) {
     const video = document.createElement('video');
     video.src = link.href;
     video.controls = true;
@@ -837,9 +836,9 @@ convertLinkToInlineVideo(link) {
     
     // Replace link with video
     link.parentNode.replaceChild(container, link);
-}
+    }
 
-enhanceInlineVideo(video) {
+    enhanceInlineVideo(video) {
     video.style.cssText += `
         max-width: 100%;
         height: auto;
@@ -850,8 +849,8 @@ enhanceInlineVideo(video) {
         display: block;
         background: rgba(0, 0, 0, 0.9);
     `;
-    video.controls = true;
-}
+        video.controls = true;
+    }
 
     initGlitchEffects() {
         const glitchElements = document.querySelectorAll('.glitch');
