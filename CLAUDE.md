@@ -120,6 +120,8 @@ zip -r matrix-reader.xpi * -x "*.DS_Store" "*.git*" "README.md"
 - Image placeholders show hover hints for preview system
 - Terminal panels auto-populate with page metadata
 - Inline media loading replaces links with actual media elements
+- Hybrid dynamic content detection (MutationObserver + progressive polling)
+- Site-specific content pattern recognition for modern JavaScript sites
 
 ### Browser Compatibility
 - ✅ **Firefox 88+** (Manifest V2)  
@@ -131,6 +133,7 @@ zip -r matrix-reader.xpi * -x "*.DS_Store" "*.git*" "README.md"
 - CORS policies can prevent image preview on external images
 - Performance impact on pages with many images/videos
 - Complex tables with merged cells may need manual review after expansion
+- ~~Dynamic content loading sites (eCFR, Reddit, Gemini) may have incomplete extraction~~ **FIXED**
 
 ## 🟢 CURRENT FEATURES (Implemented)
 
@@ -139,6 +142,7 @@ zip -r matrix-reader.xpi * -x "*.DS_Store" "*.git*" "README.md"
 - ✅ **Readability.js Content Extraction** - Clean article parsing
 - ✅ **90s Retrofuture Interface** - Complete cyberpunk transformation
 - ✅ **Original Page Restoration** - Exit back to normal web
+- ✅ **Dynamic Content Detection** - Waits for JavaScript-loaded content on modern sites
 
 ### Visual Themes & Interface
 - ✅ **4 Synthwave Themes** - Nightdrive, Neon Surge, Outrun Storm, Strange Days
