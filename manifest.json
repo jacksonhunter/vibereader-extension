@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "Matrix Reader - Hidden Tab Edition",
+  "name": "VibeReader",
   "version": "2.0.0",
-  "description": "Transform any webpage into a cyberpunk reading experience using hidden tab proxy architecture for perfect content extraction",
+  "description": "vibeReader.setVibes() // Transform any webpage into a cyberpunk coding aesthetic with hidden tab proxy architecture",
   
   "applications": {
     "gecko": {
@@ -24,7 +24,7 @@
   },
   
   "browser_action": {
-    "default_title": "Toggle Matrix Reader Mode (v2.0)",
+    "default_title": "vibeReader.setVibes()",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -39,7 +39,7 @@
       "suggested_key": {
         "default": "Ctrl+Shift+M"
       },
-      "description": "Toggle Matrix Reader mode"
+      "description": "vibeReader.setVibes() // activate cyberpunk mode"
     }
   },
   

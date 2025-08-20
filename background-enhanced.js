@@ -1,5 +1,5 @@
-// Matrix Reader v2.0 - Enhanced Background Script with Hidden Tab Management
-// Orchestrates hidden tab creation, content extraction, and proxy communication
+// VibeReader v2.0 - Enhanced Background Script with Hidden Tab Management
+// vibeReader.init() // Orchestrates hidden tab creation, content extraction, and proxy communication
 
 class HiddenTabManager {
     constructor() {
@@ -49,16 +49,18 @@ class HiddenTabManager {
         const isActive = this.activeTabIds.has(tab.id);
         
         if (isActive) {
-            // Deactivate Matrix Reader
-            await this.deactivateMatrixMode(tab.id);
+            // vibeReader.kill() // Deactivate vibe mode
+            await this.deactivateVibeMode(tab.id);
         } else {
-            // Activate Matrix Reader with hidden tab
-            await this.activateMatrixMode(tab);
+            // vibeReader.setVibes() // Activate with hidden tab proxy
+            await this.activateVibeMode(tab);
         }
     }
     
-    async activateMatrixMode(tab) {
+    async activateVibeMode(tab) {
         try {
+            console.log('🔥 vibeReader.setVibes() // initializing hidden tab proxy...');
+            
             // Step 1: Create hidden tab for content extraction
             const hiddenTab = await this.createHiddenTab(tab.url);
             this.hiddenTabs.set(tab.id, hiddenTab.id);
@@ -88,13 +90,17 @@ class HiddenTabManager {
                 }
             });
             
+            console.log('✅ vibeReader.init() // background processes active');
+            
         } catch (error) {
-            console.error('Failed to activate Matrix Mode:', error);
+            console.error('❌ vibeReader.setVibes() // activation failed:', error);
             this.sendErrorToUser(tab.id, error.message);
         }
     }
     
-    async deactivateMatrixMode(tabId) {
+    async deactivateVibeMode(tabId) {
+        console.log('🔌 vibeReader.kill() // cleaning up processes...');
+        
         // Clean up hidden tab
         const hiddenTabId = this.hiddenTabs.get(tabId);
         if (hiddenTabId) {
@@ -109,6 +115,8 @@ class HiddenTabManager {
         // Update state
         this.activeTabIds.delete(tabId);
         this.updateBadge(tabId, false);
+        
+        console.log('✅ vibeReader.kill() // processes terminated');
     }
     
     async createHiddenTab(url) {
@@ -188,7 +196,7 @@ class HiddenTabManager {
                 break;
                 
             case 'logError':
-                console.error('Matrix Reader Error:', request.error);
+                console.error('❌ vibeReader.error():', request.error);
                 break;
                 
             default:
@@ -305,13 +313,13 @@ class HiddenTabManager {
             browser.browserAction.setBadgeText({ text: 'ON', tabId: tabId });
             browser.browserAction.setBadgeBackgroundColor({ color: '#f92672', tabId: tabId });
             browser.browserAction.setTitle({ 
-                title: 'Matrix Reader v2.0: Active (Hidden Tab Mode)', 
+                title: 'vibeReader.isActive() // true', 
                 tabId: tabId 
             });
         } else {
             browser.browserAction.setBadgeText({ text: '', tabId: tabId });
             browser.browserAction.setTitle({ 
-                title: 'Matrix Reader v2.0: Click to activate', 
+                title: 'vibeReader.setVibes() // click to activate', 
                 tabId: tabId 
             });
         }

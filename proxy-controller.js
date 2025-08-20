@@ -1,5 +1,5 @@
-// Matrix Reader v2.0 - Proxy Controller
-// Manages the visible tab interface and proxy communication with hidden tab
+// VibeReader v2.0 - Proxy Controller
+// vibeReader.display() // Manages the visible tab interface and proxy communication with hidden tab
 
 class ProxyController {
     constructor() {
@@ -116,12 +116,12 @@ class ProxyController {
             <div class="matrix-reader-overlay">
                 <div class="matrix-header">
                     <div class="matrix-header-left">
-                        <span class="matrix-brand">▓▓ MATRIX READER v2.0 ▓▓</span>
-                        <span class="matrix-status">[ HIDDEN TAB MODE ]</span>
+                        <span class="matrix-brand">▓▓ VIBE READER v2.0 ▓▓</span>
+                        <span class="matrix-status">[ BACKGROUND PROCESS ]</span>
                     </div>
                     <div class="matrix-header-right">
-                        <button class="matrix-btn theme-btn" title="Cycle Theme">🎨 THEME</button>
-                        <button class="matrix-btn disconnect-btn" title="Exit Matrix Mode">⚡ DISCONNECT</button>
+                        <button class="matrix-btn theme-btn" title="Cycle Theme">🎨 .setTheme()</button>
+                        <button class="matrix-btn disconnect-btn" title="vibeReader.kill()">⚡ .kill()</button>
                     </div>
                 </div>
                 
@@ -133,10 +133,10 @@ class ProxyController {
                             <div class="cyber-loader">
                                 <div class="cyber-loader-bar"></div>
                             </div>
-                            <div class="extraction-status">INITIALIZING STEALTH EXTRACTION...</div>
+                            <div class="extraction-status">vibeReader.init() // initializing...</div>
                             <div class="extraction-details">
                                 <span class="progress-percent">0%</span>
-                                <span class="progress-stage">Preparing hidden tab...</span>
+                                <span class="progress-stage">// preparing background process...</span>
                             </div>
                         </div>
                     </main>
@@ -166,12 +166,12 @@ class ProxyController {
                         </div>
                     </div>
                     <div class="terminal-content" id="left-terminal">
-                        <div class="terminal-line">> MATRIX READER v2.0</div>
-                        <div class="terminal-line">> HIDDEN TAB PROXY ACTIVE</div>
-                        <div class="terminal-line">> EXTRACTION MODE: STEALTH</div>
-                        <div class="terminal-line">> FRAMEWORK DETECTION: ON</div>
+                        <div class="terminal-line">> vibeReader v2.0</div>
+                        <div class="terminal-line">> backgroundProcess.active = true</div>
+                        <div class="terminal-line">> extractionMode = 'stealth'</div>
+                        <div class="terminal-line">> frameworkDetection = true</div>
                         <div class="terminal-line">> </div>
-                        <div class="terminal-line">> WAITING FOR CONTENT...</div>
+                        <div class="terminal-line">> // waiting for neural patterns...</div>
                     </div>
                 </div>
             </aside>
@@ -185,11 +185,11 @@ class ProxyController {
                         </div>
                     </div>
                     <div class="terminal-content" id="right-terminal">
-                        <div class="terminal-line">> PROXY CONNECTION: ACTIVE</div>
-                        <div class="terminal-line">> HIDDEN TAB: LOADING</div>
-                        <div class="terminal-line">> STEALTH MODE: ENGAGED</div>
+                        <div class="terminal-line">> proxyConnection.status = 'active'</div>
+                        <div class="terminal-line">> backgroundTab.loading = true</div>
+                        <div class="terminal-line">> stealthMode.engaged = true</div>
                         <div class="terminal-line">> </div>
-                        <div class="terminal-line">> EXTRACTING CONTENT...</div>
+                        <div class="terminal-line">> // extracting vibes...</div>
                     </div>
                 </div>
             </aside>
@@ -234,31 +234,31 @@ class ProxyController {
         }
         
         const statusMessages = {
-            'initializing': 'INITIALIZING STEALTH EXTRACTION...',
-            'waiting_for_framework': 'WAITING FOR FRAMEWORK HYDRATION...',
-            'simulating_scroll': 'SIMULATING HUMAN INTERACTION...',
-            'waiting_for_content': 'WAITING FOR DYNAMIC CONTENT...',
-            'extracting': 'EXTRACTING CLEAN CONTENT...',
-            'complete': 'EXTRACTION COMPLETE!',
-            'error': 'EXTRACTION ERROR - RETRYING...'
+            'initializing': 'vibeReader.init() // initializing...',
+            'waiting_for_framework': 'frameworks.detect() // React/Vue/Angular...',
+            'simulating_scroll': 'humanSimulator.scroll() // loading content...',
+            'waiting_for_content': 'content.stabilize() // waiting...',
+            'extracting': 'readability.extract() // parsing vibes...',
+            'complete': '// vibes successfully parsed',
+            'error': '// extraction error - retrying...'
         };
         
         const stageMessages = {
-            'initializing': 'Creating hidden tab environment',
-            'waiting_for_framework': 'Detecting React/Vue/Angular',
-            'simulating_scroll': 'Triggering lazy-loaded content',
-            'waiting_for_content': 'Ensuring content stability',
-            'extracting': 'Processing with Readability.js',
-            'complete': 'Ready to display',
-            'error': 'Attempting fallback extraction'
+            'initializing': '// creating background process environment',
+            'waiting_for_framework': '// detecting React/Vue/Angular',
+            'simulating_scroll': '// triggering lazy-loaded content',
+            'waiting_for_content': '// ensuring content stability',
+            'extracting': '// processing with readability.js',
+            'complete': '// ready to display vibes',
+            'error': '// attempting fallback extraction'
         };
         
         if (statusText) {
-            statusText.textContent = statusMessages[status] || 'PROCESSING...';
+            statusText.textContent = statusMessages[status] || '// processing...';
         }
         
         if (stageText) {
-            stageText.textContent = stageMessages[status] || 'Working...';
+            stageText.textContent = stageMessages[status] || '// working...';
         }
         
         // Update terminal panels
@@ -271,12 +271,12 @@ class ProxyController {
         
         if (leftTerminal) {
             const lines = [
-                '> MATRIX READER v2.0',
-                '> HIDDEN TAB PROXY ACTIVE',
-                `> EXTRACTION PROGRESS: ${progress}%`,
-                `> STATUS: ${status.toUpperCase()}`,
+                '> vibeReader v2.0',
+                '> backgroundProcess.active = true',
+                `> progress = ${progress}%`,
+                `> status = '${status}'`,
                 '> ',
-                `> ${new Date().toLocaleTimeString()}`
+                `> timestamp = '${new Date().toLocaleTimeString()}'`
             ];
             leftTerminal.innerHTML = lines.map(line => 
                 `<div class="terminal-line">${line}</div>`
@@ -285,12 +285,12 @@ class ProxyController {
         
         if (rightTerminal) {
             const lines = [
-                '> PROXY CONNECTION: ACTIVE',
-                `> HIDDEN TAB: ${status === 'complete' ? 'READY' : 'PROCESSING'}`,
-                '> STEALTH MODE: ENGAGED',
-                `> PROGRESS: ${'█'.repeat(Math.floor(progress/10))}${'░'.repeat(10-Math.floor(progress/10))}`,
+                '> proxyConnection = "active"',
+                `> backgroundTab = "${status === 'complete' ? 'ready' : 'processing'}"`,
+                '> stealthMode.enabled = true',
+                `> progressBar = "${'█'.repeat(Math.floor(progress/10))}${'░'.repeat(10-Math.floor(progress/10))}"`,
                 '> ',
-                `> STAGE: ${status.replace(/_/g, ' ').toUpperCase()}`
+                `> currentStage = "${status.replace(/_/g, '_')}"`
             ];
             rightTerminal.innerHTML = lines.map(line => 
                 `<div class="terminal-line">${line}</div>`
