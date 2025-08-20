@@ -1,37 +1,24 @@
 {
   "manifest_version": 2,
-  "name": "VibeReader - Synthwave Mode",
-  "version": "1.0.0",
-  "description": "Transform any webpage into a cyberpunk vibe reader experience with ASCII art and synthwave aesthetics",
+  "name": "Matrix Reader - Hidden Tab Edition",
+  "version": "2.0.0",
+  "description": "Transform any webpage into a cyberpunk reading experience using hidden tab proxy architecture for perfect content extraction",
   
   "permissions": [
     "activeTab",
+    "tabs",
     "storage",
-    "<all_urls>"
-  ],
-  
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": [
-        "lib/readability.js",
-        "lib/image-preview.js",
-        "content.js"
-      ],
-      "css": [
-        "styles/retrofuture-theme.css"
-      ],
-      "run_at": "document_end"
-    }
+    "<all_urls>",
+    "webNavigation"
   ],
   
   "background": {
-    "scripts": ["background.js"],
-    "persistent": false
+    "scripts": ["background-enhanced.js"],
+    "persistent": true
   },
   
   "browser_action": {
-    "default_title": "Toggle VibeReader Mode",
+    "default_title": "Toggle Matrix Reader Mode (v2.0)",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -41,10 +28,22 @@
     }
   },
   
+  "commands": {
+    "toggle-matrix-mode": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+M"
+      },
+      "description": "Toggle Matrix Reader mode"
+    }
+  },
+  
   "web_accessible_resources": [
     "styles/*",
     "fonts/*",
-    "assets/*"
+    "assets/*",
+    "lib/readability.js",
+    "stealth-extractor.js",
+    "proxy-controller.js"
   ],
   
   "icons": {
