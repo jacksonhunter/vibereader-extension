@@ -116,8 +116,7 @@ class HiddenTabManager {
         const hiddenTab = await browser.tabs.create({
             url: url,
             active: false, // Keep hidden
-            pinned: true,  // Minimize resource usage
-            windowId: browser.windows.WINDOW_ID_CURRENT
+            pinned: true   // Minimize resource usage
         });
         
         // Wait for tab to be ready

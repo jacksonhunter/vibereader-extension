@@ -4,6 +4,12 @@
   "version": "2.0.0",
   "description": "Transform any webpage into a cyberpunk reading experience using hidden tab proxy architecture for perfect content extraction",
   
+  "applications": {
+    "gecko": {
+      "id": "matrix-reader@nightdrive.dev"
+    }
+  },
+  
   "permissions": [
     "activeTab",
     "tabs",
