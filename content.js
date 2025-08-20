@@ -1481,21 +1481,11 @@ class MatrixReader {
     shouldWaitForDynamicContent() {
         // Check if we have low quality content that suggests dynamic loading
         const currentQuality = this.assessContentQuality();
-        const hostname = window.location.hostname;
-        
-        // Sites known to load content dynamically
-        const dynamicSites = [
-            'ecfr.gov',
-            'reddit.com', 
-            'gemini.google.com',
-            'docs.google.com',
-            'medium.com'
-        ];
-        
-        const isDynamicSite = dynamicSites.some(site => hostname.includes(site));
         const hasLowQuality = currentQuality.score < 0.5;
         
-        return isDynamicSite || hasLowQuality;
+        console.log('📊 Content quality check:', currentQuality);
+        
+        return hasLowQuality;
     }
     
     waitForDynamicContent() {
@@ -1563,60 +1553,27 @@ class MatrixReader {
         const bodyText = document.body.textContent.trim();
         const textLength = bodyText.length;
         
-        // Site-specific content detection
-        const hostname = window.location.hostname;
-        let hasRealContent = false;
-        let score = 0;
+        // Generic content quality assessment only
+        const hasStructure = !!(
+            document.querySelector('article') ||
+            document.querySelector('main') ||
+            document.querySelector('.content') ||
+            document.querySelector('#content') ||
+            document.querySelector('[role="main"]')
+        );
         
-        if (hostname.includes('ecfr.gov')) {
-            // Look for regulatory content patterns
-            hasRealContent = !!(
-                document.querySelector('[id^="p-"]') ||
-                document.querySelector('.indent-1, .indent-2') ||
-                bodyText.includes('CFR') ||
-                document.querySelector('table.table')
-            );
-            score = hasRealContent ? 0.8 : 0.2;
-            
-        } else if (hostname.includes('reddit.com')) {
-            // Look for post content
-            hasRealContent = !!(
-                document.querySelector('[data-testid="post-content"]') ||
-                document.querySelector('.Post') ||
-                document.querySelector('[data-click-id="text"]')
-            );
-            score = hasRealContent ? 0.8 : 0.3;
-            
-        } else if (hostname.includes('gemini.google.com')) {
-            // Look for conversation content
-            hasRealContent = !!(
-                document.querySelector('[data-test-id]') ||
-                document.querySelector('.conversation-turn') ||
-                textLength > 1000
-            );
-            score = hasRealContent ? 0.8 : 0.2;
-            
-        } else {
-            // Generic content quality assessment
-            const hasStructure = !!(
-                document.querySelector('article') ||
-                document.querySelector('main') ||
-                document.querySelector('.content') ||
-                document.querySelector('#content')
-            );
-            
-            const hasText = textLength > 1500;
-            const notJustNavigation = !this.isOnlyNavigation(bodyText);
-            
-            hasRealContent = hasStructure && hasText && notJustNavigation;
-            score = hasRealContent ? 0.8 : (textLength > 500 ? 0.5 : 0.2);
-        }
+        const hasParagraphs = document.querySelectorAll('p').length > 3;
+        const hasText = textLength > 1500;
+        const notJustNavigation = !this.isOnlyNavigation(bodyText);
+        
+        const hasRealContent = (hasStructure || hasParagraphs) && hasText && notJustNavigation;
+        const score = hasRealContent ? 0.8 : (textLength > 500 ? 0.4 : 0.2);
         
         return {
             score,
             hasRealContent,
             textLength,
-            hostname
+            paragraphCount: document.querySelectorAll('p').length
         };
     }
     
