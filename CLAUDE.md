@@ -25,8 +25,10 @@ Matrix Reader is a Firefox browser extension that transforms any webpage into a 
 ```
 matrix-reader-extension/
 ├── manifest.json              # Extension configuration
-├── content.js                 # Main content transformation (997 lines)
-├── background.js              # Extension lifecycle (119 lines)  
+├── content.js                 # Display interface for proxied content
+├── background.js              # Hidden tab manager & message router
+├── stealth-extractor.js      # Hidden tab content extraction (NEW)
+├── proxy-controller.js       # Bidirectional proxy communication (NEW)  
 ├── lib/
 │   ├── readability.js         # Content extraction library
 │   └── image-preview.js       # Imagus-style preview system
@@ -44,20 +46,38 @@ matrix-reader-extension/
 
 ## Core Classes and Architecture
 
-### MatrixReader (content.js)
-Main class handling page transformation and user interface:
-- `activate()` - Transforms page using Readability.js extraction
-- `createRetrofutureLayout()` - Builds 90s cyberpunk interface
-- `processRetrofutureContent()` - Converts HTML to themed format
-- `inlineLoadAllMedia()` - Loads images/videos directly in content
-- `initRetrofutureSideScrollers()` - Populates terminal panels
-- `cycleTheme()` - Switches between 4 synthwave themes
+### 🔄 ARCHITECTURE UPDATE: Hidden Tab Proxy System (v2.0)
+**Moving from overlay-based to hidden tab proxy architecture to solve bleedthrough issues**
 
-### MatrixReaderBackground (background.js)  
-Handles extension lifecycle and browser integration:
-- `toggleMatrixMode()` - Activates/deactivates reader on tabs
-- `updateBadge()` - Shows ON/OFF status in browser toolbar
-- `handleMessage()` - Processes settings and state changes
+### HiddenTabManager (background.js - ENHANCED)
+Orchestrates hidden tab creation and lifecycle:
+- `createStealthTab()` - Creates invisible browser tab for content extraction
+- `waitForFullRender()` - Ensures React/Vue/Angular fully hydrates
+- `routeProxyMessages()` - Handles bidirectional communication
+- `syncTabStates()` - Keeps visible and hidden tabs synchronized
+- `cleanupHiddenTab()` - Properly destroys hidden tabs
+
+### StealthExtractor (stealth-extractor.js - NEW)
+Runs in hidden tab for clean content extraction:
+- `waitForFramework()` - Detects and waits for JS framework initialization
+- `simulateHumanScroll()` - Natural scrolling to trigger lazy loading
+- `extractCleanContent()` - Uses Readability.js after full page load
+- `handleProxyCommands()` - Responds to user interactions from visible tab
+- `reportExtraction()` - Sends clean HTML back to visible tab
+
+### ProxyController (proxy-controller.js - NEW)  
+Manages bidirectional proxy communication:
+- `captureUserActions()` - Records scroll, click, type events
+- `forwardToHiddenTab()` - Sends actions to hidden tab
+- `receiveContentUpdates()` - Gets extracted content from hidden tab
+- `updateVisibleInterface()` - Refreshes Matrix Reader display
+
+### MatrixReader (content.js - REFACTORED)
+Now focuses on display rather than extraction:
+- `displayProxiedContent()` - Shows content from hidden tab
+- `createRetrofutureLayout()` - Builds 90s cyberpunk interface
+- `handleUserInteraction()` - Captures events for proxy forwarding
+- `updateFromHiddenTab()` - Receives and displays new content
 
 ### ImagePreview (lib/image-preview.js)
 Provides Imagus-style hover image previews with smart positioning.
@@ -128,17 +148,18 @@ zip -r matrix-reader.xpi * -x "*.DS_Store" "*.git*" "README.md"
 - ⚠️ **Chrome** (needs Manifest V3 conversion)
 - ⚠️ **Safari** (needs additional modifications)
 
-### Known Issues
-- Some pages may block content extraction for security
-- CORS policies can prevent image preview on external images
-- Performance impact on pages with many images/videos
-- Complex tables with merged cells may need manual review after expansion
+### Known Issues (v1.0 - Overlay System)
+- ~~Some pages may block content extraction for security~~ **SOLVED WITH HIDDEN TAB**
+- ~~CORS policies can prevent image preview on external images~~ **SOLVED WITH PROXY**
+- ~~Performance impact on pages with many images/videos~~ **IMPROVED WITH HIDDEN TAB**
+- ~~Complex tables with merged cells may need manual review after expansion~~ **FIXED**
 - ~~Dynamic content loading sites (eCFR, Reddit, Gemini) may have incomplete extraction~~ **FIXED**
-- Element bleeding on complex React/Vue sites with framework-specific styling patterns
+- ~~Element bleeding on complex React/Vue sites with framework-specific styling patterns~~ **SOLVED WITH HIDDEN TAB**
 
-### Next Major Improvements
-#### Smart Element Analysis System (Planned)
-Current element hiding uses predefined selectors, but modern web apps need smarter detection:
+### 🚀 MAJOR ARCHITECTURE UPDATE (v2.0 - In Progress)
+#### Hidden Tab Proxy System (Currently Implementing)
+**Problem**: Overlay system has fundamental limitations with modern web frameworks
+**Solution**: Hidden tab architecture with proxy interaction system
 
 **Problem**: React/Vue apps, Shadow DOM, CSS-in-JS, inline styles with random z-index values
 **Solution**: Post-activation element analysis

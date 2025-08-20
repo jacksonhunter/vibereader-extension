@@ -2,7 +2,8 @@
 
 Transform any webpage into a **90s cyberpunk retrofuture reading experience** with **Imagus-style image previews** and classic synthwave aesthetics.
 
-![Matrix Reader Preview](https://img.shields.io/badge/Status-Ready%20to%20Install-brightgreen?style=for-the-badge&logo=firefox&logoColor=white)
+![Matrix Reader Preview](https://img.shields.io/badge/Status-v2.0%20Architecture%20Update-orange?style=for-the-badge&logo=firefox&logoColor=white)
+![Architecture](https://img.shields.io/badge/Architecture-Hidden%20Tab%20Proxy-blue?style=for-the-badge&logo=buffer&logoColor=white)
 
 ## ⚡ Features
 
@@ -25,13 +26,14 @@ Transform any webpage into a **90s cyberpunk retrofuture reading experience** wi
 - **Cyberpunk table styling** with retrofuture aesthetics
 - **Simple table enhancement** for basic tables without placeholders
 
-### 🎯 **Advanced Reading Experience**
-- **Non-Destructive Overlay System** - Original page continues running underneath
+### 🎯 **Advanced Reading Experience (v2.0 - Hidden Tab Architecture)**
+- **Hidden Tab Proxy System** - Complete isolation from original page (NEW!)
+- **No More Bleedthrough** - Solves all z-index and CSS conflicts (NEW!)
+- **Full Framework Support** - Perfect with React/Vue/Angular sites (NEW!)
 - **Dynamic Content Monitoring** - Live updates with smooth glitch transitions
-- **Smart Element Isolation** - Automatically hides ads, modals, and sticky elements
+- **Smart Content Extraction** - Waits for full page hydration
 - **Readability.js integration** for clean content extraction
 - **Enhanced typography** with neon glow effects and retrofuture styling
-- **Maximum Z-Index Protection** - Bulletproof overlay layering (2,147,483,647)
 - **Error Handling** - Clean fallbacks when content extraction fails
 
 ### ⌨️ **Controls**
@@ -183,11 +185,55 @@ Click the Matrix Reader icon to open settings:
 
 ## 🛠️ Technical Details
 
-### **Architecture**
+### **v2.0 Architecture - Hidden Tab Proxy System**
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    VIBE READER EXTENSION                        │
+│                USER'S VISIBLE TAB (Clean Interface)             │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  MATRIX READER INTERFACE (content.js)                   │   │
+│  │  • Clean cyberpunk UI (no conflicts!)                   │   │
+│  │  • Displays extracted content from hidden tab           │   │
+│  │  • Captures user interactions for proxy forwarding      │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                            ⬆️⬇️
+              [Bidirectional Message Passing]
+                            ⬆️⬇️
+┌─────────────────────────────────────────────────────────────────┐
+│            BACKGROUND SCRIPT HUB (background.js)                │
+│  • Hidden tab manager                                           │
+│  • Message router between visible and hidden tabs               │
+│  • State synchronization                                        │
+│  • Content extraction coordinator                               │
+└─────────────────────────────────────────────────────────────────┘
+                            ⬆️⬇️
+              [Browser Tab API Messages]
+                            ⬆️⬇️
+┌─────────────────────────────────────────────────────────────────┐
+│          HIDDEN TAB (Invisible to User)                         │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  ORIGINAL WEBPAGE (Fully Rendered)                      │   │
+│  │  • React/Vue/Angular fully hydrated                     │   │
+│  │  • All dynamic content loaded                           │   │
+│  │  • No visual interference or CSS conflicts              │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  STEALTH EXTRACTOR (stealth-extractor.js)               │   │
+│  │  • Waits for full page load and framework hydration     │   │
+│  │  • Simulates human scrolling to trigger lazy loading    │   │
+│  │  • Extracts clean content with Readability.js           │   │
+│  │  • Handles proxy commands from visible tab              │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### **v1.0 Architecture (Previous - Overlay System)**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    MATRIX READER EXTENSION                      │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────────┐    ┌──────────────────────────────────────┐ │
