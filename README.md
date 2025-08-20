@@ -25,11 +25,14 @@ Transform any webpage into a **90s cyberpunk retrofuture reading experience** wi
 - **Cyberpunk table styling** with retrofuture aesthetics
 - **Simple table enhancement** for basic tables without placeholders
 
-### 🎯 **Reading Experience**
+### 🎯 **Advanced Reading Experience**
+- **Non-Destructive Overlay System** - Original page continues running underneath
+- **Dynamic Content Monitoring** - Live updates with smooth glitch transitions
+- **Smart Element Isolation** - Automatically hides ads, modals, and sticky elements
 - **Readability.js integration** for clean content extraction
-- **Enhanced typography** with neon glow effects
-- **Responsive design** that works on all screen sizes
-- **Accessibility features** with reduced motion support
+- **Enhanced typography** with neon glow effects and retrofuture styling
+- **Maximum Z-Index Protection** - Bulletproof overlay layering (2,147,483,647)
+- **Error Handling** - Clean fallbacks when content extraction fails
 
 ### ⌨️ **Controls**
 - **Ctrl+Shift+M** - Toggle Matrix Reader mode

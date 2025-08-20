@@ -68,14 +68,6 @@ class MatrixReader {
         if (this.isActive) return;
         
         console.log('🔥 Activating VibeReader Mode...');
-        
-        // Check if we should wait for dynamic content
-        if (this.shouldWaitForDynamicContent()) {
-            console.log('⏳ Waiting for dynamic content to load...');
-            this.waitForDynamicContent();
-            return;
-        }
-        
         this.activateWithContent();
     }
     
@@ -91,18 +83,16 @@ class MatrixReader {
         
         if (!article) {
             console.warn('Could not extract readable content');
+            // Show error overlay instead of failing silently
+            this.showErrorOverlay('Could not extract readable content from this page');
             return;
         }
         
-        // Store original content and article data
-        this.originalContent = {
-            html: document.documentElement.innerHTML,
-            title: document.title
-        };
+        // Store article data (no need to store or31iginal DOM anymore)
         this.currentArticle = article;
         
-        // Transform the page into 90s retrofuture reader
-        this.createRetrofutureLayout(article);
+        // Create overlay with retrofuture reader (non-destructive)
+        this.createRetrofutureOverlay(article);
         this.isActive = true;
         
         // Initialize image preview system
@@ -119,11 +109,16 @@ class MatrixReader {
         
         console.log('🌙 Deactivating VibeReader Mode...');
         
-        // Restore original content
-        if (this.originalContent) {
-            document.documentElement.innerHTML = this.originalContent.html;
-            document.title = this.originalContent.title;
+        // Hide the overlay (non-destructive)
+        if (this.matrixContainer) {
+            this.matrixContainer.remove();
         }
+        
+        // Stop monitoring dynamic content
+        this.stopDynamicContentMonitor();
+        
+        // Restore hidden page elements
+        this.restorePageElements();
         
         this.isActive = false;
         this.matrixContainer = null;
@@ -139,24 +134,41 @@ class MatrixReader {
         browser.runtime.sendMessage({ action: 'updateBadge', active: false }).catch(() => {});
     }
     
-    createRetrofutureLayout(article) {
-        // Clear the page
-        document.body.innerHTML = '';
-        document.head.innerHTML = `
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>VibeReader: ${article.title}</title>
+    createRetrofutureOverlay(article) {
+        // Create fullscreen overlay container (non-destructive)
+        this.matrixContainer = document.createElement('div');
+        this.matrixContainer.className = 'retrofuture-reader-overlay';
+        this.matrixContainer.setAttribute('data-theme', this.settings.theme);
+        
+        // Add overlay styles for fullscreen coverage with maximum isolation
+        this.matrixContainer.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 2147483647 !important;
+            background: #000 !important;
+            overflow: auto !important;
+            font-family: 'Courier New', monospace !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            clip: none !important;
+            isolation: isolate !important;
         `;
         
-        // Create main container
-        this.matrixContainer = document.createElement('div');
-        this.matrixContainer.className = 'retrofuture-reader-container';
-        this.matrixContainer.setAttribute('data-theme', this.settings.theme);
+        // Hide problematic page elements that might interfere
+        this.hidePageElements();
         
         // Create layout structure
         const layout = this.createRetrofutureHTML(article);
         this.matrixContainer.innerHTML = layout;
         
+        // Append to body (overlay, don't replace)
         document.body.appendChild(this.matrixContainer);
         
         // Start side scrollers with 90s style data
@@ -174,6 +186,77 @@ class MatrixReader {
         
         // Initialize control panel buttons
         this.initRetrofutureControlPanel();
+        
+        // Start monitoring for dynamic content changes
+        this.initDynamicContentMonitor();
+    }
+    
+    showErrorOverlay(message) {
+        // Create error overlay for failed extraction
+        this.matrixContainer = document.createElement('div');
+        this.matrixContainer.className = 'retrofuture-error-overlay';
+        this.matrixContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 999999;
+            background: #000;
+            color: #ff1493;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            text-align: center;
+        `;
+        
+        this.matrixContainer.innerHTML = `
+            <div style="border: 2px solid #ff1493; padding: 40px; border-radius: 10px; background: rgba(255, 20, 147, 0.1);">
+                <h1 style="color: #ff1493; margin-bottom: 20px;">⚠️ EXTRACTION FAILED</h1>
+                <p style="margin-bottom: 30px;">${message}</p>
+                <p style="font-size: 14px; opacity: 0.8;">This page may have dynamic content that hasn't loaded yet.</p>
+                <button id="retry-extraction" style="
+                    background: #ff1493;
+                    color: #000;
+                    border: none;
+                    padding: 10px 20px;
+                    margin: 10px;
+                    border-radius: 5px;
+                    font-family: 'Courier New', monospace;
+                    font-weight: bold;
+                    cursor: pointer;
+                ">RETRY</button>
+                <button id="close-error" style="
+                    background: transparent;
+                    color: #ff1493;
+                    border: 2px solid #ff1493;
+                    padding: 10px 20px;
+                    margin: 10px;
+                    border-radius: 5px;
+                    font-family: 'Courier New', monospace;
+                    font-weight: bold;
+                    cursor: pointer;
+                ">CLOSE</button>
+            </div>
+        `;
+        
+        document.body.appendChild(this.matrixContainer);
+        
+        // Add event listeners
+        document.getElementById('retry-extraction')?.addEventListener('click', () => {
+            this.matrixContainer.remove();
+            this.matrixContainer = null;
+            setTimeout(() => this.activate(), 500); // Retry after short delay
+        });
+        
+        document.getElementById('close-error')?.addEventListener('click', () => {
+            this.deactivate();
+        });
+        
+        this.isActive = true; // Mark as active so deactivate() works
     }
     
     createRetrofutureHTML(article) {
@@ -1475,128 +1558,381 @@ class MatrixReader {
     }
     
     // ============================================================================
-    // DYNAMIC CONTENT DETECTION SYSTEM
+    // DYNAMIC CONTENT MONITORING SYSTEM
     // ============================================================================
     
-    shouldWaitForDynamicContent() {
-        // Check if we have low quality content that suggests dynamic loading
-        const currentQuality = this.assessContentQuality();
-        const hasLowQuality = currentQuality.score < 0.5;
+    initDynamicContentMonitor() {
+        if (this.contentObserver) {
+            this.contentObserver.disconnect();
+        }
         
-        console.log('📊 Content quality check:', currentQuality);
+        // Create debounced handler for content changes
+        this.handleContentChanges = this.debounce(() => {
+            if (this.isActive && this.matrixContainer) {
+                this.processContentUpdates();
+            }
+        }, 2000); // 2 second debounce
         
-        return hasLowQuality;
-    }
-    
-    waitForDynamicContent() {
-        let attempts = 0;
-        const maxAttempts = 10;
-        const checkInterval = 1000; // 1 second
-        
-        // Strategy 1: MutationObserver for real-time detection
-        const observer = new MutationObserver((mutations) => {
-            // Check if meaningful content was added
+        // Watch for meaningful content changes in the original page
+        this.contentObserver = new MutationObserver((mutations) => {
             const hasSignificantChange = mutations.some(mutation => {
+                // Look for added nodes with substantial content
                 return mutation.addedNodes.length > 0 && 
                        Array.from(mutation.addedNodes).some(node => 
                            node.nodeType === Node.ELEMENT_NODE && 
-                           (node.textContent?.length > 100 || 
-                            node.querySelector('p, div, table, article'))
+                           (node.textContent?.length > 200 || 
+                            node.querySelector('p, article, div.content, div[class*="post"], div[class*="article"]'))
                        );
             });
             
-            if (hasSignificantChange && this.hasQualityContent()) {
-                console.log('🔍 Dynamic content detected via MutationObserver');
-                observer.disconnect();
-                this.activateWithContent();
+            if (hasSignificantChange) {
+                console.log('🔄 Dynamic content detected, scheduling update...');
+                this.handleContentChanges();
             }
         });
         
-        observer.observe(document.body, {
+        // Monitor the body for content changes (but not our overlay)
+        this.contentObserver.observe(document.body, {
             childList: true,
             subtree: true,
             attributes: false
         });
         
-        // Strategy 2: Progressive polling fallback
-        const checkContent = () => {
-            attempts++;
+        console.log('👁️ Dynamic content monitoring started');
+    }
+    
+    async processContentUpdates() {
+        try {
+            console.log('🔄 Processing content updates...');
             
-            if (this.hasQualityContent()) {
-                console.log(`🔍 Quality content detected after ${attempts} attempts`);
-                observer.disconnect();
-                this.activateWithContent();
+            // Extract fresh content in background
+            const documentClone = document.cloneNode(true);
+            
+            // Remove our overlay from the clone to avoid interference
+            const overlayInClone = documentClone.querySelector('.retrofuture-reader-overlay, .retrofuture-error-overlay');
+            if (overlayInClone) {
+                overlayInClone.remove();
+            }
+            
+            const reader = new Readability(documentClone);
+            const newArticle = reader.parse();
+            
+            if (!newArticle) {
+                console.log('⚠️ New content extraction failed');
                 return;
             }
             
-            if (attempts < maxAttempts) {
-                // Exponential backoff: 1s, 2s, 3s, 5s, 8s, 13s...
-                const delay = Math.min(attempts * 1000, 5000);
-                setTimeout(checkContent, delay);
+            // Check if content has meaningfully changed
+            if (this.hasSignificantContentChanges(newArticle)) {
+                console.log('✨ Significant changes detected, updating content...');
+                await this.smoothUpdateContent(newArticle);
             } else {
-                console.log('⏰ Timeout waiting for dynamic content, activating with current content');
-                observer.disconnect();
-                this.activateWithContent();
+                console.log('📝 No significant changes detected');
             }
+            
+        } catch (error) {
+            console.error('❌ Content update failed:', error);
+        }
+    }
+    
+    hasSignificantContentChanges(newArticle) {
+        if (!this.currentArticle) return true;
+        
+        // Compare content length (significant if >20% change)
+        const oldLength = this.currentArticle.textContent?.length || 0;
+        const newLength = newArticle.textContent?.length || 0;
+        const lengthDiff = Math.abs(newLength - oldLength);
+        const significantLengthChange = lengthDiff > (oldLength * 0.2);
+        
+        // Compare titles
+        const titleChanged = this.currentArticle.title !== newArticle.title;
+        
+        // Basic content comparison (simplified)
+        const oldWords = this.currentArticle.textContent?.split(' ').length || 0;
+        const newWords = newArticle.textContent?.split(' ').length || 0;
+        const wordDiff = Math.abs(newWords - oldWords);
+        const significantWordChange = wordDiff > 50; // 50+ new words
+        
+        const hasChanges = significantLengthChange || titleChanged || significantWordChange;
+        
+        if (hasChanges) {
+            console.log('📊 Content changes detected:', {
+                lengthDiff,
+                titleChanged,
+                wordDiff,
+                oldWords,
+                newWords
+            });
+        }
+        
+        return hasChanges;
+    }
+    
+    async smoothUpdateContent(newArticle) {
+        if (!this.matrixContainer) return;
+        
+        // Store scroll position
+        const scrollTop = this.matrixContainer.scrollTop;
+        
+        // Trigger cyberpunk glitch effect
+        await this.triggerContentGlitch();
+        
+        // Update the article data
+        this.currentArticle = newArticle;
+        
+        // Get the content area
+        const documentViewer = this.matrixContainer.querySelector('.document-viewer');
+        if (!documentViewer) return;
+        
+        // Create new content
+        const newContent = this.processRetrofutureContent(newArticle.content);
+        
+        // Smooth transition with fade effect
+        documentViewer.style.transition = 'opacity 0.3s ease';
+        documentViewer.style.opacity = '0.3';
+        
+        setTimeout(() => {
+            documentViewer.innerHTML = newContent;
+            documentViewer.style.opacity = '1';
+            
+            // Restore scroll position (approximately)
+            this.matrixContainer.scrollTop = scrollTop;
+            
+            // Update side terminals with new data
+            if (this.settings.sideScrolls) {
+                this.updateSideScrollers(newArticle);
+            }
+            
+            console.log('✅ Content updated smoothly');
+        }, 300);
+    }
+    
+    async triggerContentGlitch() {
+        const contentArea = this.matrixContainer?.querySelector('.document-viewer');
+        if (!contentArea) return;
+        
+        // Add glitch effect
+        contentArea.style.filter = 'hue-rotate(180deg) brightness(1.5)';
+        contentArea.style.transform = 'skew(1deg)';
+        
+        // Flash effect
+        const flash = document.createElement('div');
+        flash.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #ff1493, #00ffff);
+            opacity: 0.1;
+            pointer-events: none;
+            animation: flash 0.2s ease-out;
+        `;
+        
+        this.matrixContainer.appendChild(flash);
+        
+        return new Promise(resolve => {
+            setTimeout(() => {
+                contentArea.style.filter = '';
+                contentArea.style.transform = '';
+                flash.remove();
+                resolve();
+            }, 200);
+        });
+    }
+    
+    updateSideScrollers(article) {
+        // Update left terminal with new info
+        const leftTerminal = document.getElementById('left-terminal-content');
+        if (leftTerminal) {
+            const terminalOutput = leftTerminal.querySelector('.terminal-output');
+            if (terminalOutput) {
+                terminalOutput.innerHTML = '';
+                const updateInfo = [
+                    '> CONTENT UPDATED',
+                    '> NEURAL SYNC: COMPLETE',
+                    `> NEW WORD COUNT: ${article.textContent.split(' ').length}`,
+                    `> READING TIME: ${this.calculateReadingTime(article.textContent)} MIN`,
+                    `> UPDATE TIME: ${new Date().toLocaleTimeString()}`,
+                    '> SYSTEM STATUS: OPTIMAL'
+                ];
+                
+                updateInfo.forEach((line, index) => {
+                    setTimeout(() => {
+                        const lineEl = document.createElement('div');
+                        lineEl.textContent = line;
+                        lineEl.style.color = '#00ff00'; // Green for updates
+                        terminalOutput.appendChild(lineEl);
+                    }, index * 100);
+                });
+            }
+        }
+    }
+    
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
         };
-        
-        // Start polling after initial delay
-        setTimeout(checkContent, checkInterval);
     }
     
-    hasQualityContent() {
-        const quality = this.assessContentQuality();
-        return quality.score > 0.7 && quality.hasRealContent;
+    stopDynamicContentMonitor() {
+        if (this.contentObserver) {
+            this.contentObserver.disconnect();
+            this.contentObserver = null;
+            console.log('👁️ Dynamic content monitoring stopped');
+        }
     }
     
-    assessContentQuality() {
-        const bodyText = document.body.textContent.trim();
-        const textLength = bodyText.length;
-        
-        // Generic content quality assessment only
-        const hasStructure = !!(
-            document.querySelector('article') ||
-            document.querySelector('main') ||
-            document.querySelector('.content') ||
-            document.querySelector('#content') ||
-            document.querySelector('[role="main"]')
-        );
-        
-        const hasParagraphs = document.querySelectorAll('p').length > 3;
-        const hasText = textLength > 1500;
-        const notJustNavigation = !this.isOnlyNavigation(bodyText);
-        
-        const hasRealContent = (hasStructure || hasParagraphs) && hasText && notJustNavigation;
-        const score = hasRealContent ? 0.8 : (textLength > 500 ? 0.4 : 0.2);
-        
-        return {
-            score,
-            hasRealContent,
-            textLength,
-            paragraphCount: document.querySelectorAll('p').length
-        };
-    }
+    // ============================================================================
+    // PAGE ELEMENT ISOLATION SYSTEM
+    // ============================================================================
     
-    isOnlyNavigation(text) {
-        const navigationKeywords = [
-            'navigate by entering',
-            'search box',
-            'click here',
-            'menu',
-            'login',
-            'sign in',
-            'loading',
-            'please wait'
+    hidePageElements() {
+        // Store references to elements we're hiding
+        this.hiddenElements = [];
+        
+        // Common problematic selectors that might interfere with overlay
+        const problematicSelectors = [
+            // Fixed/sticky positioned elements
+            '[style*="position: fixed"]',
+            '[style*="position:fixed"]',
+            '[style*="position: sticky"]',
+            '[style*="position:sticky"]',
+            '.fixed',
+            '.sticky',
+            '.navbar-fixed',
+            '.header-fixed',
+            '.sidebar-fixed',
+            
+            // High z-index elements
+            '[style*="z-index: 999"]',
+            '[style*="z-index:999"]',
+            '[style*="z-index: 9999"]',
+            '[style*="z-index:9999"]',
+            
+            // Common ad containers
+            '.ad',
+            '.ads',
+            '.advertisement',
+            '.google-ads',
+            '.adsbox',
+            '.adsbygoogle',
+            '[class*="ad-"]',
+            '[id*="ad-"]',
+            '[class*="ads-"]',
+            '[id*="ads-"]',
+            
+            // Popup/modal/overlay elements
+            '.modal',
+            '.popup',
+            '.overlay',
+            '.lightbox',
+            '.tooltip',
+            '.dropdown-menu',
+            '.popover',
+            
+            // Navigation and headers that might be sticky
+            'nav[style*="position"]',
+            'header[style*="position"]',
+            '.navbar',
+            '.header',
+            '.topbar',
+            '.menu-bar',
+            
+            // Chat widgets and social buttons
+            '.chat-widget',
+            '.social-buttons',
+            '.share-buttons',
+            '.floating-buttons',
+            '[class*="chat"]',
+            '[class*="messenger"]',
+            
+            // Cookie notices and banners
+            '.cookie-notice',
+            '.cookie-banner',
+            '.gdpr-notice',
+            '.privacy-notice',
+            
+            // Video players that might be fixed
+            '.video-player[style*="position"]',
+            '.media-player[style*="position"]'
         ];
         
-        const lowerText = text.toLowerCase();
-        const keywordMatches = navigationKeywords.filter(keyword => 
-            lowerText.includes(keyword)
-        ).length;
+        problematicSelectors.forEach(selector => {
+            try {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(element => {
+                    // Skip our own overlay
+                    if (element.classList.contains('retrofuture-reader-overlay') || 
+                        element.classList.contains('retrofuture-error-overlay')) {
+                        return;
+                    }
+                    
+                    // Check if element has high z-index or problematic positioning
+                    const computedStyle = window.getComputedStyle(element);
+                    const zIndex = parseInt(computedStyle.zIndex) || 0;
+                    const position = computedStyle.position;
+                    
+                    const shouldHide = 
+                        zIndex > 1000 || 
+                        position === 'fixed' || 
+                        position === 'sticky' ||
+                        element.classList.toString().toLowerCase().includes('ad') ||
+                        element.id.toLowerCase().includes('ad');
+                    
+                    if (shouldHide && element.offsetHeight > 0) { // Only hide visible elements
+                        // Store original display style
+                        this.hiddenElements.push({
+                            element: element,
+                            originalDisplay: element.style.display,
+                            originalVisibility: element.style.visibility,
+                            originalOpacity: element.style.opacity
+                        });
+                        
+                        // Hide the element using multiple methods for maximum compatibility
+                        element.style.display = 'none !important';
+                        element.style.visibility = 'hidden !important';
+                        element.style.opacity = '0 !important';
+                        element.style.pointerEvents = 'none !important';
+                        element.style.zIndex = '-1 !important';
+                    }
+                });
+            } catch (error) {
+                // Ignore selector errors
+                console.debug('Selector error (safe to ignore):', selector, error);
+            }
+        });
         
-        // If more than half the content is navigation keywords, it's likely just navigation
-        return keywordMatches > 2 && text.length < 2000;
+        console.log(`🫥 Hidden ${this.hiddenElements.length} potentially problematic elements`);
     }
+    
+    restorePageElements() {
+        if (!this.hiddenElements) return;
+        
+        this.hiddenElements.forEach(({ element, originalDisplay, originalVisibility, originalOpacity }) => {
+            try {
+                // Restore original styles
+                element.style.display = originalDisplay;
+                element.style.visibility = originalVisibility;
+                element.style.opacity = originalOpacity;
+                element.style.pointerEvents = '';
+                element.style.zIndex = '';
+            } catch (error) {
+                // Element might have been removed from DOM
+                console.debug('Could not restore element (safe to ignore):', error);
+            }
+        });
+        
+        console.log(`🔄 Restored ${this.hiddenElements.length} hidden elements`);
+        this.hiddenElements = [];
+    }
+    
 }
 
 // ASCII Converter Class (placeholder for now)

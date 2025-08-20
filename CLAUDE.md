@@ -113,15 +113,15 @@ zip -r matrix-reader.xpi * -x "*.DS_Store" "*.git*" "README.md"
 ## Development Notes
 
 ### Key Implementation Details
-- Uses Readability.js for clean content extraction
-- Replaces entire page DOM with retrofuture interface
-- Stores original content for restoration on exit
-- CSS themes use CSS custom properties for easy switching
-- Image placeholders show hover hints for preview system
-- Terminal panels auto-populate with page metadata
-- Inline media loading replaces links with actual media elements
-- Hybrid dynamic content detection (MutationObserver + progressive polling)
-- Site-specific content pattern recognition for modern JavaScript sites
+- **Non-Destructive Overlay System**: Creates fullscreen overlay without destroying original page
+- **Maximum Z-Index Isolation**: Uses `z-index: 2147483647` with CSS isolation for bulletproof layering
+- **Smart Element Hiding**: Automatically hides sticky navbars, ads, modals, and high-z-index elements
+- **Dynamic Content Monitoring**: MutationObserver with debounced updates for live content changes
+- **Readability.js Integration**: Clean content extraction with smooth glitch transitions on updates
+- **CSS themes**: Use CSS custom properties for easy switching between 4 synthwave themes
+- **Image placeholders**: Show hover hints for preview system with inline loading capability
+- **Terminal panels**: Auto-populate with page metadata and real-time system status
+- **Complex table handling**: Placeholder system for large tables with click-to-expand functionality
 
 ### Browser Compatibility
 - ✅ **Firefox 88+** (Manifest V2)  
@@ -134,15 +134,49 @@ zip -r matrix-reader.xpi * -x "*.DS_Store" "*.git*" "README.md"
 - Performance impact on pages with many images/videos
 - Complex tables with merged cells may need manual review after expansion
 - ~~Dynamic content loading sites (eCFR, Reddit, Gemini) may have incomplete extraction~~ **FIXED**
+- Element bleeding on complex React/Vue sites with framework-specific styling patterns
+
+### Next Major Improvements
+#### Smart Element Analysis System (Planned)
+Current element hiding uses predefined selectors, but modern web apps need smarter detection:
+
+**Problem**: React/Vue apps, Shadow DOM, CSS-in-JS, inline styles with random z-index values
+**Solution**: Post-activation element analysis
+- **Runtime Scanning**: After overlay creation, scan all elements for actual visibility
+- **Geometric Detection**: Use `getBoundingClientRect()` to find elements in viewport
+- **Behavioral Analysis**: Detect elements responding to mouse events over our overlay
+- **Iterative Hiding**: Re-scan after hiding elements to catch newly visible ones
+- **Smart Visibility**: Check `getComputedStyle()` for effective opacity/visibility
+
+**Implementation Approach**:
+```javascript
+// After overlay activation
+scanForVisibleElements() {
+    const allElements = document.querySelectorAll('*');
+    const problematic = [];
+    
+    allElements.forEach(el => {
+        if (this.isElementVisible(el) && this.isElementProblematic(el)) {
+            problematic.push(el);
+        }
+    });
+    
+    return problematic;
+}
+```
+
+This will provide much better compatibility with modern JavaScript frameworks and complex sites.
 
 ## 🟢 CURRENT FEATURES (Implemented)
 
 ### Core Reader Functionality
 - ✅ **Matrix Reader Mode Toggle** - Ctrl+Shift+M or toolbar icon
-- ✅ **Readability.js Content Extraction** - Clean article parsing
-- ✅ **90s Retrofuture Interface** - Complete cyberpunk transformation
-- ✅ **Original Page Restoration** - Exit back to normal web
-- ✅ **Dynamic Content Detection** - Waits for JavaScript-loaded content on modern sites
+- ✅ **Non-Destructive Overlay System** - Fullscreen reader without destroying original page
+- ✅ **Readability.js Content Extraction** - Clean article parsing with error handling
+- ✅ **90s Retrofuture Interface** - Complete cyberpunk transformation with 4 themes
+- ✅ **Dynamic Content Monitoring** - MutationObserver with smooth glitch transitions
+- ✅ **Smart Element Isolation** - Automatic hiding of ads, modals, sticky elements
+- ✅ **Maximum Z-Index Protection** - Bulletproof overlay layering (z-index: 2147483647)
 
 ### Visual Themes & Interface
 - ✅ **4 Synthwave Themes** - Nightdrive, Neon Surge, Outrun Storm, Strange Days
