@@ -81,7 +81,7 @@
   background: radial-gradient(ellipse at center, var(--bg-primary), var(--bg-secondary)) !important;
   font-family: 'Orbitron', 'Share Tech Mono', monospace !important;
   color: var(--text-primary) !important;
-  z-index: 999999 !important;
+  z-index: 2147483647 !important; /* Maximum z-index for absolute isolation */
   overflow: hidden !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -310,7 +310,53 @@
 /* HEADER SECTION */
 /* ============================================================================ */
 
+/* Top Navigation Header */
 .vibe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.9) 0%, 
+    var(--bg-secondary) 100%);
+  border-bottom: 2px solid var(--primary);
+  box-shadow: 0 2px 20px var(--glow-primary);
+  position: relative;
+  z-index: 10;
+}
+
+.vibe-header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.vibe-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vibe-brand {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 16px;
+  color: var(--primary);
+  text-shadow: 0 0 20px var(--glow-primary);
+  letter-spacing: 2px;
+  animation: neon-flicker 4s linear infinite;
+}
+
+.vibe-status {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: var(--secondary);
+  text-shadow: 0 0 10px var(--glow-secondary);
+  opacity: 0.8;
+}
+
+/* Article Header (existing style) */
+.article-header {
   text-align: center;
   margin-bottom: 3rem;
   padding: 2rem;
@@ -649,6 +695,41 @@
 @keyframes signature-glow {
   0% { opacity: 0.8; }
   100% { opacity: 1; text-shadow: 0 0 20px var(--primary), 0 0 30px var(--secondary); }
+}
+
+/* ============================================================================ */
+/* VIBE READER BUTTONS */
+/* ============================================================================ */
+
+.vibe-btn {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+  padding: 10px 15px;
+  margin: 0 5px;
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 4px;
+  box-shadow: 0 0 15px var(--glow-primary);
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+.vibe-btn:hover {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+  box-shadow: 0 0 25px var(--glow-secondary);
+  transform: translateY(-2px) scale(1.05);
+  border-color: var(--secondary);
+}
+
+.vibe-btn:active {
+  transform: translateY(0) scale(1);
 }
 
 /* ============================================================================ */
