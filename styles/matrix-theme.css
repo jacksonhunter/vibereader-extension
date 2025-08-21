@@ -1120,6 +1120,54 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Force media elements to be properly contained */
+.media-wrapper img,
+.media-wrapper video,
+.media-wrapper iframe,
+.media-wrapper object,
+.media-wrapper embed {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  margin: 0 auto !important;
+  border-radius: 4px !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.media-normal-display img,
+.media-normal-display video,
+.media-normal-display iframe,
+.media-normal-display object,
+.media-normal-display embed {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Override any external positioning */
+.media-wrapper * {
+  position: relative !important;
+  float: none !important;
+  clear: both !important;
+}
+
+/* Ensure wrapper has proper containment */
+.media-wrapper {
+  overflow: hidden !important;
+  contain: layout style !important;
 }
 
 .media-wrapper:hover {

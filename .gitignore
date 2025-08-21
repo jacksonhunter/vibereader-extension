@@ -42,7 +42,7 @@ coverage/
 *.crx
 
 # Test exports folder
-test-exports/
+test-exports/*
 
 # Session files
 session-*.md

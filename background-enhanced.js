@@ -59,11 +59,17 @@ class HiddenTabManager {
     }
     
     async activateVibeMode(tab) {
+        const activationStart = performance.now();
         try {
-            console.log('🔥 Set Vibes // initializing hidden tab proxy...');
+            console.log('🔥 Set Vibes // initializing hidden tab proxy...', {
+                url: tab.url,
+                startTime: new Date().toISOString()
+            });
             
             // Step 1: Create hidden tab for content extraction
+            const hiddenTabStart = performance.now();
             const hiddenTab = await this.createHiddenTab(tab.url);
+            console.log(`⏱️ Hidden tab creation: ${(performance.now() - hiddenTabStart).toFixed(1)}ms`);
             this.hiddenTabs.set(tab.id, hiddenTab.id);
             this.extractionStatus.set(hiddenTab.id, { 
                 status: 'initializing',
@@ -72,23 +78,31 @@ class HiddenTabManager {
             });
             
             // Step 2: Inject stealth extractor into hidden tab
+            const extractorStart = performance.now();
             await this.injectStealthExtractor(hiddenTab.id);
+            console.log(`⏱️ Stealth extractor injection: ${(performance.now() - extractorStart).toFixed(1)}ms`);
             
             // Step 3: Inject proxy controller into visible tab
+            const proxyStart = performance.now();
             await this.injectProxyController(tab.id);
+            console.log(`⏱️ Proxy controller injection: ${(performance.now() - proxyStart).toFixed(1)}ms`);
             
             // Step 4: Mark as active
             this.activeTabIds.add(tab.id);
             this.updateBadge(tab.id, true);
             
+            console.log(`⏱️ Total activation setup: ${(performance.now() - activationStart).toFixed(1)}ms`);
+            
             // Step 5: Initiate content extraction (with delay for script initialization)
+            console.log('⏱️ Starting extraction with 500ms delay...');
             setTimeout(() => {
+                console.log('⏱️ Sending extraction command to hidden tab...');
                 browser.tabs.sendMessage(hiddenTab.id, {
                     action: 'extractContent',
                     config: {
                         waitForFramework: true,
                         simulateScroll: true,
-                        extractDelay: 2000 // Wait 2s for React/Vue hydration
+                        extractDelay: 500 // Quick wait for framework hydration
                     }
                 }).catch(error => {
                     console.error('❌ Failed to send extract message:', error);
@@ -155,19 +169,23 @@ class HiddenTabManager {
             file: 'lib/readability.js'
         });
         
-        // Then inject our stealth extractor
+        // Then inject our stealth extractor (with void to prevent cloning errors)
+        await browser.tabs.executeScript(tabId, {
+            code: 'void 0;',
+            runAt: 'document_end'
+        });
         await browser.tabs.executeScript(tabId, {
             file: 'stealth-extractor.js'
         });
     }
     
     async injectProxyController(tabId) {
-        // Inject aalib.js for ASCII conversion
+        // Inject aalib.js for ASCII conversion in visible tab
         await browser.tabs.executeScript(tabId, {
             file: 'lib/aalib.js'
         });
         
-        // Inject content display script
+        // Inject content display script (with void to prevent cloning errors)
         await browser.tabs.executeScript(tabId, {
             file: 'proxy-controller.js'
         });

@@ -296,3 +296,4 @@ The extension requires broad permissions for functionality:
 - `<all_urls>`: Work on any website
 
 All code focuses on defensive reading enhancement - no malicious functionality.
+- test extension with: cd "C:\Users\jacks\PycharmProjects\NightDrive theme\theme_exports\synthwave-themes\vibe-reader-extension" && web-ext run --verbose --devtools --browser-console --firefox="C:\Program Files\Firefox Developer Edition\firefox.exe"

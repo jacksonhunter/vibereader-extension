@@ -7,6 +7,9 @@ class StealthExtractor {
         this.maxAttempts = 5;
         this.scrollProgress = 0;
         this.frameworkDetected = null;
+        this.mutationObserver = null;
+        this.contentStabilityResolver = null;
+        this.lastContentHash = null;
         this.init();
     }
     
@@ -61,74 +64,109 @@ class StealthExtractor {
     }
     
     async startExtraction(config, sendResponse) {
+        const extractionStart = performance.now();
         try {
-            console.log('🕵️ StealthExtractor.startExtraction() // starting extraction in hidden tab:', window.location.href);
+            console.log('🕵️ StealthExtractor.startExtraction() // starting extraction in hidden tab:', window.location.href, {
+                config: config,
+                startTime: new Date().toISOString()
+            });
             this.reportProgress('waiting_for_framework', 10);
             
-            // Step 1: Wait for framework to fully hydrate
+            // Step 1: Wait for framework to fully hydrate (keep original wait)
             if (config.waitForFramework) {
+                const frameworkStart = performance.now();
                 console.log('🕵️ StealthExtractor.startExtraction() // waiting for framework:', this.frameworkDetected);
                 await this.waitForFramework();
+                console.log(`⏱️ Framework wait completed: ${(performance.now() - frameworkStart).toFixed(1)}ms`);
             }
             
-            this.reportProgress('simulating_scroll', 30);
+            this.reportProgress('extracting', 40);
             
-            // Step 2: Simulate human scrolling to trigger lazy loading
+            // Step 2: Extract content immediately (don't wait for scroll)
+            const extractionContentStart = performance.now();
+            console.log('🕵️ StealthExtractor.startExtraction() // extracting content with Readability.js');
+            const content = await this.extractWithReadability();
+            console.log(`⏱️ Content extraction: ${(performance.now() - extractionContentStart).toFixed(1)}ms`);
+            
+            this.reportProgress('complete', 90);
+            
+            // Step 3: Send content immediately
+            console.log('🕵️ StealthExtractor.startExtraction() // sending extracted content to background');
+            this.reportExtraction(content);
+            
+            // Step 4: Do scroll simulation in background (non-blocking)
             if (config.simulateScroll) {
-                await this.simulateHumanScroll();
+                console.log('🕵️ StealthExtractor.startExtraction() // starting background scroll for lazy content');
+                this.backgroundScrollAndUpdate();
             }
             
-            this.reportProgress('waiting_for_content', 60);
+            console.log(`⏱️ Total extraction time: ${(performance.now() - extractionStart).toFixed(1)}ms`);
+            return content;
+        } catch (error) {
+            console.error('❌ StealthExtractor.startExtraction() // extraction failed:', {
+                error: error.message,
+                stack: error.stack,
+                url: window.location.href,
+                framework: this.frameworkDetected,
+                extractionTime: (performance.now() - extractionStart).toFixed(1) + 'ms'
+            });
+            this.reportProgress('error', 0);
+            throw error;
+        }
+    }
+    
+    // New method: Non-blocking background scroll
+    async backgroundScrollAndUpdate() {
+        try {
+            // Do scroll simulation in background
+            await this.simulateHumanScroll();
             
-            // Step 3: Wait for dynamic content to stabilize
+            // Wait for any new content to stabilize
             await this.waitForContentStability();
             
-            this.reportProgress('extracting', 80);
+            // Re-extract and update if content changed significantly
+            const newContent = await this.extractWithReadability();
+            const originalLength = this.lastExtractedContent?.length || 0;
+            const newLength = newContent.extractedContent?.length || 0;
             
-            // Step 4: Extract content with Readability
-            console.log('🕵️ StealthExtractor.startExtraction() // extracting content with Readability.js');
-            const extractedContent = this.extractContent();
-            
-            if (extractedContent && extractedContent.content) {
-                console.log('🕵️ StealthExtractor.startExtraction() // content extracted successfully, length:', extractedContent.content.length);
-                this.reportProgress('complete', 100);
-                
-                // Send extracted content back to background script
-                console.log('🕵️ StealthExtractor.startExtraction() // sending content to background script');
-                browser.runtime.sendMessage({
-                    action: 'contentExtracted',
-                    content: extractedContent.content,
-                    metadata: {
-                        title: extractedContent.title || document.title,
-                        byline: extractedContent.byline,
-                        excerpt: extractedContent.excerpt,
-                        length: extractedContent.length,
-                        siteName: extractedContent.siteName,
-                        url: window.location.href,
-                        extractedAt: Date.now(),
-                        framework: this.frameworkDetected
-                    }
-                });
-                
-                sendResponse({ success: true });
-            } else {
-                throw new Error('Content extraction failed');
+            // If content increased significantly, send update
+            if (newLength > originalLength * 1.2) {
+                console.log('🕵️ StealthExtractor.backgroundScrollAndUpdate() // found significant new content after scroll');
+                this.reportExtraction(newContent);
             }
-            
         } catch (error) {
-            console.error('Extraction error:', error);
-            this.reportProgress('error', 0);
-            
-            // Retry extraction with fallback method
-            if (this.extractionAttempts < this.maxAttempts) {
-                this.extractionAttempts++;
-                setTimeout(() => {
-                    this.startExtraction(config, sendResponse);
-                }, 2000);
-            } else {
-                sendResponse({ error: error.message });
-            }
+            console.log('⚠️ Background scroll failed, but main content already extracted:', error);
         }
+    }
+    
+    async extractWithReadability() {
+        const extractedContent = this.extractContent();
+        
+        if (extractedContent && extractedContent.content) {
+            console.log('🕵️ StealthExtractor.extractWithReadability() // content extracted successfully, length:', extractedContent.content.length);
+            this.lastExtractedContent = extractedContent.content;
+            return extractedContent;
+        } else {
+            throw new Error('Content extraction failed');
+        }
+    }
+    
+    reportExtraction(extractedContent) {
+        console.log('🕵️ StealthExtractor.reportExtraction() // sending content to background script');
+        browser.runtime.sendMessage({
+            action: 'contentExtracted',
+            content: extractedContent.content,
+            metadata: {
+                title: extractedContent.title || document.title,
+                byline: extractedContent.byline,
+                excerpt: extractedContent.excerpt,
+                length: extractedContent.length,
+                siteName: extractedContent.siteName,
+                url: window.location.href,
+                extractedAt: Date.now(),
+                framework: this.frameworkDetected
+            }
+        });
     }
     
     async waitForFramework() {
@@ -199,15 +237,15 @@ class StealthExtractor {
     }
     
     getFrameworkWaitTime() {
-        // Different wait times for different frameworks
+        // Reduced wait times for faster loading
         const waitTimes = {
-            'react': 3000,
-            'vue': 2500,
-            'angular': 3500,
-            'svelte': 2000,
-            'vanilla': 1000
+            'react': 800,
+            'vue': 600,
+            'angular': 1000,
+            'svelte': 500,
+            'vanilla': 300
         };
-        return waitTimes[this.frameworkDetected] || 2000;
+        return waitTimes[this.frameworkDetected] || 500;
     }
     
     async simulateHumanScroll() {
@@ -230,18 +268,13 @@ class StealthExtractor {
                     currentScroll += scrollAmount;
                     this.scrollProgress = Math.min(100, (currentScroll / scrollDistance) * 100);
                     
-                    // Random pause between scrolls (human-like)
-                    const pauseTime = 100 + Math.random() * 300;
+                    // Quick pause between scrolls for lazy loading
+                    const pauseTime = 50 + Math.random() * 100;
                     setTimeout(scrollStep, pauseTime);
-                    
-                    // Occasionally pause longer (like human reading)
-                    if (Math.random() < 0.1) {
-                        setTimeout(scrollStep, pauseTime + 500);
-                    }
                 } else {
-                    // Scroll back to top smoothly
+                    // Scroll back to top quickly
                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                    setTimeout(resolve, 1000);
+                    setTimeout(resolve, 300);
                 }
             };
             
@@ -251,30 +284,109 @@ class StealthExtractor {
     
     async waitForContentStability() {
         return new Promise((resolve) => {
-            let lastContentLength = document.body.innerHTML.length;
-            let stableCount = 0;
-            const requiredStableChecks = 3;
+            this.contentStabilityResolver = resolve;
             
-            const checkStability = () => {
-                const currentLength = document.body.innerHTML.length;
-                
-                if (Math.abs(currentLength - lastContentLength) < 100) {
-                    stableCount++;
-                } else {
-                    stableCount = 0;
-                }
-                
-                lastContentLength = currentLength;
-                
-                if (stableCount >= requiredStableChecks) {
-                    resolve();
-                } else {
-                    setTimeout(checkStability, 500);
-                }
-            };
+            // Set up MutationObserver to detect DOM changes
+            this.mutationObserver = new MutationObserver((mutations) => {
+                this.handleContentMutation(mutations);
+            });
             
-            checkStability();
+            // Start observing DOM changes
+            this.mutationObserver.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['src', 'data-src', 'style', 'class'],
+                characterData: true
+            });
+            
+            // Get initial content hash
+            this.lastContentHash = this.getContentHash();
+            
+            // Start stability timer
+            this.startStabilityTimer();
+            
+            console.log('🕵️ MutationObserver started watching for content changes');
         });
+    }
+    
+    handleContentMutation(mutations) {
+        // Check if mutations are significant
+        let significantChange = false;
+        
+        for (const mutation of mutations) {
+            // Text content changes
+            if (mutation.type === 'characterData') {
+                significantChange = true;
+                break;
+            }
+            
+            // New elements added
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        // Check if it's a content element (not script/style)
+                        if (!['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(node.tagName)) {
+                            significantChange = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Image src changes (lazy loading)
+            if (mutation.type === 'attributes' && 
+                ['src', 'data-src'].includes(mutation.attributeName)) {
+                significantChange = true;
+                break;
+            }
+        }
+        
+        if (significantChange) {
+            console.log('🕵️ Significant content change detected, resetting stability timer');
+            this.resetStabilityTimer();
+        }
+    }
+    
+    startStabilityTimer() {
+        this.stabilityTimeout = setTimeout(() => {
+            console.log('🕵️ Content appears stable, resolving');
+            this.cleanupMutationObserver();
+            if (this.contentStabilityResolver) {
+                this.contentStabilityResolver();
+                this.contentStabilityResolver = null;
+            }
+        }, 800); // Wait 800ms for stability
+    }
+    
+    resetStabilityTimer() {
+        if (this.stabilityTimeout) {
+            clearTimeout(this.stabilityTimeout);
+        }
+        this.startStabilityTimer();
+    }
+    
+    cleanupMutationObserver() {
+        if (this.mutationObserver) {
+            this.mutationObserver.disconnect();
+            this.mutationObserver = null;
+        }
+        if (this.stabilityTimeout) {
+            clearTimeout(this.stabilityTimeout);
+            this.stabilityTimeout = null;
+        }
+    }
+    
+    getContentHash() {
+        // Simple hash of content for change detection
+        const content = document.body.textContent || '';
+        let hash = 0;
+        for (let i = 0; i < content.length; i++) {
+            const char = content.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return hash;
     }
     
     extractContent() {
@@ -340,8 +452,9 @@ class StealthExtractor {
             'table[border="0"][cellpadding="5"][cellspacing="0"]',
             'nobr', // Legacy no-break tags
             'center', // Legacy center tags
-            // Common ad-related patterns
-            '[*="ad"], [*="banner"], [*="sponsor"]',
+            // Common ad-related patterns (using valid CSS selectors)
+            '[class*="ad"], [class*="banner"], [class*="sponsor"]',
+            '[id*="ad"], [id*="banner"], [id*="sponsor"]',
             'table[width="488"][height="60"]', // Specific ad table dimensions
             // Footer and legal content
             '.footer-links',

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(git push:*)",
       "Bash(node:*)",
-      "WebFetch(domain:www.npmjs.com)"
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(web-ext run:*)"
     ],
     "deny": [],
     "ask": []

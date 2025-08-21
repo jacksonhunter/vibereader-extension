@@ -19,62 +19,139 @@ class ProxyController {
     }
     
     init() {
-        // Listen for messages from background script
-        browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-            this.handleMessage(request, sender, sendResponse);
-            return true;
-        });
-        
-        // Load settings
-        this.loadSettings();
-        
-        // Start activation
-        this.activate();
+        const initStart = performance.now();
+        try {
+            console.log('🎮 ProxyController.init() // initializing proxy controller:', {
+                url: window.location.href,
+                startTime: new Date().toISOString(),
+                userAgent: navigator.userAgent.substring(0, 50)
+            });
+            
+            // Listen for messages from background script
+            browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+                this.handleMessage(request, sender, sendResponse);
+                return true;
+            });
+            
+            // Load settings
+            this.loadSettings();
+            
+            // Start activation
+            this.activate();
+            
+            console.log(`⏱️ ProxyController.init() // initialization complete: ${(performance.now() - initStart).toFixed(1)}ms`);
+            
+        } catch (error) {
+            console.error('❌ ProxyController.init() // initialization failed:', {
+                error: error.message,
+                stack: error.stack,
+                url: window.location.href,
+                initTime: (performance.now() - initStart).toFixed(1) + 'ms'
+            });
+            throw error;
+        }
     }
     
     handleMessage(request, sender, sendResponse) {
-        switch (request.action) {
-            case 'displayContent':
-                this.displayExtractedContent(request.content, request.metadata);
-                sendResponse({ success: true });
-                break;
-                
-            case 'extractionProgress':
-                // Background extraction happening, no user interaction needed
-                break;
-                
-            case 'deactivate':
-                this.deactivate();
-                sendResponse({ success: true });
-                break;
-                
-            case 'showError':
-                this.showError(request.error);
-                break;
-                
-            case 'hiddenTabClosed':
-                this.handleHiddenTabClosed(request.error);
-                break;
-                
-            case 'updateSettings':
-                this.updateSettings(request.settings);
-                sendResponse({ success: true });
-                break;
-                
-            case 'getStatus':
-                sendResponse({ active: this.isActive });
-                break;
-                
-            default:
-                console.warn('Unknown message:', request);
+        const messageStart = performance.now();
+        try {
+            console.log('📨 ProxyController.handleMessage() // received message:', {
+                action: request.action,
+                sender: sender.tab ? sender.tab.url : 'background',
+                timestamp: new Date().toISOString()
+            });
+            
+            switch (request.action) {
+                case 'displayContent':
+                    this.displayExtractedContent(request.content, request.metadata);
+                    sendResponse({ success: true });
+                    break;
+                    
+                case 'extractionProgress':
+                    // Background extraction happening, no user interaction needed
+                    console.log('📊 ProxyController.handleMessage() // extraction progress update:', {
+                        status: request.status,
+                        progress: request.progress
+                    });
+                    break;
+                    
+                case 'deactivate':
+                    this.deactivate();
+                    sendResponse({ success: true });
+                    break;
+                    
+                case 'showError':
+                    console.error('❌ ProxyController.handleMessage() // received error:', request.error);
+                    this.showError(request.error);
+                    break;
+                    
+                case 'hiddenTabClosed':
+                    console.error('🔌 ProxyController.handleMessage() // hidden tab closed:', request.error);
+                    this.handleHiddenTabClosed(request.error);
+                    break;
+                    
+                case 'updateSettings':
+                    this.updateSettings(request.settings);
+                    sendResponse({ success: true });
+                    break;
+                    
+                case 'getStatus':
+                    sendResponse({ active: this.isActive });
+                    break;
+                    
+                default:
+                    console.warn('⚠️ ProxyController.handleMessage() // unknown message action:', {
+                        action: request.action,
+                        fullRequest: request
+                    });
+            }
+            
+            console.log(`⏱️ ProxyController.handleMessage() // message processed: ${(performance.now() - messageStart).toFixed(1)}ms`);
+            
+        } catch (error) {
+            console.error('❌ ProxyController.handleMessage() // message handling failed:', {
+                error: error.message,
+                stack: error.stack,
+                action: request.action,
+                processingTime: (performance.now() - messageStart).toFixed(1) + 'ms'
+            });
+            
+            // Try to send error response
+            try {
+                sendResponse({ error: error.message });
+            } catch (responseError) {
+                console.error('❌ ProxyController.handleMessage() // failed to send error response:', responseError.message);
+            }
         }
     }
     
     async loadSettings() {
-        const result = await browser.storage.sync.get('vibeReaderSettings');
-        if (result.vibeReaderSettings) {
-            this.settings = { ...this.settings, ...result.vibeReaderSettings };
-            this.currentTheme = this.settings.theme || 'nightdrive';
+        const loadStart = performance.now();
+        try {
+            console.log('⚙️ ProxyController.loadSettings() // loading user settings...');
+            
+            const result = await browser.storage.sync.get('vibeReaderSettings');
+            if (result.vibeReaderSettings) {
+                this.settings = { ...this.settings, ...result.vibeReaderSettings };
+                this.currentTheme = this.settings.theme || 'nightdrive';
+                
+                console.log('✅ ProxyController.loadSettings() // settings loaded:', {
+                    theme: this.currentTheme,
+                    mediaMode: this.settings.mediaMode,
+                    sideScrolls: this.settings.sideScrolls,
+                    loadTime: (performance.now() - loadStart).toFixed(1) + 'ms'
+                });
+            } else {
+                console.log('💾 ProxyController.loadSettings() // using default settings');
+            }
+            
+        } catch (error) {
+            console.error('❌ ProxyController.loadSettings() // settings loading failed:', {
+                error: error.message,
+                stack: error.stack,
+                loadTime: (performance.now() - loadStart).toFixed(1) + 'ms'
+            });
+            // Continue with default settings
         }
     }
     
@@ -104,21 +181,52 @@ class ProxyController {
     }
     
     activate() {
-        this.isActive = true;
-        
-        // Hide original page content completely
-        this.hideOriginalContent();
-        
-        // Create VibeReader interface
-        this.createInterface();
-        
-        // Content will be updated when extraction completes
-        
-        // Notify background script
-        browser.runtime.sendMessage({ 
-            action: 'updateBadge', 
-            active: true 
-        });
+        const activateStart = performance.now();
+        try {
+            console.log('🔥 ProxyController.activate() // activating vibe mode...', {
+                url: window.location.href,
+                startTime: new Date().toISOString()
+            });
+            
+            this.isActive = true;
+            
+            // Hide original page content completely
+            const hideStart = performance.now();
+            this.hideOriginalContent();
+            console.log(`⏱️ ProxyController.activate() // content hiding: ${(performance.now() - hideStart).toFixed(1)}ms`);
+            
+            // Create VibeReader interface
+            const interfaceStart = performance.now();
+            this.createInterface();
+            console.log(`⏱️ ProxyController.activate() // interface creation: ${(performance.now() - interfaceStart).toFixed(1)}ms`);
+            
+            // Content will be updated when extraction completes
+            
+            // Notify background script
+            browser.runtime.sendMessage({ 
+                action: 'updateBadge', 
+                active: true 
+            }).catch(error => {
+                console.error('❌ ProxyController.activate() // failed to update badge:', error.message);
+            });
+            
+            console.log(`✅ ProxyController.activate() // activation complete: ${(performance.now() - activateStart).toFixed(1)}ms`);
+            
+        } catch (error) {
+            console.error('❌ ProxyController.activate() // activation failed:', {
+                error: error.message,
+                stack: error.stack,
+                url: window.location.href,
+                activationTime: (performance.now() - activateStart).toFixed(1) + 'ms'
+            });
+            
+            // Try to show error to user
+            try {
+                this.showError(`Activation failed: ${error.message}`);
+            } catch (showErrorFailure) {
+                console.error('❌ ProxyController.activate() // failed to show error to user:', showErrorFailure.message);
+            }
+        }
     }
     
     hideOriginalContent() {
@@ -147,10 +255,14 @@ class ProxyController {
     }
     
     createInterface() {
-        // Create main container
-        this.container = document.createElement('div');
-        this.container.className = 'vibe-reader-container vibe-reader-proxy';
-        this.container.setAttribute('data-theme', this.currentTheme);
+        const interfaceStart = performance.now();
+        try {
+            console.log('🎨 ProxyController.createInterface() // creating cyberpunk interface...');
+            
+            // Create main container
+            this.container = document.createElement('div');
+            this.container.className = 'vibe-reader-container vibe-reader-proxy';
+            this.container.setAttribute('data-theme', this.currentTheme);
         
         // Create loading interface
         this.container.innerHTML = `
@@ -173,8 +285,8 @@ class ProxyController {
                     <main class="vibe-content">
                         <article class="vibe-article">
                             <header class="article-header">
-                                <h1 class="article-title glitch" data-text="CYBERPUNK READER ACTIVE">
-                                    CYBERPUNK READER ACTIVE
+                                <h1 class="article-title glitch" data-text="VIBE READER ACTIVE">
+                                    VIBE READER ACTIVE
                                 </h1>
                                 <div class="article-meta">
                                     <span class="meta-item">🔥 VIBE MODE ENGAGED</span>
@@ -201,13 +313,30 @@ class ProxyController {
         document.body.appendChild(this.container);
         
         // Setup event handlers
+        const handlersStart = performance.now();
         this.setupEventHandlers();
+        console.log(`⏱️ ProxyController.createInterface() // event handlers: ${(performance.now() - handlersStart).toFixed(1)}ms`);
         
         // Apply theme
+        const themeStart = performance.now();
         this.applyTheme(this.currentTheme);
+        console.log(`⏱️ ProxyController.createInterface() // theme application: ${(performance.now() - themeStart).toFixed(1)}ms`);
         
         // Initialize effects
+        const effectsStart = performance.now();
         this.initializeEffects();
+        console.log(`⏱️ ProxyController.createInterface() // effects initialization: ${(performance.now() - effectsStart).toFixed(1)}ms`);
+        
+        console.log(`✅ ProxyController.createInterface() // interface creation complete: ${(performance.now() - interfaceStart).toFixed(1)}ms`);
+        
+        } catch (error) {
+            console.error('❌ ProxyController.createInterface() // interface creation failed:', {
+                error: error.message,
+                stack: error.stack,
+                creationTime: (performance.now() - interfaceStart).toFixed(1) + 'ms'
+            });
+            throw error;
+        }
     }
     
     createLeftPanel() {
@@ -221,7 +350,7 @@ class ProxyController {
                         </div>
                     </div>
                     <div class="terminal-content" id="left-terminal">
-                        <div class="terminal-line">> INITIALIZING CYBER READER...</div>
+                        <div class="terminal-line">> INITIALIZING VIBE READER...</div>
                         <div class="terminal-line">> NEURAL INTERFACE: ACTIVE</div>
                         <div class="terminal-line">> DATA STREAM: CONNECTED</div>
                         <div class="terminal-line">> PARSING DOCUMENT...</div>
@@ -256,32 +385,77 @@ class ProxyController {
     }
     
     setupEventHandlers() {
-        // Media mode button
-        const mediaBtn = this.container.querySelector('.media-btn');
-        if (mediaBtn) {
-            mediaBtn.addEventListener('click', () => this.cycleMediaMode());
-        }
-        
-        // Theme button
-        const themeBtn = this.container.querySelector('.theme-btn');
-        if (themeBtn) {
-            themeBtn.addEventListener('click', () => this.cycleTheme());
-        }
-        
-        // Disconnect button
-        const disconnectBtn = this.container.querySelector('.disconnect-btn');
-        if (disconnectBtn) {
-            disconnectBtn.addEventListener('click', () => this.requestDeactivation());
-        }
-        
-        // Capture scroll events for proxy
-        this.container.addEventListener('scroll', (e) => {
-            if (this.extractedContent) {
-                this.sendProxyCommand('scroll', {
-                    scrollPosition: e.target.scrollTop
+        const setupStart = performance.now();
+        try {
+            console.log('🎮 ProxyController.setupEventHandlers() // setting up UI event handlers...');
+            
+            // Media mode button
+            const mediaBtn = this.container.querySelector('.media-btn');
+            if (mediaBtn) {
+                mediaBtn.addEventListener('click', () => {
+                    try {
+                        this.cycleMediaMode();
+                    } catch (error) {
+                        console.error('❌ ProxyController.setupEventHandlers() // media button click failed:', error.message);
+                    }
                 });
+                console.log('✅ ProxyController.setupEventHandlers() // media button handler added');
+            } else {
+                console.warn('⚠️ ProxyController.setupEventHandlers() // media button not found');
             }
-        });
+            
+            // Theme button
+            const themeBtn = this.container.querySelector('.theme-btn');
+            if (themeBtn) {
+                themeBtn.addEventListener('click', () => {
+                    try {
+                        this.cycleTheme();
+                    } catch (error) {
+                        console.error('❌ ProxyController.setupEventHandlers() // theme button click failed:', error.message);
+                    }
+                });
+                console.log('✅ ProxyController.setupEventHandlers() // theme button handler added');
+            } else {
+                console.warn('⚠️ ProxyController.setupEventHandlers() // theme button not found');
+            }
+            
+            // Disconnect button
+            const disconnectBtn = this.container.querySelector('.disconnect-btn');
+            if (disconnectBtn) {
+                disconnectBtn.addEventListener('click', () => {
+                    try {
+                        this.requestDeactivation();
+                    } catch (error) {
+                        console.error('❌ ProxyController.setupEventHandlers() // disconnect button click failed:', error.message);
+                    }
+                });
+                console.log('✅ ProxyController.setupEventHandlers() // disconnect button handler added');
+            } else {
+                console.warn('⚠️ ProxyController.setupEventHandlers() // disconnect button not found');
+            }
+            
+            // Capture scroll events for proxy
+            this.container.addEventListener('scroll', (e) => {
+                try {
+                    if (this.extractedContent) {
+                        this.sendProxyCommand('scroll', {
+                            scrollPosition: e.target.scrollTop
+                        });
+                    }
+                } catch (error) {
+                    console.error('❌ ProxyController.setupEventHandlers() // scroll handler failed:', error.message);
+                }
+            });
+            
+            console.log(`✅ ProxyController.setupEventHandlers() // event handlers setup complete: ${(performance.now() - setupStart).toFixed(1)}ms`);
+            
+        } catch (error) {
+            console.error('❌ ProxyController.setupEventHandlers() // event handler setup failed:', {
+                error: error.message,
+                stack: error.stack,
+                setupTime: (performance.now() - setupStart).toFixed(1) + 'ms'
+            });
+        }
     }
     
     showExtractionProgress(status, progress) {
@@ -364,8 +538,17 @@ class ProxyController {
     }
     
     displayExtractedContent(content, metadata) {
-        this.extractedContent = content;
-        this.metadata = metadata;
+        const displayStart = performance.now();
+        try {
+            console.log('📄 ProxyController.displayExtractedContent() // displaying extracted content:', {
+                title: metadata?.title?.substring(0, 50) || 'UNTITLED',
+                contentLength: content?.length || 0,
+                framework: metadata?.framework,
+                extractedAt: metadata?.extractedAt
+            });
+            
+            this.extractedContent = content;
+            this.metadata = metadata;
         
         const mainContent = this.container.querySelector('.vibe-content');
         if (!mainContent) return;
@@ -404,11 +587,33 @@ class ProxyController {
         this.processTables();
         
         // Update terminals with success info
+        const terminalsStart = performance.now();
         this.updateTerminalsWithContent(metadata);
+        console.log(`⏱️ ProxyController.displayExtractedContent() // terminals update: ${(performance.now() - terminalsStart).toFixed(1)}ms`);
         
         // Update button texts and reinitialize effects
+        const effectsStart = performance.now();
         this.updateButtonTexts();
         this.initializeEffects();
+        console.log(`⏱️ ProxyController.displayExtractedContent() // effects update: ${(performance.now() - effectsStart).toFixed(1)}ms`);
+        
+        console.log(`✅ ProxyController.displayExtractedContent() // content display complete: ${(performance.now() - displayStart).toFixed(1)}ms`);
+        
+        } catch (error) {
+            console.error('❌ ProxyController.displayExtractedContent() // content display failed:', {
+                error: error.message,
+                stack: error.stack,
+                contentLength: content?.length || 0,
+                displayTime: (performance.now() - displayStart).toFixed(1) + 'ms'
+            });
+            
+            // Try to show error to user
+            try {
+                this.showError(`Content display failed: ${error.message}`);
+            } catch (showErrorFailure) {
+                console.error('❌ ProxyController.displayExtractedContent() // failed to show error to user:', showErrorFailure.message);
+            }
+        }
     }
     
     processContent(html) {
@@ -542,15 +747,23 @@ class ProxyController {
     }
     
     async convertToAscii(src, isVideo) {
+        const conversionStart = performance.now();
         try {
+            console.log('🎨 ProxyController.convertToAscii() // starting ASCII conversion:', {
+                src: src?.substring(0, 100) || 'no-src',
+                isVideo: isVideo,
+                aalibAvailable: !!window.aalib
+            });
+            
             if (isVideo) {
                 // For videos, create a simple ASCII frame representation
                 const asciiFrame = this.generateVideoAsciiFrame();
                 this.updateAsciiContent(asciiFrame);
+                console.log(`✅ ProxyController.convertToAscii() // video ASCII generated: ${(performance.now() - conversionStart).toFixed(1)}ms`);
             } else {
                 // For images, use the badass aalib.js library
                 if (window.aalib) {
-                    console.log('🎨 Converting image to ASCII using aalib.js...');
+                    console.log('🎨 ProxyController.convertToAscii() // using aalib.js for image conversion...');
                     
                     window.aalib.read.image.fromURL(src)
                         .map(window.aalib.aa({ 
@@ -567,23 +780,33 @@ class ProxyController {
                         }))
                         .subscribe({
                             next: (asciiElement) => {
-                                console.log('✅ ASCII conversion successful');
+                                console.log(`✅ ProxyController.convertToAscii() // aalib.js conversion successful: ${(performance.now() - conversionStart).toFixed(1)}ms`);
                                 // Extract the text content from the HTML element
                                 const asciiText = asciiElement.textContent || asciiElement.innerText;
                                 this.updateAsciiContent(asciiText);
                             },
                             error: (error) => {
-                                console.log('❌ aalib.js conversion failed:', error);
+                                console.error('❌ ProxyController.convertToAscii() // aalib.js conversion failed:', {
+                                    error: error.message,
+                                    src: src?.substring(0, 100),
+                                    conversionTime: (performance.now() - conversionStart).toFixed(1) + 'ms'
+                                });
                                 this.updateAsciiContent(this.getFallbackAscii(false));
                             }
                         });
                 } else {
-                    console.log('⚠️ aalib.js not loaded, using fallback ASCII');
+                    console.warn('⚠️ ProxyController.convertToAscii() // aalib.js not loaded, using fallback ASCII');
                     this.updateAsciiContent(this.getFallbackAscii(false));
                 }
             }
         } catch (error) {
-            console.log('ASCII conversion failed, using fallback:', error);
+            console.error('❌ ProxyController.convertToAscii() // ASCII conversion failed:', {
+                error: error.message,
+                stack: error.stack,
+                src: src?.substring(0, 100),
+                isVideo: isVideo,
+                conversionTime: (performance.now() - conversionStart).toFixed(1) + 'ms'
+            });
             this.updateAsciiContent(this.getFallbackAscii(isVideo));
         }
     }
@@ -824,54 +1047,143 @@ class ProxyController {
     }
     
     sendProxyCommand(command, data) {
-        browser.runtime.sendMessage({
-            action: 'proxyCommand',
-            command: command,
-            data: data
-        });
+        const commandStart = performance.now();
+        try {
+            console.log('🔗 ProxyController.sendProxyCommand() // sending proxy command:', {
+                command: command,
+                dataKeys: data ? Object.keys(data) : [],
+                timestamp: new Date().toISOString()
+            });
+            
+            browser.runtime.sendMessage({
+                action: 'proxyCommand',
+                command: command,
+                data: data
+            }).then(() => {
+                console.log(`⏱️ ProxyController.sendProxyCommand() // command sent: ${(performance.now() - commandStart).toFixed(1)}ms`);
+            }).catch(error => {
+                console.error('❌ ProxyController.sendProxyCommand() // command failed:', {
+                    error: error.message,
+                    command: command,
+                    commandTime: (performance.now() - commandStart).toFixed(1) + 'ms'
+                });
+            });
+            
+        } catch (error) {
+            console.error('❌ ProxyController.sendProxyCommand() // proxy command failed:', {
+                error: error.message,
+                stack: error.stack,
+                command: command,
+                commandTime: (performance.now() - commandStart).toFixed(1) + 'ms'
+            });
+        }
     }
     
     requestDeactivation() {
-        browser.runtime.sendMessage({ action: 'updateBadge', active: false });
-        this.deactivate();
+        const requestStart = performance.now();
+        try {
+            console.log('⚡ ProxyController.requestDeactivation() // user requested deactivation');
+            
+            browser.runtime.sendMessage({ action: 'updateBadge', active: false }).catch(error => {
+                console.error('❌ ProxyController.requestDeactivation() // failed to update badge:', error.message);
+            });
+            
+            this.deactivate();
+            
+            console.log(`✅ ProxyController.requestDeactivation() // deactivation request complete: ${(performance.now() - requestStart).toFixed(1)}ms`);
+            
+        } catch (error) {
+            console.error('❌ ProxyController.requestDeactivation() // deactivation request failed:', {
+                error: error.message,
+                stack: error.stack,
+                requestTime: (performance.now() - requestStart).toFixed(1) + 'ms'
+            });
+        }
     }
     
     deactivate() {
-        if (this.container) {
-            this.container.remove();
-        }
-        
-        // Restore original page
-        document.body.style.overflow = this.originalBodyOverflow || '';
-        document.documentElement.style.overflow = this.originalHtmlOverflow || '';
-        
-        const allElements = document.body.children;
-        for (let el of allElements) {
-            if (el.style.display === 'none') {
-                el.style.display = '';
+        const deactivateStart = performance.now();
+        try {
+            console.log('🔌 ProxyController.deactivate() // deactivating vibe mode...');
+            
+            if (this.container) {
+                this.container.remove();
+                console.log('🗑️ ProxyController.deactivate() // container removed');
             }
+            
+            // Restore original page
+            document.body.style.overflow = this.originalBodyOverflow || '';
+            document.documentElement.style.overflow = this.originalHtmlOverflow || '';
+            
+            const allElements = document.body.children;
+            let restoredCount = 0;
+            for (let el of allElements) {
+                if (el.style.display === 'none') {
+                    el.style.display = '';
+                    restoredCount++;
+                }
+            }
+            
+            this.isActive = false;
+            
+            console.log(`✅ ProxyController.deactivate() // deactivation complete: ${(performance.now() - deactivateStart).toFixed(1)}ms, restored ${restoredCount} elements`);
+            
+        } catch (error) {
+            console.error('❌ ProxyController.deactivate() // deactivation failed:', {
+                error: error.message,
+                stack: error.stack,
+                deactivationTime: (performance.now() - deactivateStart).toFixed(1) + 'ms'
+            });
         }
-        
-        this.isActive = false;
     }
     
     showError(message) {
-        const mainContent = this.container.querySelector('.vibe-content');
-        if (mainContent) {
-            mainContent.innerHTML = `
-                <div class="error-display">
-                    <div class="error-icon">⚠️</div>
-                    <div class="error-title">EXTRACTION ERROR</div>
-                    <div class="error-message">${this.escapeHtml(message)}</div>
-                    <button class="vibe-btn retry-btn">RETRY EXTRACTION</button>
-                </div>
-            `;
+        const errorStart = performance.now();
+        try {
+            console.error('❌ ProxyController.showError() // displaying error to user:', {
+                message: message,
+                timestamp: new Date().toISOString()
+            });
             
-            const retryBtn = mainContent.querySelector('.retry-btn');
-            if (retryBtn) {
-                retryBtn.addEventListener('click', () => {
-                    window.location.reload();
-                });
+            const mainContent = this.container?.querySelector('.vibe-content');
+            if (mainContent) {
+                mainContent.innerHTML = `
+                    <div class="error-display">
+                        <div class="error-icon">⚠️</div>
+                        <div class="error-title">EXTRACTION ERROR</div>
+                        <div class="error-message">${this.escapeHtml(message)}</div>
+                        <button class="vibe-btn retry-btn">RETRY EXTRACTION</button>
+                    </div>
+                `;
+                
+                const retryBtn = mainContent.querySelector('.retry-btn');
+                if (retryBtn) {
+                    retryBtn.addEventListener('click', () => {
+                        console.log('🔄 ProxyController.showError() // user clicked retry, reloading page');
+                        window.location.reload();
+                    });
+                }
+                
+                console.log(`⏱️ ProxyController.showError() // error display created: ${(performance.now() - errorStart).toFixed(1)}ms`);
+            } else {
+                console.error('❌ ProxyController.showError() // no container found to display error');
+                // Fallback: show alert
+                alert(`Vibe Reader Error: ${message}`);
+            }
+            
+        } catch (error) {
+            console.error('❌ ProxyController.showError() // failed to show error:', {
+                originalMessage: message,
+                error: error.message,
+                stack: error.stack,
+                errorTime: (performance.now() - errorStart).toFixed(1) + 'ms'
+            });
+            
+            // Last resort fallback
+            try {
+                alert(`Critical Error: Failed to display error message. Original: ${message}`);
+            } catch (alertError) {
+                console.error('❌ ProxyController.showError() // even alert failed:', alertError.message);
             }
         }
     }
@@ -993,5 +1305,7 @@ class ProxyController {
     }
 }
 
-// Initialize proxy controller
-void new ProxyController();
+// Initialize proxy controller (prevent multiple instances)
+if (!window.vibeReaderProxyController) {
+    window.vibeReaderProxyController = new ProxyController();
+}
