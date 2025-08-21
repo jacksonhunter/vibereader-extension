@@ -53,14 +53,14 @@ class HiddenTabManager {
             // vibeReader.kill() // Deactivate vibe mode
             await this.deactivateVibeMode(tab.id);
         } else {
-            // vibeReader.setVibes() // Activate with hidden tab proxy
+            // Set Vibes // Activate with hidden tab proxy
             await this.activateVibeMode(tab);
         }
     }
     
     async activateVibeMode(tab) {
         try {
-            console.log('🔥 vibeReader.setVibes() // initializing hidden tab proxy...');
+            console.log('🔥 Set Vibes // initializing hidden tab proxy...');
             
             // Step 1: Create hidden tab for content extraction
             const hiddenTab = await this.createHiddenTab(tab.url);
@@ -98,7 +98,7 @@ class HiddenTabManager {
             console.log('✅ vibeReader.init() // background processes active');
             
         } catch (error) {
-            console.error('❌ vibeReader.setVibes() // activation failed:', error);
+            console.error('❌ Set Vibes // activation failed:', error);
             this.sendErrorToUser(tab.id, error.message);
         }
     }
@@ -354,7 +354,7 @@ class HiddenTabManager {
         } else {
             browser.browserAction.setBadgeText({ text: '', tabId: tabId });
             browser.browserAction.setTitle({ 
-                title: 'vibeReader.setVibes() // click to activate', 
+                title: 'Set Vibes // click to activate', 
                 tabId: tabId 
             });
         }

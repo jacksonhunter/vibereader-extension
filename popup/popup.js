@@ -174,7 +174,7 @@ class VibeReaderPopup {
             statusIndicator.classList.remove('active');
             statusIcon.textContent = '⚡';
             statusText.textContent = 'STANDBY';
-            toggleBtnText.textContent = '.setVibes()';
+            toggleBtnText.textContent = 'Set Vibes';
             toggleBtn.classList.remove('neon-pulse');
         }
     }
@@ -279,7 +279,7 @@ class VibeReaderPopup {
 🔥 VIBE READER HELP 🔥
 
 ACTIVATION:
-• Click ".setVibes()" or use Ctrl+Shift+M
+• Click "Set Vibes" or use Ctrl+Shift+M
 • vibeReader.init() // transforms any webpage into cyberpunk mode
 
 FEATURES:
@@ -294,7 +294,7 @@ CONTROLS:
 🔄 RESET - Restore default settings
 
 HOTKEYS:
-Ctrl+Shift+M - vibeReader.setVibes()
+Ctrl+Shift+M - Set Vibes
         `.trim();
         
         alert(helpText);
@@ -304,7 +304,7 @@ Ctrl+Shift+M - vibeReader.setVibes()
         const aboutText = `
 🔥 VIBE READER v2.0.0 🔥
 
-vibeReader.setVibes() // Transform any webpage into a cyberpunk coding aesthetic with hidden tab proxy architecture
+Set Vibes // Transform any webpage into a cyberpunk coding aesthetic with hidden tab proxy architecture
 
 FEATURES:
 ✨ 4 unique synthwave themes

@@ -40,7 +40,7 @@ class ProxyController {
                 break;
                 
             case 'extractionProgress':
-                this.showExtractionProgress(request.status, request.progress);
+                // Background extraction happening, no user interaction needed
                 break;
                 
             case 'deactivate':
@@ -112,8 +112,7 @@ class ProxyController {
         // Create VibeReader interface
         this.createInterface();
         
-        // Show loading state
-        this.showExtractionProgress('initializing', 0);
+        // Content will be updated when extraction completes
         
         // Notify background script
         browser.runtime.sendMessage({ 
@@ -172,16 +171,24 @@ class ProxyController {
                     ${this.settings.sideScrolls ? this.createLeftPanel() : '<div class="vibe-sidebar-spacer"></div>'}
                     
                     <main class="vibe-content">
-                        <div class="extraction-progress">
-                            <div class="cyber-loader">
-                                <div class="cyber-loader-bar"></div>
+                        <article class="vibe-article">
+                            <header class="article-header">
+                                <h1 class="article-title glitch" data-text="CYBERPUNK READER ACTIVE">
+                                    CYBERPUNK READER ACTIVE
+                                </h1>
+                                <div class="article-meta">
+                                    <span class="meta-item">🔥 VIBE MODE ENGAGED</span>
+                                    <span class="meta-item">⚡ NEURAL INTERFACE ONLINE</span>
+                                    <span class="meta-item">🎯 EXTRACTING CONTENT...</span>
+                                </div>
+                            </header>
+                            
+                            <div class="article-content retrofuture-content">
+                                <p class="cyber-text">Initializing cyberpunk reading interface...</p>
+                                <p class="cyber-text">Background extraction in progress...</p>
+                                <p class="cyber-text">Content will appear seamlessly when ready.</p>
                             </div>
-                            <div class="extraction-status">vibeReader.init() // initializing...</div>
-                            <div class="extraction-details">
-                                <span class="progress-percent">0%</span>
-                                <span class="progress-stage">// preparing background process...</span>
-                            </div>
-                        </div>
+                        </article>
                     </main>
                     
                     ${this.settings.sideScrolls ? this.createRightPanel() : '<div class="vibe-sidebar-spacer"></div>'}
@@ -214,12 +221,12 @@ class ProxyController {
                         </div>
                     </div>
                     <div class="terminal-content" id="left-terminal">
-                        <div class="terminal-line">> vibeReader v2.0</div>
-                        <div class="terminal-line">> backgroundProcess.active = true</div>
-                        <div class="terminal-line">> extractionMode = 'stealth'</div>
-                        <div class="terminal-line">> frameworkDetection = true</div>
-                        <div class="terminal-line">> </div>
-                        <div class="terminal-line">> // waiting for neural patterns...</div>
+                        <div class="terminal-line">> INITIALIZING CYBER READER...</div>
+                        <div class="terminal-line">> NEURAL INTERFACE: ACTIVE</div>
+                        <div class="terminal-line">> DATA STREAM: CONNECTED</div>
+                        <div class="terminal-line">> PARSING DOCUMENT...</div>
+                        <div class="terminal-line">> VIBE MODE: ENGAGED</div>
+                        <div class="terminal-line">> EXTRACTION: IN PROGRESS</div>
                     </div>
                 </div>
             </aside>
@@ -526,8 +533,8 @@ class ProxyController {
             </div>
         `;
         
-        // If we have aalib and src, convert to ASCII
-        if (src && window.aalib) {
+        // Convert to ASCII using built-in converter
+        if (src) {
             setTimeout(() => this.convertToAscii(src, isVideo), 100);
         }
         
@@ -541,54 +548,46 @@ class ProxyController {
                 const asciiFrame = this.generateVideoAsciiFrame();
                 this.updateAsciiContent(asciiFrame);
             } else {
-                // For images, use aalib conversion
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    const ascii = this.imageToAscii(img);
-                    this.updateAsciiContent(ascii);
-                };
-                img.src = src;
+                // For images, use the badass aalib.js library
+                if (window.aalib) {
+                    console.log('🎨 Converting image to ASCII using aalib.js...');
+                    
+                    window.aalib.read.image.fromURL(src)
+                        .map(window.aalib.aa({ 
+                            width: 80, 
+                            height: 40, 
+                            colored: false,
+                            charset: window.aalib.charset.ASCII_CHARSET
+                        }))
+                        .map(window.aalib.render.html({ 
+                            background: 'transparent',
+                            fontFamily: 'VT323, Share Tech Mono, monospace',
+                            fontSize: 12,
+                            color: 'var(--secondary)'
+                        }))
+                        .subscribe({
+                            next: (asciiElement) => {
+                                console.log('✅ ASCII conversion successful');
+                                // Extract the text content from the HTML element
+                                const asciiText = asciiElement.textContent || asciiElement.innerText;
+                                this.updateAsciiContent(asciiText);
+                            },
+                            error: (error) => {
+                                console.log('❌ aalib.js conversion failed:', error);
+                                this.updateAsciiContent(this.getFallbackAscii(false));
+                            }
+                        });
+                } else {
+                    console.log('⚠️ aalib.js not loaded, using fallback ASCII');
+                    this.updateAsciiContent(this.getFallbackAscii(false));
+                }
             }
         } catch (error) {
-            console.log('ASCII conversion failed, using fallback');
+            console.log('ASCII conversion failed, using fallback:', error);
             this.updateAsciiContent(this.getFallbackAscii(isVideo));
         }
     }
     
-    imageToAscii(img) {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Scale to reasonable ASCII size
-        const maxWidth = 80;
-        const maxHeight = 40;
-        const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
-        
-        canvas.width = Math.floor(img.width * ratio);
-        canvas.height = Math.floor(img.height * ratio);
-        
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const chars = ' .:-=+*#%@';
-        let ascii = '';
-        
-        for (let y = 0; y < canvas.height; y++) {
-            for (let x = 0; x < canvas.width; x++) {
-                const i = (y * canvas.width + x) * 4;
-                const r = imageData.data[i];
-                const g = imageData.data[i + 1];
-                const b = imageData.data[i + 2];
-                const gray = Math.round((r + g + b) / 3);
-                const charIndex = Math.floor((gray / 255) * (chars.length - 1));
-                ascii += chars[charIndex];
-            }
-            ascii += '\n';
-        }
-        
-        return ascii;
-    }
     
     generateVideoAsciiFrame() {
         return `
@@ -635,11 +634,25 @@ class ProxyController {
     }
     
     updateAsciiContent(asciiText) {
-        const asciiElements = this.container.querySelectorAll('.ascii-art');
+        // Find ASCII elements in the current page
+        const asciiElements = this.container.querySelectorAll('.ascii-art, .ascii-content');
+        console.log('Found ASCII elements:', asciiElements.length);
+        
         asciiElements.forEach(el => {
             el.textContent = asciiText;
             el.classList.remove('loading');
+            el.style.whiteSpace = 'pre';
+            el.style.fontFamily = 'VT323, monospace';
         });
+        
+        // If no elements found, try updating media wrappers directly
+        if (asciiElements.length === 0) {
+            const mediaWrappers = this.container.querySelectorAll('.media-wrapper[data-mode="ascii"] .ascii-art');
+            mediaWrappers.forEach(el => {
+                el.textContent = asciiText;
+                el.classList.remove('loading');
+            });
+        }
     }
     
     createNormalDisplay(originalElement) {
@@ -790,7 +803,7 @@ class ProxyController {
     updateButtonTexts() {
         if (!this.container) return;
         
-        // Update theme button
+        // Update theme button - show palette emoji + theme name
         const themeBtn = this.container.querySelector('.theme-btn');
         if (themeBtn) {
             const themeNames = {
@@ -802,7 +815,7 @@ class ProxyController {
             themeBtn.textContent = `🎨 ${themeNames[this.currentTheme]}`;
         }
         
-        // Update media button
+        // Update media button - just emoji for minimal aesthetic
         const mediaBtn = this.container.querySelector('.media-btn');
         if (mediaBtn) {
             const modeEmojis = { emoji: '🖼️', ascii: '🎨', normal: '📸' };
@@ -889,6 +902,9 @@ class ProxyController {
         if (this.settings.vibeRain) {
             this.createMatrixRain();
         }
+        
+        // Start terminal scrolling effects
+        this.startTerminalEffects();
     }
     
     startGlitchEffects() {
@@ -928,6 +944,51 @@ class ProxyController {
             drop.innerHTML = text;
             
             rainContainer.appendChild(drop);
+        }
+    }
+    
+    startTerminalEffects() {
+        // Start updating terminals with live data
+        setInterval(() => {
+            this.updateLiveTerminals();
+        }, 2000);
+    }
+    
+    updateLiveTerminals() {
+        if (!this.container) return;
+        
+        const leftTerminal = this.container.querySelector('#left-terminal');
+        const rightTerminal = this.container.querySelector('#right-terminal');
+        
+        if (leftTerminal) {
+            const lines = [
+                '> VIBE READER v2.0 ACTIVE',
+                `> CPU: ${Math.floor(Math.random() * 100)}% USAGE`,
+                `> MEM: ${Math.floor(Math.random() * 100)}% ALLOC`,
+                `> NET: ${Math.floor(Math.random() * 1000)}ms LATENCY`,
+                `> STATUS: ${this.extractedContent ? 'CONTENT LOADED' : 'PROCESSING'}`,
+                `> TIME: ${new Date().toLocaleTimeString()}`
+            ];
+            
+            // Animate the terminal lines
+            leftTerminal.innerHTML = lines.map((line, index) => 
+                `<div class="terminal-line" style="animation-delay: ${index * 0.1}s">${line}</div>`
+            ).join('');
+        }
+        
+        if (rightTerminal) {
+            const lines = [
+                '> PROXY STATUS: CONNECTED',
+                `> BANDWIDTH: ${Math.floor(Math.random() * 1000)}KB/s`,
+                `> PACKETS: ${Math.floor(Math.random() * 10000)}`,
+                `> ERRORS: ${Math.floor(Math.random() * 10)}`,
+                `> UPTIME: ${Math.floor(Date.now() / 1000)}s`,
+                `> SYNC: ${new Date().toLocaleTimeString()}`
+            ];
+            
+            rightTerminal.innerHTML = lines.map((line, index) => 
+                `<div class="terminal-line" style="animation-delay: ${index * 0.1}s">${line}</div>`
+            ).join('');
         }
     }
 }

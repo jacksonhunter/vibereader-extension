@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "VibeReader",
   "version": "2.0.0",
-  "description": "vibeReader.setVibes() // Transform any webpage into a cyberpunk coding aesthetic with hidden tab proxy architecture",
+  "description": "Set Vibes // Transform any webpage into a cyberpunk coding aesthetic with hidden tab proxy architecture",
   
   "applications": {
     "gecko": {
@@ -24,7 +24,7 @@
   },
   
   "browser_action": {
-    "default_title": "vibeReader.setVibes()",
+    "default_title": "Set Vibes",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -40,7 +40,7 @@
       "suggested_key": {
         "default": "Ctrl+Shift+M"
       },
-      "description": "vibeReader.setVibes() // activate cyberpunk mode"
+      "description": "Set Vibes // activate cyberpunk mode"
     }
   },
   
