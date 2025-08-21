@@ -50,3 +50,4 @@ session-*.md
 
 # Local settings
 .claude/settings.local.json
+/test-exports/

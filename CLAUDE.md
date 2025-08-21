@@ -289,6 +289,51 @@ This will provide much better compatibility with modern JavaScript frameworks an
 - [ ] **API Integration** - Connect with external services
 - [ ] **Analytics Dashboard** - Reading statistics and insights
 
+## 🆕 RECENT IMPROVEMENTS (v2.1 - Enhanced Stability)
+
+### ✅ **Critical Bug Fixes Implemented:**
+
+1. **Enhanced WeakMap Registry** - Complete rewrite of tab data management
+   - **Comprehensive tab data storage** with performance metrics, settings, and timer tracking
+   - **Automatic memory cleanup** when tabs are garbage collected
+   - **Reverse lookup cache** for efficient tab reference management
+
+2. **Complete Timer Cleanup System** - Eliminates memory leaks
+   - **Centralized timer tracking** in WeakMap data structure  
+   - **Proper cleanup** on deactivation, tab closure, and failed activation
+   - **Memory leak prevention** with comprehensive resource management
+
+3. **Fixed Race Conditions** - Resolves hidden tab premature closure
+   - **Script readiness verification** via `waitForScriptReady()` method
+   - **Sequential activation** ensures scripts are responsive before proceeding
+   - **Eliminated timing issues** that caused hidden tabs to close unexpectedly
+
+4. **Script Readiness Verification** - Robust injection system
+   - **Ping-based verification** with configurable retry attempts (10 attempts × 200ms)
+   - **Type checking** to ensure correct script responds (`extractor` vs `proxy`)
+   - **Graceful fallback** with warning logs for debugging
+
+5. **Improved Error Handling** - Better failure recovery
+   - **Enhanced cleanup on failures** with proper resource deallocation
+   - **Extended hidden tab cleanup delay** (8 seconds) to prevent premature closure
+   - **Comprehensive error logging** with context and stack traces
+
+### **🔧 Technical Architecture Updates:**
+
+- **Hidden Tab Stability**: Proper lifecycle management prevents unexpected closures
+- **Memory Management**: All timers, listeners, and references tracked and cleaned up
+- **Activation Reliability**: Zero race conditions during script injection
+- **Error Recovery**: Robust state cleanup on any failure scenario
+
+### **🚀 Performance Improvements:**
+
+- **Faster activation** with parallel script readiness checks
+- **Better resource utilization** with automatic cleanup
+- **Improved debugging** with detailed performance metrics logging
+- **Enhanced reliability** across different frameworks (React, Vue, Angular, Next.js)
+
+---
+
 ## Security Notes
 The extension requires broad permissions for functionality:
 - `activeTab`: Access current tab content
@@ -296,4 +341,207 @@ The extension requires broad permissions for functionality:
 - `<all_urls>`: Work on any website
 
 All code focuses on defensive reading enhancement - no malicious functionality.
-- test extension with: cd "C:\Users\jacks\PycharmProjects\NightDrive theme\theme_exports\synthwave-themes\vibe-reader-extension" && web-ext run --verbose --devtools --browser-console --firefox="C:\Program Files\Firefox Developer Edition\firefox.exe"
+- test extension with: 
+'cd "C:\Users\jacks\PycharmProjects\NightDrive theme\theme_exports\synthwave-themes\vibe-reader-extension" && web-ext run --verbose --devtools --browser-console --firefox="C:\Program Files\Firefox Developer Edition\firefox.exe"'
+
+- VibeReader CSS Protocol v1.0
+Core Architecture
+The extension expects a specific CSS structure with three main stylesheets:
+styles/
+├── popup.css           # Popup interface styles
+├── retrofuture-theme.css  # Main vibe reader theme
+└── matrix-theme.css    # Additional effects layer
+Required CSS Classes by Component
+1. Container Structure
+css/* Primary containers - MUST exist */
+.vibe-reader-container    /* Root container for entire UI */
+.vibe-reader-proxy        /* Modifier class for proxy mode */
+.vibe-reader-overlay      /* Full-screen overlay wrapper */
+
+/* Layout structure - MUST exist */
+.vibe-layout              /* Main layout grid/flex container */
+.vibe-content             /* Central content area */
+.vibe-sidebar             /* Side panel base class */
+.vibe-sidebar-spacer      /* Empty spacer when sidebars disabled */
+.left-panel               /* Left terminal modifier */
+.right-panel              /* Right terminal modifier */
+2. Header Components
+css/* Header structure - MUST exist */
+.vibe-header              /* Top header bar */
+.vibe-header-left         /* Left header section */
+.vibe-header-right        /* Right header section */
+.vibe-brand               /* Brand/logo text */
+.vibe-status              /* Status indicator text */
+
+/* Button system - MUST exist */
+.vibe-btn                 /* Base button class */
+.media-btn                /* Media mode toggle */
+.theme-btn                /* Theme cycle button */
+.disconnect-btn           /* Deactivate button */
+3. Article/Content Display
+css/* Article structure - MUST exist */
+.vibe-article             /* Article container */
+.article-header           /* Article header section */
+.article-title            /* Main title */
+.article-byline           /* Author byline */
+.article-meta             /* Metadata container */
+.meta-item                /* Individual meta items */
+.article-content          /* Main content area */
+.article-footer           /* Footer section */
+.footer-info              /* Footer info container */
+
+/* Content modifiers - MUST exist */
+.cyber-heading            /* Enhanced headings */
+.cyber-link               /* Styled links */
+.cyber-code               /* Code block styling */
+.cyber-table              /* Table styling */
+.cyber-media              /* Media element styling */
+.cyber-frame              /* Media frame wrapper */
+4. Terminal Components
+css/* Terminal system - MUST exist */
+.terminal-window          /* Terminal container */
+.terminal-header          /* Terminal title bar */
+.terminal-title           /* Terminal title text */
+.terminal-controls        /* Control buttons area */
+.terminal-content         /* Terminal body */
+.terminal-line            /* Individual terminal line */
+.led-indicator            /* Status LED */
+5. Media Display System
+css/* Media wrappers - MUST exist */
+.media-wrapper            /* Universal media container */
+
+/* Emoji mode - MUST exist when mediaMode='emoji' */
+.media-emoji-display      /* Emoji display container */
+.emoji-icon               /* Emoji icon element */
+.media-label              /* Media type label */
+.mode-hint                /* User instruction text */
+
+/* ASCII mode - MUST exist when mediaMode='ascii' */
+.media-ascii-display      /* ASCII display container */
+.ascii-art                /* ASCII art pre element */
+
+/* Normal mode - MUST exist when mediaMode='normal' */
+.media-normal-display     /* Normal display wrapper */
+6. Progress/Loading States
+css/* Extraction progress - MUST exist during loading */
+.extraction-progress      /* Progress container */
+.progress-bar             /* Progress bar track */
+.progress-fill            /* Progress bar fill */
+.extraction-status        /* Status text */
+7. Error States
+css/* Error display - MUST exist for error handling */
+.error-display            /* Error container */
+.error-icon               /* Error icon */
+.error-title              /* Error title */
+.error-message            /* Error message text */
+.retry-btn                /* Retry button */
+8. Effects Classes
+css/* Visual effects - MUST support these states */
+.glitch                   /* Elements with glitch effect */
+.glitching                /* Active glitch state */
+.neon-pulse               /* Neon pulse animation */
+.active                   /* Active state modifier */
+.loading                  /* Loading state */
+9. Special Effects Containers
+css/* Optional effects - conditionally rendered */
+.vibe-rain-container      /* Matrix rain container */
+.matrix-drop              /* Individual rain drop */
+Required Data Attributes
+css/* Theme system - MUST handle these values */
+[data-theme="nightdrive"]
+[data-theme="neon-surge"]
+[data-theme="outrun-storm"]
+[data-theme="strange-days"]
+
+/* Media display modes - MUST handle these values */
+[data-mode="emoji"]
+[data-mode="ascii"]
+[data-mode="normal"]
+
+/* Glitch effect text */
+[data-text]               /* Contains glitch text for pseudo-elements */
+Required CSS Custom Properties
+css:root {
+  /* Color variables - MUST be defined */
+  --neon-pink: <color>;
+  --neon-green: <color>;
+  --glow-primary: <color>;
+  --secondary: <color>;
+  
+  /* Theme-specific overrides should be scoped */
+  [data-theme="nightdrive"] {
+    /* Override variables per theme */
+  }
+}
+Popup-Specific Classes
+css/* Popup structure - MUST exist in popup.css */
+.vibe-popup               /* Popup root */
+.popup-header             /* Popup header */
+.popup-title              /* Main title */
+.version-info             /* Version text */
+
+/* Status display */
+.status-section           /* Status container */
+.status-indicator         /* Status element */
+.status-icon              /* Status icon */
+.status-text              /* Status text */
+
+/* Actions */
+.actions-section          /* Actions container */
+.action-btn               /* Action button */
+.primary                  /* Primary button modifier */
+.secondary                /* Secondary button modifier */
+.btn-icon                 /* Button icon */
+.btn-text                 /* Button text */
+.quick-actions            /* Quick action group */
+
+/* Settings panel */
+.settings-panel           /* Settings container */
+.settings-header          /* Settings header */
+.setting-group            /* Setting row */
+.setting-label            /* Setting label */
+.label-text               /* Label text */
+.setting-select           /* Select dropdown */
+.toggle-switch            /* Toggle container */
+.toggle-input             /* Toggle checkbox */
+.toggle-slider            /* Toggle visual */
+.settings-footer          /* Settings footer */
+.open                     /* Panel open state */
+
+/* Info section */
+.info-section             /* Info container */
+.shortcut-info            /* Shortcut display */
+.shortcut-label           /* Shortcut label */
+.shortcut-code            /* Shortcut code */
+.footer-links             /* Footer link group */
+.footer-link              /* Individual link */
+Animation Requirements
+The CSS must support these animations:
+
+Glitch Effect: Multi-layer text distortion using ::before and ::after pseudo-elements
+Matrix Rain: Vertical scrolling animation with variable duration
+Neon Pulse: Glow pulsing animation
+Terminal Blink: Cursor or text blinking
+
+Responsive Considerations
+The CSS should handle:
+
+Hidden tab positioning (index: 9999)
+Full-screen overlay (position: fixed; inset: 0)
+Scrollbar hiding on body/html
+Z-index layering for overlays
+
+State Management Classes
+css/* These classes are dynamically added/removed */
+.active                   /* Component is active */
+.open                     /* Panel/dropdown is open */
+.loading                  /* Content is loading */
+.glitching                /* Glitch animation active */
+.neon-pulse               /* Pulse animation active */
+.media-transition         /* Media mode transitioning */
+Critical Missing CSS Handling
+If any required class is missing, the extension should:
+
+Log a warning to console
+Apply fallback inline styles for critical functionality
+Gracefully degrade visual effects
