@@ -127,6 +127,39 @@
 }
 
 /* ============================================================================ */
+/* SIDE PANELS / SIDEBARS */
+/* ============================================================================ */
+
+.vibe-sidebar {
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.vibe-sidebar.left-panel {
+  border-right: 2px solid var(--primary);
+  box-shadow: inset -5px 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.vibe-sidebar.right-panel {
+  border-left: 2px solid var(--secondary);
+  box-shadow: inset 5px 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.vibe-sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: cyber-scan 3s linear infinite;
+}
+
+/* ============================================================================ */
 /* MAIN LAYOUT STRUCTURE */
 /* ============================================================================ */
 
@@ -955,6 +988,97 @@
 }
 
 /* ============================================================================ */
+/* ARTICLE CONTENT STYLES */
+/* ============================================================================ */
+
+.article-title {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 2.5em;
+  color: var(--primary);
+  text-shadow: 0 0 20px var(--glow-primary);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.article-byline {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.1em;
+  color: var(--secondary);
+  text-shadow: 0 0 10px var(--glow-secondary);
+  margin-bottom: 15px;
+}
+
+.article-meta {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+
+.meta-item {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: var(--text-secondary);
+  opacity: 0.8;
+  padding: 5px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.retrofuture-heading {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 15px var(--accent);
+  margin: 30px 0 15px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.cyber-link {
+  color: var(--secondary);
+  text-decoration: none;
+  position: relative;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.cyber-link:hover {
+  color: var(--primary);
+  text-shadow: 0 0 10px var(--glow-primary);
+  transform: translateX(2px);
+}
+
+.cyber-code {
+  font-family: 'VT323', monospace;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--accent);
+  text-shadow: 0 0 5px var(--accent);
+}
+
+.cyber-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 2px;
+  margin: 20px 0;
+}
+
+.cyber-table th,
+.cyber-table td {
+  padding: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+/* ============================================================================ */
 /* MEDIA WRAPPER SYSTEM - 3-MODE DISPLAY */
 /* ============================================================================ */
 
@@ -1101,6 +1225,141 @@
     transform: scale(1) rotateX(0deg); 
     filter: blur(0px);
   }
+}
+
+/* ============================================================================ */
+/* LOADING & EXTRACTION PROGRESS */
+/* ============================================================================ */
+
+.extraction-progress {
+  padding: 40px;
+  text-align: center;
+}
+
+.cyber-loader {
+  width: 100%;
+  max-width: 400px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  margin: 20px auto;
+  overflow: hidden;
+  position: relative;
+}
+
+.cyber-loader-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+  width: 0%;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 10px var(--glow-primary);
+  animation: cyber-pulse 1s ease-in-out infinite;
+}
+
+@keyframes cyber-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.extraction-status {
+  font-family: 'Orbitron', monospace;
+  font-size: 18px;
+  color: var(--primary);
+  text-shadow: 0 0 10px var(--glow-primary);
+  margin: 10px 0;
+}
+
+.extraction-details {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.progress-percent {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--secondary);
+  text-shadow: 0 0 15px var(--glow-secondary);
+}
+
+.progress-stage {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+/* ============================================================================ */
+/* TERMINAL WINDOWS IN SIDE PANELS */
+/* ============================================================================ */
+
+.terminal-window {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.terminal-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  text-shadow: 0 0 8px var(--glow-primary);
+  letter-spacing: 1px;
+}
+
+.terminal-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.led-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--secondary);
+  box-shadow: 0 0 8px var(--glow-secondary);
+  animation: led-pulse 2s ease-in-out infinite;
+}
+
+.led-indicator.active {
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+}
+
+@keyframes led-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.terminal-content {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+}
+
+.terminal-line {
+  color: var(--secondary);
+  text-shadow: 0 0 5px var(--glow-secondary);
+  margin: 4px 0;
+  opacity: 0.9;
 }
 
 /* ============================================================================ */
