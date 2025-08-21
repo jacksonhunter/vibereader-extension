@@ -352,6 +352,10 @@ if (window.__vibeReaderProxyController) {
 
                 this.extractedContent = content;
                 this.metadata = metadata;
+                
+                // Cache performance-sensitive values for terminals
+                this._contentSize = Math.round(JSON.stringify(content).length / 1024);
+                this._elementCount = 0; // Will be updated after DOM creation
 
                 const mainContent = this.container?.querySelector('.vibe-content');
                 if (!mainContent) {
@@ -389,6 +393,11 @@ if (window.__vibeReaderProxyController) {
 
                 this.updateTerminalsWithContent(metadata);
                 this.initializeEffects();
+                
+                // Update element count after DOM is created
+                setTimeout(() => {
+                    this._elementCount = this.container ? this.container.querySelectorAll('*').length : 0;
+                }, 100);
 
             } catch (error) {
                 console.error('❌ Failed to display content:', error);
@@ -788,8 +797,10 @@ if (window.__vibeReaderProxyController) {
 
             if (leftTerminal) {
                 const status = this.extractedContent ? 'ACTIVE' : 'STANDBY';
-                const memUsage = this.extractedContent ? Math.round(JSON.stringify(this.extractedContent).length / 1024) : 0;
-                const elementCount = this.container ? this.container.querySelectorAll('*').length : 0;
+                // Cache content size to avoid repeated JSON.stringify
+                const memUsage = this.extractedContent ? (this._contentSize || 0) : 0;
+                // Cache element count to avoid repeated DOM queries
+                const elementCount = this._elementCount || 0;
                 
                 leftTerminal.innerHTML = [
                     '> VIBE READER v2.0',
@@ -804,11 +815,17 @@ if (window.__vibeReaderProxyController) {
                 const hiddenTabStatus = this.extractedContent ? 'CONNECTED' : 'INITIALIZING';
                 const wordCount = this.metadata?.length || 0;
                 const readTime = Math.max(1, Math.ceil(wordCount / 200));
-                const domain = new URL(window.location.href).hostname;
+                // Safe domain extraction with error handling
+                let domain = 'unknown';
+                try {
+                    domain = new URL(window.location.href).hostname.substring(0, 20);
+                } catch (e) {
+                    domain = window.location.hostname || 'localhost';
+                }
                 
                 rightTerminal.innerHTML = [
                     `> PROXY: ${hiddenTabStatus}`,
-                    `> DOMAIN: ${domain.substring(0, 20)}`,
+                    `> DOMAIN: ${domain}`,
                     `> WORDS: ${wordCount}`,
                     `> READ: ${readTime}min`,
                     `> THEME: ${this.settings.theme?.toUpperCase() || 'NIGHTDRIVE'}`
