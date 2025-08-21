@@ -1,6 +1,6 @@
 # 🔥 Matrix Reader - Retrofuture Web Extension 🔥
 
-Transform any webpage into a **90s cyberpunk retrofuture reading experience** with **Imagus-style image previews** and classic synthwave aesthetics.
+Transform any webpage into a **90s cyberpunk retrofuture reading experience** with classic synthwave aesthetics.
 
 ![Matrix Reader Preview](https://img.shields.io/badge/Status-v2.0%20Architecture%20Update-orange?style=for-the-badge&logo=firefox&logoColor=white)
 ![Architecture](https://img.shields.io/badge/Architecture-Hidden%20Tab%20Proxy-blue?style=for-the-badge&logo=buffer&logoColor=white)
@@ -13,11 +13,6 @@ Transform any webpage into a **90s cyberpunk retrofuture reading experience** wi
 - **Scanline effects** and authentic CRT monitor aesthetics
 - **Four synthwave themes** (Nightdrive, Neon Surge, Outrun Storm, Strange Days)
 
-### 📸 **Imagus-Style Image Preview**
-- **Hover to preview** images instantly without clicking
-- **Smart positioning** that stays within viewport bounds
-- **File information** display with dimensions and filename
-- **Keyboard shortcuts** (Escape to close previews)
 
 ### 📊 **Advanced Table Handling**
 - **Complex table detection** automatically identifies large or nested tables
@@ -122,7 +117,6 @@ Transform any webpage into a **90s cyberpunk retrofuture reading experience** wi
 Click the Matrix Reader icon to open settings:
 
 - **🎭 Visual Theme** - Choose from 4 synthwave aesthetics
-- **📸 Image Preview** - Toggle Imagus-style hover previews  
 - **📜 Terminal Panels** - Show/hide side information panels
 - **🌧️ Matrix Rain** - Optional background digital rain effect
 - **🚀 Auto-Activate** - Automatically transform pages on load
@@ -283,7 +277,7 @@ Click the Matrix Reader icon to open settings:
 │  │  ┌─────────────────┐    ┌─────────────────────────────────┐ │ │
 │  │  │ readability.js  │    │       image-preview.js          │ │ │
 │  │  │                 │    │                                 │ │ │
-│  │  │ • Mozilla's     │    │ • Imagus-style hover preview   │ │ │
+│  │  │ • Mozilla's     │    │ • Click-to-load placeholders    │ │ │
 │  │  │   content       │    │ • Smart positioning            │ │ │
 │  │  │   extraction    │    │ • Viewport bounds detection    │ │ │
 │  │  │ • Article       │    │ • Keyboard navigation          │ │ │
@@ -336,7 +330,6 @@ Click the Matrix Reader icon to open settings:
 
 ### **Libraries Used**
 - **Readability.js** - Mozilla's content extraction library
-- **Custom Image Preview** - Imagus-inspired hover preview system
 - **CSS Grid & Flexbox** - Responsive retrofuture layout
 
 ### **Browser Compatibility**
@@ -352,7 +345,7 @@ matrix-reader-extension/
 ├── background.js              # Extension lifecycle
 ├── lib/
 │   ├── readability.js         # Content extraction
-│   └── image-preview.js       # Imagus-style previews
+│   └── (moved to legacy/)
 ├── styles/
 │   └── retrofuture-theme.css  # 90s cyberpunk aesthetics
 ├── popup/
@@ -382,7 +375,6 @@ matrix-reader-extension/
 - **Inspiration**: Classic 90s web design, Blade Runner, The Matrix
 - **Color Schemes**: Based on synthwave and outrun aesthetics  
 - **Typography**: VT323, Share Tech Mono, Orbitron fonts
-- **Image Preview**: Inspired by the amazing Imagus extension
 
 ---
 

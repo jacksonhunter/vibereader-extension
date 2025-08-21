@@ -6,7 +6,7 @@
   
   "applications": {
     "gecko": {
-      "id": "matrix-reader@nightdrive.dev"
+      "id": "vibe-reader@nightdrive.dev"
     }
   },
   
@@ -34,8 +34,9 @@
     }
   },
   
+  
   "commands": {
-    "toggle-matrix-mode": {
+    "toggle-vibe-mode": {
       "suggested_key": {
         "default": "Ctrl+Shift+M"
       },
@@ -48,6 +49,7 @@
     "fonts/*",
     "assets/*",
     "lib/readability.js",
+    "lib/aalib.js",
     "stealth-extractor.js",
     "proxy-controller.js"
   ],

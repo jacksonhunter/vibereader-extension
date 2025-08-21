@@ -1,14 +1,14 @@
-// Matrix Reader Popup - JavaScript Controller
-// Manages the popup interface and settings
+// VibeReader Popup - JavaScript Controller
+// vibeReader.popup() // Manages the popup interface and settings
 
-class MatrixReaderPopup {
+class VibeReaderPopup {
     constructor() {
         this.currentTab = null;
         this.settings = {
             theme: 'nightdrive',
             asciiImages: true,
             sideScrolls: true,
-            matrixRain: true,
+            vibeRain: true,
             autoActivate: false
         };
         
@@ -16,7 +16,7 @@ class MatrixReaderPopup {
     }
     
     async init() {
-        // Get current tab
+        // Get current tab f
         this.currentTab = await this.getCurrentTab();
         
         // Load settings
@@ -35,7 +35,7 @@ class MatrixReaderPopup {
     setupEventListeners() {
         // Toggle button
         document.getElementById('toggle-btn').addEventListener('click', () => {
-            this.toggleMatrixMode();
+            this.toggleVibeMode();
         });
         
         // Theme cycle button
@@ -61,8 +61,8 @@ class MatrixReaderPopup {
             this.updateSetting('sideScrolls', e.target.checked);
         });
         
-        document.getElementById('matrix-rain').addEventListener('change', (e) => {
-            this.updateSetting('matrixRain', e.target.checked);
+        document.getElementById('vibe-rain').addEventListener('change', (e) => {
+            this.updateSetting('vibeRain', e.target.checked);
         });
         
         document.getElementById('auto-activate').addEventListener('change', (e) => {
@@ -98,9 +98,9 @@ class MatrixReaderPopup {
     
     async loadSettings() {
         try {
-            const result = await browser.storage.sync.get('matrixReaderSettings');
-            if (result.matrixReaderSettings) {
-                this.settings = { ...this.settings, ...result.matrixReaderSettings };
+            const result = await browser.storage.sync.get('vibeReaderSettings');
+            if (result.vibeReaderSettings) {
+                this.settings = { ...this.settings, ...result.vibeReaderSettings };
             }
             this.updateSettingsUI();
         } catch (error) {
@@ -111,7 +111,7 @@ class MatrixReaderPopup {
     
     async saveSettings() {
         try {
-            await browser.storage.sync.set({ matrixReaderSettings: this.settings });
+            await browser.storage.sync.set({ vibeReaderSettings: this.settings });
         } catch (error) {
             console.error('Failed to save settings:', error);
         }
@@ -121,7 +121,7 @@ class MatrixReaderPopup {
         document.getElementById('theme-select').value = this.settings.theme;
         document.getElementById('ascii-images').checked = this.settings.asciiImages;
         document.getElementById('side-scrolls').checked = this.settings.sideScrolls;
-        document.getElementById('matrix-rain').checked = this.settings.matrixRain;
+        document.getElementById('vibe-rain').checked = this.settings.vibeRain;
         document.getElementById('auto-activate').checked = this.settings.autoActivate;
     }
     
@@ -147,7 +147,7 @@ class MatrixReaderPopup {
     async updateStatus() {
         if (!this.currentTab) return;
         
-        // Check if Matrix Reader is active on current tab
+        // Check if VibeReader is active on current tab
         try {
             const response = await browser.tabs.sendMessage(this.currentTab.id, { action: 'getStatus' });
             this.setStatus(response?.active || false);
@@ -167,19 +167,19 @@ class MatrixReaderPopup {
         if (isActive) {
             statusIndicator.classList.add('active');
             statusIcon.textContent = '🔥';
-            statusText.textContent = 'MATRIX ACTIVE';
-            toggleBtnText.textContent = 'DEACTIVATE';
+            statusText.textContent = 'VIBES ACTIVE';
+            toggleBtnText.textContent = '.kill()';
             toggleBtn.classList.add('neon-pulse');
         } else {
             statusIndicator.classList.remove('active');
             statusIcon.textContent = '⚡';
             statusText.textContent = 'STANDBY';
-            toggleBtnText.textContent = 'ACTIVATE MATRIX';
+            toggleBtnText.textContent = '.setVibes()';
             toggleBtn.classList.remove('neon-pulse');
         }
     }
     
-    async toggleMatrixMode() {
+    async toggleVibeMode() {
         if (!this.currentTab) return;
         
         // Show loading state
@@ -191,15 +191,13 @@ class MatrixReaderPopup {
         toggleBtn.disabled = true;
         
         try {
-            // Send toggle message to content script
-            const response = await browser.tabs.sendMessage(this.currentTab.id, { action: 'toggle' });
-            this.setStatus(response?.status || false);
+            // Close popup to avoid blocking the activation
+            window.close();
             
-            // Reset button state
-            toggleBtn.disabled = false;
+            // Let the background script handle the activation
+            // This will trigger the same logic as clicking the browser action
+            browser.runtime.sendMessage({ action: 'toggleFromPopup', tabId: this.currentTab.id });
             
-            // Add success effect
-            this.addSuccessEffect(toggleBtn);
         } catch (error) {
             console.error('Toggle failed:', error);
             toggleBtnText.textContent = originalText;
@@ -251,7 +249,7 @@ class MatrixReaderPopup {
             theme: 'nightdrive',
             asciiImages: true,
             sideScrolls: true,
-            matrixRain: true,
+            vibeRain: true,
             autoActivate: false
         };
         
@@ -278,17 +276,17 @@ class MatrixReaderPopup {
     
     showHelp() {
         const helpText = `
-🔥 MATRIX READER HELP 🔥
+🔥 VIBE READER HELP 🔥
 
 ACTIVATION:
-• Click "ACTIVATE MATRIX" or use Ctrl+Shift+M
-• Transforms any webpage into cyberpunk reader mode
+• Click ".setVibes()" or use Ctrl+Shift+M
+• vibeReader.init() // transforms any webpage into cyberpunk mode
 
 FEATURES:
 🎭 Visual Themes - 4 synthwave aesthetics
 📸 ASCII Images - Converts images to text art
 📜 Side Scrolls - Live metadata streams
-🌧️ Matrix Rain - Background digital rain effect
+🌧️ Vibe Rain - Background digital rain effect
 
 CONTROLS:
 🎨 THEME - Cycle through visual themes
@@ -296,7 +294,7 @@ CONTROLS:
 🔄 RESET - Restore default settings
 
 HOTKEYS:
-Ctrl+Shift+M - Toggle Matrix Reader
+Ctrl+Shift+M - vibeReader.setVibes()
         `.trim();
         
         alert(helpText);
@@ -304,21 +302,21 @@ Ctrl+Shift+M - Toggle Matrix Reader
     
     showAbout() {
         const aboutText = `
-🔥 MATRIX READER v1.0.0 🔥
+🔥 VIBE READER v2.0.0 🔥
 
-Transform any webpage into a cyberpunk reading experience with synthwave aesthetics, ASCII art, and matrix effects.
+vibeReader.setVibes() // Transform any webpage into a cyberpunk coding aesthetic with hidden tab proxy architecture
 
 FEATURES:
 ✨ 4 unique synthwave themes
 ✨ Real-time ASCII image conversion
 ✨ Live metadata side-scrollers
-✨ Matrix rain background effects
+✨ Vibe rain background effects
 ✨ Glitch text animations
 ✨ Neon glow effects
 
 Created with love for cyberpunk enthusiasts.
 
-🚀 Enter the Matrix. Read the Future. 🚀
+🚀 vibeReader.init() // Enter the code. Read the vibes. 🚀
         `.trim();
         
         alert(aboutText);
@@ -402,8 +400,8 @@ document.head.appendChild(style);
 // Initialize popup when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        new MatrixReaderPopup();
+        new VibeReaderPopup();
     });
 } else {
-    new MatrixReaderPopup();
+    new VibeReaderPopup();
 }

@@ -1,4 +1,4 @@
-// Matrix Reader v2.0 - Stealth Content Extractor
+// VibeReader v2.0 - Stealth Content Extractor
 // Runs in hidden tab to extract clean content after full page load
 
 class StealthExtractor {
@@ -11,6 +11,8 @@ class StealthExtractor {
     }
     
     init() {
+        console.log('🕵️ StealthExtractor.init() // initializing in tab:', window.location.href);
+        
         // Listen for extraction commands from background script
         browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
             this.handleMessage(request, sender, sendResponse);
@@ -22,6 +24,8 @@ class StealthExtractor {
         
         // Report initialization
         this.reportProgress('initialized', 0);
+        
+        console.log('🕵️ StealthExtractor.init() // ready for extraction commands');
     }
     
     detectFramework() {
@@ -58,10 +62,12 @@ class StealthExtractor {
     
     async startExtraction(config, sendResponse) {
         try {
+            console.log('🕵️ StealthExtractor.startExtraction() // starting extraction in hidden tab:', window.location.href);
             this.reportProgress('waiting_for_framework', 10);
             
             // Step 1: Wait for framework to fully hydrate
             if (config.waitForFramework) {
+                console.log('🕵️ StealthExtractor.startExtraction() // waiting for framework:', this.frameworkDetected);
                 await this.waitForFramework();
             }
             
@@ -80,12 +86,15 @@ class StealthExtractor {
             this.reportProgress('extracting', 80);
             
             // Step 4: Extract content with Readability
+            console.log('🕵️ StealthExtractor.startExtraction() // extracting content with Readability.js');
             const extractedContent = this.extractContent();
             
             if (extractedContent && extractedContent.content) {
+                console.log('🕵️ StealthExtractor.startExtraction() // content extracted successfully, length:', extractedContent.content.length);
                 this.reportProgress('complete', 100);
                 
                 // Send extracted content back to background script
+                console.log('🕵️ StealthExtractor.startExtraction() // sending content to background script');
                 browser.runtime.sendMessage({
                     action: 'contentExtracted',
                     content: extractedContent.content,
@@ -270,25 +279,43 @@ class StealthExtractor {
     
     extractContent() {
         try {
-            // Clone the document for Readability
+            // Check if Readability is available
+            if (typeof Readability === 'undefined') {
+                console.error('🕵️ StealthExtractor.extractContent() // Readability.js not loaded, using fallback');
+                return this.fallbackExtraction();
+            }
+            
+            // Clone the document for Readability (deep clone required)
             const documentClone = document.cloneNode(true);
             
             // Pre-process to improve extraction
             this.preprocessDocument(documentClone);
             
-            // Use Readability.js to extract content
-            const reader = new Readability(documentClone);
+            // Use the real Mozilla Readability.js with proper options
+            console.log('🕵️ StealthExtractor.extractContent() // creating Readability instance');
+            const reader = new Readability(documentClone, {
+                debug: false,
+                maxElemsToParse: 0, // No limit for stealth extraction
+                nbTopCandidates: 5,
+                charThreshold: 500,
+                classesToPreserve: ['caption', 'emoji', 'hidden'],
+                keepClasses: true
+            });
+            
             const article = reader.parse();
             
             if (article && article.content) {
+                console.log('🕵️ StealthExtractor.extractContent() // Readability.js extraction successful');
                 // Post-process extracted content
                 article.content = this.postprocessContent(article.content);
+                return article;
+            } else {
+                console.warn('🕵️ StealthExtractor.extractContent() // Readability.js returned null, trying fallback');
+                return this.fallbackExtraction();
             }
             
-            return article;
-            
         } catch (error) {
-            console.error('Readability extraction failed:', error);
+            console.error('🕵️ StealthExtractor.extractContent() // Readability extraction failed:', error);
             // Fallback to basic extraction
             return this.fallbackExtraction();
         }
@@ -307,11 +334,58 @@ class StealthExtractor {
             '.popup',
             '.modal',
             '[class*="subscribe"]',
-            '[class*="newsletter"]'
+            '[class*="newsletter"]',
+            // Navigation and layout tables (common in legacy sites)
+            'table[border="0"][cellpadding="0"][cellspacing="0"]',
+            'table[border="0"][cellpadding="5"][cellspacing="0"]',
+            'nobr', // Legacy no-break tags
+            'center', // Legacy center tags
+            // Common ad-related patterns
+            '[*="ad"], [*="banner"], [*="sponsor"]',
+            'table[width="488"][height="60"]', // Specific ad table dimensions
+            // Footer and legal content
+            '.footer-links',
+            'font[size="-1"]'
         ];
         
         selectorsToRemove.forEach(selector => {
-            doc.querySelectorAll(selector).forEach(el => el.remove());
+            try {
+                doc.querySelectorAll(selector).forEach(el => el.remove());
+            } catch (e) {
+                // Skip invalid selectors
+                console.warn('Invalid selector:', selector);
+            }
+        });
+        
+        // Remove navigation tables with image links only
+        doc.querySelectorAll('table').forEach(table => {
+            const cells = table.querySelectorAll('td');
+            const imageLinks = table.querySelectorAll('a img');
+            
+            // If table is mostly image links for navigation, remove it
+            if (cells.length > 3 && imageLinks.length > cells.length * 0.6) {
+                console.log('🗑️ Removing navigation table with', imageLinks.length, 'image links');
+                table.remove();
+            }
+        });
+        
+        // Remove tables that contain mostly empty cells or just whitespace
+        doc.querySelectorAll('table').forEach(table => {
+            const cells = table.querySelectorAll('td, th');
+            let emptyCount = 0;
+            
+            cells.forEach(cell => {
+                const text = cell.textContent.trim();
+                if (!text || text.length < 5) {
+                    emptyCount++;
+                }
+            });
+            
+            // If more than 70% of cells are empty, remove the table
+            if (cells.length > 0 && emptyCount / cells.length > 0.7) {
+                console.log('🗑️ Removing mostly empty table');
+                table.remove();
+            }
         });
         
         // Expand collapsed content
@@ -356,20 +430,101 @@ class StealthExtractor {
     }
     
     fallbackExtraction() {
-        // Basic extraction when Readability fails
-        const content = document.querySelector('main, article, [role="main"], .content, #content');
+        console.log('🕵️ StealthExtractor.fallbackExtraction() // attempting basic content extraction');
+        
+        // Try multiple content selectors in order of preference
+        const contentSelectors = [
+            'main',
+            'article', 
+            '[role="main"]',
+            '.main-content',
+            '.content',
+            '#content',
+            '.post-content',
+            '.entry-content',
+            '.article-content',
+            '.story-body',
+            '.article-body'
+        ];
+        
+        let content = null;
+        for (const selector of contentSelectors) {
+            content = document.querySelector(selector);
+            if (content && content.textContent.trim().length > 200) {
+                console.log(`🕵️ StealthExtractor.fallbackExtraction() // found content using selector: ${selector}`);
+                break;
+            }
+        }
+        
+        // If still no content, try to find the largest text block
+        if (!content) {
+            console.log('🕵️ StealthExtractor.fallbackExtraction() // no semantic selectors worked, finding largest text block');
+            const allElements = document.querySelectorAll('div, section, p');
+            let largestElement = null;
+            let largestTextLength = 0;
+            
+            allElements.forEach(el => {
+                const textLength = el.textContent.trim().length;
+                if (textLength > largestTextLength && textLength > 500) {
+                    largestElement = el;
+                    largestTextLength = textLength;
+                }
+            });
+            
+            content = largestElement;
+        }
         
         if (content) {
+            const textContent = content.textContent.trim();
+            console.log(`🕵️ StealthExtractor.fallbackExtraction() // extracted ${textContent.length} characters`);
+            
             return {
-                title: document.title,
+                title: document.title || 'Untitled',
+                byline: this.extractByline(),
                 content: content.innerHTML,
-                excerpt: content.textContent.substring(0, 200),
-                length: content.textContent.length,
-                siteName: window.location.hostname
+                excerpt: textContent.substring(0, 300),
+                length: textContent.length,
+                siteName: this.extractSiteName(),
+                textContent: textContent
             };
         }
         
+        console.error('🕵️ StealthExtractor.fallbackExtraction() // no content found');
         return null;
+    }
+    
+    extractByline() {
+        const bylineSelectors = [
+            '[rel="author"]',
+            '.author',
+            '.byline', 
+            '.writer',
+            '.journalist',
+            'meta[name="author"]'
+        ];
+        
+        for (const selector of bylineSelectors) {
+            const element = document.querySelector(selector);
+            if (element) {
+                return element.textContent || element.getAttribute('content') || '';
+            }
+        }
+        
+        return '';
+    }
+    
+    extractSiteName() {
+        // Try meta tags first
+        const siteNameMeta = document.querySelector('meta[property="og:site_name"]') ||
+                           document.querySelector('meta[name="application-name"]') ||
+                           document.querySelector('meta[name="apple-mobile-web-app-title"]');
+        
+        if (siteNameMeta) {
+            return siteNameMeta.getAttribute('content');
+        }
+        
+        // Fallback to hostname
+        return window.location.hostname;
     }
     
     executeProxyCommand(command, data, sendResponse) {
@@ -425,4 +580,4 @@ class StealthExtractor {
 }
 
 // Initialize the stealth extractor
-new StealthExtractor();
+void new StealthExtractor();

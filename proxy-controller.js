@@ -10,9 +10,9 @@ class ProxyController {
         this.isActive = false;
         this.settings = {
             theme: 'nightdrive',
-            imagePreview: true,
             sideScrolls: true,
-            matrixRain: false
+            vibeRain: false,
+            mediaMode: 'emoji' // 'emoji', 'ascii', 'normal'
         };
         this.init();
     }
@@ -55,16 +55,50 @@ class ProxyController {
                 this.handleHiddenTabClosed(request.error);
                 break;
                 
+            case 'updateSettings':
+                this.updateSettings(request.settings);
+                sendResponse({ success: true });
+                break;
+                
+            case 'getStatus':
+                sendResponse({ active: this.isActive });
+                break;
+                
             default:
                 console.warn('Unknown message:', request);
         }
     }
     
     async loadSettings() {
-        const result = await browser.storage.sync.get('matrixReaderSettings');
-        if (result.matrixReaderSettings) {
-            this.settings = { ...this.settings, ...result.matrixReaderSettings };
+        const result = await browser.storage.sync.get('vibeReaderSettings');
+        if (result.vibeReaderSettings) {
+            this.settings = { ...this.settings, ...result.vibeReaderSettings };
             this.currentTheme = this.settings.theme || 'nightdrive';
+        }
+    }
+    
+    updateSettings(newSettings) {
+        this.settings = { ...this.settings, ...newSettings };
+        this.currentTheme = this.settings.theme || 'nightdrive';
+        
+        // Apply theme change immediately
+        this.applyTheme(this.currentTheme);
+        
+        // Update button texts
+        this.updateButtonTexts();
+        
+        // Update vibe rain if setting changed
+        if (this.container) {
+            const rainContainer = this.container.querySelector('.vibe-rain-container');
+            if (this.settings.vibeRain && !rainContainer) {
+                // Add rain container if enabled
+                const newRain = document.createElement('div');
+                newRain.className = 'vibe-rain-container';
+                this.container.querySelector('.vibe-reader-overlay').appendChild(newRain);
+            } else if (!this.settings.vibeRain && rainContainer) {
+                // Remove rain container if disabled
+                rainContainer.remove();
+            }
         }
     }
     
@@ -74,7 +108,7 @@ class ProxyController {
         // Hide original page content completely
         this.hideOriginalContent();
         
-        // Create Matrix Reader interface
+        // Create VibeReader interface
         this.createInterface();
         
         // Show loading state
@@ -88,6 +122,13 @@ class ProxyController {
     }
     
     hideOriginalContent() {
+        // Ensure proper DOCTYPE to prevent quirks mode
+        if (!document.doctype) {
+            console.log('🔧 ProxyController.hideOriginalContent() // adding missing DOCTYPE');
+            const doctype = document.implementation.createDocumentType('html', '', '');
+            document.insertBefore(doctype, document.documentElement);
+        }
+        
         // Store original page state
         this.originalBodyOverflow = document.body.style.overflow;
         this.originalHtmlOverflow = document.documentElement.style.overflow;
@@ -99,7 +140,7 @@ class ProxyController {
         // Hide all original page elements
         const allElements = document.body.children;
         for (let el of allElements) {
-            if (!el.classList.contains('matrix-reader-container')) {
+            if (!el.classList.contains('vibe-reader-container')) {
                 el.style.display = 'none';
             }
         }
@@ -108,27 +149,29 @@ class ProxyController {
     createInterface() {
         // Create main container
         this.container = document.createElement('div');
-        this.container.className = 'matrix-reader-container matrix-reader-proxy';
+        this.container.className = 'vibe-reader-container vibe-reader-proxy';
         this.container.setAttribute('data-theme', this.currentTheme);
         
         // Create loading interface
         this.container.innerHTML = `
-            <div class="matrix-reader-overlay">
-                <div class="matrix-header">
-                    <div class="matrix-header-left">
-                        <span class="matrix-brand">▓▓ VIBE READER v2.0 ▓▓</span>
-                        <span class="matrix-status">[ BACKGROUND PROCESS ]</span>
+            <div class="vibe-reader-overlay">
+                <div class="vibe-header">
+                    <div class="vibe-header-left">
+                        <span class="vibe-brand">▓▓ VIBE READER v2.0 ▓▓</span>
+                        <span class="vibe-status">[ BACKGROUND PROCESS ]</span>
                     </div>
-                    <div class="matrix-header-right">
-                        <button class="matrix-btn theme-btn" title="Cycle Theme">🎨 .setTheme()</button>
-                        <button class="matrix-btn disconnect-btn" title="vibeReader.kill()">⚡ .kill()</button>
+                    <div class="vibe-header-right">
+                        <button class="vibe-btn media-btn" title="Toggle Media Mode">📺 .media()</button>
+                        <button class="vibe-btn load-all-btn" title="Load All Media">📥 .loadAll()</button>
+                        <button class="vibe-btn theme-btn" title="Cycle Theme">🎨 .setTheme()</button>
+                        <button class="vibe-btn disconnect-btn" title="vibeReader.kill()">⚡ .kill()</button>
                     </div>
                 </div>
                 
-                <div class="matrix-layout">
+                <div class="vibe-layout">
                     ${this.settings.sideScrolls ? this.createSidePanels() : ''}
                     
-                    <main class="matrix-content">
+                    <main class="vibe-content">
                         <div class="extraction-progress">
                             <div class="cyber-loader">
                                 <div class="cyber-loader-bar"></div>
@@ -142,7 +185,7 @@ class ProxyController {
                     </main>
                 </div>
                 
-                ${this.settings.matrixRain ? '<div class="matrix-rain"></div>' : ''}
+                ${this.settings.vibeRain ? '<div class="vibe-rain-container"></div>' : ''}
             </div>
         `;
         
@@ -153,11 +196,14 @@ class ProxyController {
         
         // Apply theme
         this.applyTheme(this.currentTheme);
+        
+        // Initialize effects
+        this.initializeEffects();
     }
     
     createSidePanels() {
         return `
-            <aside class="matrix-sidebar left-panel">
+            <aside class="vibe-sidebar left-panel">
                 <div class="terminal-window">
                     <div class="terminal-header">
                         <span class="terminal-title">▓ SYSTEM INFO ▓</span>
@@ -176,7 +222,7 @@ class ProxyController {
                 </div>
             </aside>
             
-            <aside class="matrix-sidebar right-panel">
+            <aside class="vibe-sidebar right-panel">
                 <div class="terminal-window">
                     <div class="terminal-header">
                         <span class="terminal-title">▓ NETWORK STATUS ▓</span>
@@ -197,6 +243,18 @@ class ProxyController {
     }
     
     setupEventHandlers() {
+        // Media mode button
+        const mediaBtn = this.container.querySelector('.media-btn');
+        if (mediaBtn) {
+            mediaBtn.addEventListener('click', () => this.cycleMediaMode());
+        }
+        
+        // Load all media button
+        const loadAllBtn = this.container.querySelector('.load-all-btn');
+        if (loadAllBtn) {
+            loadAllBtn.addEventListener('click', () => this.loadAllMedia());
+        }
+        
         // Theme button
         const themeBtn = this.container.querySelector('.theme-btn');
         if (themeBtn) {
@@ -302,12 +360,12 @@ class ProxyController {
         this.extractedContent = content;
         this.metadata = metadata;
         
-        const mainContent = this.container.querySelector('.matrix-content');
+        const mainContent = this.container.querySelector('.vibe-content');
         if (!mainContent) return;
         
         // Clear loading state
         mainContent.innerHTML = `
-            <article class="matrix-article">
+            <article class="vibe-article">
                 <header class="article-header">
                     <h1 class="article-title glitch" data-text="${this.escapeHtml(metadata.title || 'UNTITLED')}">
                         ${this.escapeHtml(metadata.title || 'UNTITLED')}
@@ -340,6 +398,10 @@ class ProxyController {
         
         // Update terminals with success info
         this.updateTerminalsWithContent(metadata);
+        
+        // Update button texts and reinitialize effects
+        this.updateButtonTexts();
+        this.initializeEffects();
     }
     
     processContent(html) {
@@ -378,28 +440,266 @@ class ProxyController {
     }
     
     processImages() {
-        const images = this.container.querySelectorAll('.article-content img');
-        images.forEach(img => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'image-wrapper';
-            
-            const placeholder = document.createElement('div');
-            placeholder.className = 'image-placeholder';
-            placeholder.innerHTML = `
-                <div class="placeholder-content">
-                    <span class="placeholder-icon">📷</span>
-                    <span class="placeholder-text">[ CLICK TO LOAD IMAGE ]</span>
+        const allMedia = this.container.querySelectorAll('.article-content img, .article-content video');
+        allMedia.forEach(media => this.createMediaWrapper(media));
+    }
+    
+    createMediaWrapper(mediaElement) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'media-wrapper';
+        wrapper.setAttribute('data-mode', this.settings.mediaMode);
+        
+        const originalSrc = mediaElement.src || mediaElement.getAttribute('data-src');
+        const isVideo = mediaElement.tagName === 'VIDEO';
+        
+        // Store original element for mode switching
+        wrapper._originalElement = mediaElement.cloneNode(true);
+        wrapper._originalSrc = originalSrc;
+        wrapper._isVideo = isVideo;
+        
+        // Create the current mode display
+        this.updateMediaDisplay(wrapper);
+        
+        // Replace original element
+        mediaElement.parentNode.insertBefore(wrapper, mediaElement);
+        mediaElement.remove();
+    }
+    
+    updateMediaDisplay(wrapper) {
+        const mode = wrapper.getAttribute('data-mode') || this.settings.mediaMode;
+        const isVideo = wrapper._isVideo;
+        const src = wrapper._originalSrc;
+        
+        // Clear existing content
+        wrapper.innerHTML = '';
+        
+        switch (mode) {
+            case 'emoji':
+                wrapper.innerHTML = this.createEmojiDisplay(isVideo);
+                break;
+            case 'ascii':
+                wrapper.innerHTML = this.createAsciiDisplay(isVideo, src);
+                break;
+            case 'normal':
+                wrapper.innerHTML = this.createNormalDisplay(wrapper._originalElement);
+                break;
+        }
+        
+        // Add click handler for mode cycling
+        wrapper.addEventListener('click', () => this.cycleMediaItem(wrapper));
+    }
+    
+    createEmojiDisplay(isVideo) {
+        const emojis = {
+            image: ['🖼️', '📸', '🎨', '🖥️', '📱'],
+            video: ['📹', '🎬', '🎞️', '📺', '🔴']
+        };
+        
+        const emojiSet = isVideo ? emojis.video : emojis.image;
+        const emoji = emojiSet[Math.floor(Math.random() * emojiSet.length)];
+        
+        return `
+            <div class="media-emoji-display">
+                <div class="emoji-icon cyber-glow">${emoji}</div>
+                <div class="media-label">${isVideo ? 'VIDEO' : 'IMAGE'}</div>
+                <div class="mode-hint">CLICK TO CYCLE MODES</div>
+            </div>
+        `;
+    }
+    
+    createAsciiDisplay(isVideo, src) {
+        const placeholder = `
+            <div class="media-ascii-display">
+                <div class="ascii-content">
+                    <div class="ascii-art loading">
+                        ╔══════════════════════════════╗
+                        ║  ░░░░░░ LOADING ASCII ░░░░░░  ║
+                        ║  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░  ║
+                        ║  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░  ║
+                        ║  ░░░░░░░░ VIBE ░░░░░░░░░░░░░░  ║
+                        ║  ░░░░░░░░ MODE ░░░░░░░░░░░░░░  ║
+                        ║  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░  ║
+                        ╚══════════════════════════════╝
+                    </div>
                 </div>
+                <div class="media-label">ASCII ${isVideo ? 'VIDEO' : 'IMAGE'}</div>
+            </div>
+        `;
+        
+        // If we have aalib and src, convert to ASCII
+        if (src && window.aalib) {
+            setTimeout(() => this.convertToAscii(src, isVideo), 100);
+        }
+        
+        return placeholder;
+    }
+    
+    async convertToAscii(src, isVideo) {
+        try {
+            if (isVideo) {
+                // For videos, create a simple ASCII frame representation
+                const asciiFrame = this.generateVideoAsciiFrame();
+                this.updateAsciiContent(asciiFrame);
+            } else {
+                // For images, use aalib conversion
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const ascii = this.imageToAscii(img);
+                    this.updateAsciiContent(ascii);
+                };
+                img.src = src;
+            }
+        } catch (error) {
+            console.log('ASCII conversion failed, using fallback');
+            this.updateAsciiContent(this.getFallbackAscii(isVideo));
+        }
+    }
+    
+    imageToAscii(img) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Scale to reasonable ASCII size
+        const maxWidth = 80;
+        const maxHeight = 40;
+        const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+        
+        canvas.width = Math.floor(img.width * ratio);
+        canvas.height = Math.floor(img.height * ratio);
+        
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const chars = ' .:-=+*#%@';
+        let ascii = '';
+        
+        for (let y = 0; y < canvas.height; y++) {
+            for (let x = 0; x < canvas.width; x++) {
+                const i = (y * canvas.width + x) * 4;
+                const r = imageData.data[i];
+                const g = imageData.data[i + 1];
+                const b = imageData.data[i + 2];
+                const gray = Math.round((r + g + b) / 3);
+                const charIndex = Math.floor((gray / 255) * (chars.length - 1));
+                ascii += chars[charIndex];
+            }
+            ascii += '\n';
+        }
+        
+        return ascii;
+    }
+    
+    generateVideoAsciiFrame() {
+        return `
+╔════════════════════════════════════════╗
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║  ▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓  ║
+║  ▓░███████████████████████████████░▓  ║
+║  ▓░█                             █░▓  ║
+║  ▓░█        ▶ CYBER VIDEO        █░▓  ║
+║  ▓░█                             █░▓  ║
+║  ▓░█   ░░░░░░░░░░░░░░░░░░░░░░░░   █░▓  ║
+║  ▓░█   ░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░   █░▓  ║
+║  ▓░█   ░▓                  ▓░   █░▓  ║
+║  ▓░█   ░▓   VIBE  READER   ▓░   █░▓  ║
+║  ▓░█   ░▓                  ▓░   █░▓  ║
+║  ▓░█   ░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░   █░▓  ║
+║  ▓░█   ░░░░░░░░░░░░░░░░░░░░░░░░   █░▓  ║
+║  ▓░█                             █░▓  ║
+║  ▓░███████████████████████████████░▓  ║
+║  ▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓  ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+╚════════════════════════════════════════╝
+        `;
+    }
+    
+    getFallbackAscii(isVideo) {
+        if (isVideo) {
+            return this.generateVideoAsciiFrame();
+        } else {
+            return `
+╔══════════════════════════╗
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+║  ▓░░░░░░░░░░░░░░░░░░░░▓  ║
+║  ▓░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▓  ║
+║  ▓░▒                ▒░▓  ║
+║  ▓░▒   CYBER IMAGE   ▒░▓  ║
+║  ▓░▒                ▒░▓  ║
+║  ▓░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▓  ║
+║  ▓░░░░░░░░░░░░░░░░░░░░▓  ║
+║  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ║
+╚══════════════════════════╝
             `;
-            
-            placeholder.addEventListener('click', () => {
-                wrapper.replaceChild(img, placeholder);
-                img.classList.add('cyber-image', 'loaded');
-            });
-            
-            img.parentNode.insertBefore(wrapper, img);
-            wrapper.appendChild(placeholder);
-            img.remove();
+        }
+    }
+    
+    updateAsciiContent(asciiText) {
+        const asciiElements = this.container.querySelectorAll('.ascii-art');
+        asciiElements.forEach(el => {
+            el.textContent = asciiText;
+            el.classList.remove('loading');
+        });
+    }
+    
+    createNormalDisplay(originalElement) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'media-normal-display cyber-frame';
+        
+        const element = originalElement.cloneNode(true);
+        element.classList.add('cyber-media', 'loaded');
+        
+        wrapper.appendChild(element);
+        
+        return wrapper.outerHTML;
+    }
+    
+    cycleMediaItem(wrapper) {
+        const modes = ['emoji', 'ascii', 'normal'];
+        const currentMode = wrapper.getAttribute('data-mode') || this.settings.mediaMode;
+        const currentIndex = modes.indexOf(currentMode);
+        const nextIndex = (currentIndex + 1) % modes.length;
+        const nextMode = modes[nextIndex];
+        
+        // Add glitch transition
+        wrapper.classList.add('media-transition');
+        
+        setTimeout(() => {
+            wrapper.setAttribute('data-mode', nextMode);
+            this.updateMediaDisplay(wrapper);
+            wrapper.classList.remove('media-transition');
+        }, 150);
+    }
+    
+    cycleMediaMode() {
+        const modes = ['emoji', 'ascii', 'normal'];
+        const currentIndex = modes.indexOf(this.settings.mediaMode);
+        const nextIndex = (currentIndex + 1) % modes.length;
+        this.settings.mediaMode = modes[nextIndex];
+        
+        // Update all media displays
+        const mediaWrappers = this.container.querySelectorAll('.media-wrapper');
+        mediaWrappers.forEach(wrapper => {
+            wrapper.setAttribute('data-mode', this.settings.mediaMode);
+            this.updateMediaDisplay(wrapper);
+        });
+        
+        // Save setting
+        browser.storage.sync.set({ vibeReaderSettings: this.settings });
+        
+        // Update media button text
+        const mediaBtn = this.container.querySelector('.media-btn');
+        if (mediaBtn) {
+            const modeNames = { emoji: 'EMOJI', ascii: 'ASCII', normal: 'NORMAL' };
+            mediaBtn.textContent = `📺 ${modeNames[this.settings.mediaMode]}`;
+        }
+    }
+    
+    loadAllMedia() {
+        const mediaWrappers = this.container.querySelectorAll('.media-wrapper');
+        mediaWrappers.forEach(wrapper => {
+            wrapper.setAttribute('data-mode', 'normal');
+            this.updateMediaDisplay(wrapper);
         });
     }
     
@@ -474,7 +774,7 @@ class ProxyController {
     }
     
     cycleTheme() {
-        const themes = ['nightdrive', 'neonsurge', 'outrunstorm', 'strangedays'];
+        const themes = ['nightdrive', 'neon-surge', 'outrun-storm', 'strange-days'];
         const currentIndex = themes.indexOf(this.currentTheme);
         const nextIndex = (currentIndex + 1) % themes.length;
         this.currentTheme = themes[nextIndex];
@@ -483,12 +783,38 @@ class ProxyController {
         
         // Save theme preference
         this.settings.theme = this.currentTheme;
-        browser.storage.sync.set({ matrixReaderSettings: this.settings });
+        browser.storage.sync.set({ vibeReaderSettings: this.settings });
+        
+        // Update button texts
+        this.updateButtonTexts();
     }
     
     applyTheme(themeName) {
         if (this.container) {
             this.container.setAttribute('data-theme', themeName);
+        }
+    }
+    
+    updateButtonTexts() {
+        if (!this.container) return;
+        
+        // Update theme button
+        const themeBtn = this.container.querySelector('.theme-btn');
+        if (themeBtn) {
+            const themeNames = {
+                'nightdrive': 'NIGHTDRIVE',
+                'neon-surge': 'NEON SURGE', 
+                'outrun-storm': 'OUTRUN STORM',
+                'strange-days': 'STRANGE DAYS'
+            };
+            themeBtn.textContent = `🎨 ${themeNames[this.currentTheme]}`;
+        }
+        
+        // Update media button
+        const mediaBtn = this.container.querySelector('.media-btn');
+        if (mediaBtn) {
+            const modeNames = { emoji: 'EMOJI', ascii: 'ASCII', normal: 'NORMAL' };
+            mediaBtn.textContent = `📺 ${modeNames[this.settings.mediaMode]}`;
         }
     }
     
@@ -525,14 +851,14 @@ class ProxyController {
     }
     
     showError(message) {
-        const mainContent = this.container.querySelector('.matrix-content');
+        const mainContent = this.container.querySelector('.vibe-content');
         if (mainContent) {
             mainContent.innerHTML = `
                 <div class="error-display">
                     <div class="error-icon">⚠️</div>
                     <div class="error-title">EXTRACTION ERROR</div>
                     <div class="error-message">${this.escapeHtml(message)}</div>
-                    <button class="matrix-btn retry-btn">RETRY EXTRACTION</button>
+                    <button class="vibe-btn retry-btn">RETRY EXTRACTION</button>
                 </div>
             `;
             
@@ -562,7 +888,57 @@ class ProxyController {
     calculateReadingTime(wordCount) {
         return Math.max(1, Math.ceil(wordCount / 200));
     }
+    
+    initializeEffects() {
+        // Start glitch effects on headings
+        this.startGlitchEffects();
+        
+        // Create matrix rain if enabled
+        if (this.settings.vibeRain) {
+            this.createMatrixRain();
+        }
+    }
+    
+    startGlitchEffects() {
+        // Glitch effect for titles
+        setInterval(() => {
+            const glitchElements = this.container.querySelectorAll('.glitch');
+            glitchElements.forEach(el => {
+                if (Math.random() < 0.1) { // 10% chance
+                    el.classList.add('glitching');
+                    setTimeout(() => {
+                        el.classList.remove('glitching');
+                    }, 300);
+                }
+            });
+        }, 2000);
+    }
+    
+    createMatrixRain() {
+        const rainContainer = this.container.querySelector('.vibe-rain-container');
+        if (!rainContainer) return;
+        
+        const chars = '▓▒░|/\\-_=+*#%@01';
+        const columns = Math.floor(window.innerWidth / 20);
+        
+        for (let i = 0; i < columns; i++) {
+            const drop = document.createElement('div');
+            drop.className = 'matrix-drop';
+            drop.style.left = i * 20 + 'px';
+            drop.style.animationDuration = (Math.random() * 3 + 1) + 's';
+            drop.style.animationDelay = Math.random() * 2 + 's';
+            
+            // Generate random characters
+            let text = '';
+            for (let j = 0; j < Math.floor(Math.random() * 10 + 5); j++) {
+                text += chars[Math.floor(Math.random() * chars.length)] + '<br>';
+            }
+            drop.innerHTML = text;
+            
+            rainContainer.appendChild(drop);
+        }
+    }
 }
 
 // Initialize proxy controller
-new ProxyController();
+void new ProxyController();

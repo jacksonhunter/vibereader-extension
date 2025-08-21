@@ -1,4 +1,4 @@
-/* Matrix Reader - Cyberpunk Synthwave Theme */
+/* VibeReader - Cyberpunk Synthwave Theme */
 /* The ultimate reading experience for cyberpunk enthusiasts */
 
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
@@ -72,7 +72,7 @@
 /* MATRIX READER CONTAINER */
 /* ============================================================================ */
 
-.matrix-reader-container {
+.vibe-reader-container {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -92,7 +92,7 @@
 /* MATRIX RAIN BACKGROUND EFFECT */
 /* ============================================================================ */
 
-.matrix-rain-container {
+.vibe-rain-container {
   position: absolute;
   top: 0;
   left: 0;
@@ -104,7 +104,7 @@
   opacity: 0.3;
 }
 
-.matrix-rain-column {
+.vibe-rain-column {
   position: absolute;
   top: -100px;
   width: 20px;
@@ -115,7 +115,7 @@
   filter: blur(0.5px);
 }
 
-.matrix-rain-column span {
+.vibe-rain-column span {
   display: block;
   line-height: 1.2;
   text-shadow: 0 0 8px var(--secondary);
@@ -130,7 +130,7 @@
 /* MAIN LAYOUT STRUCTURE */
 /* ============================================================================ */
 
-.matrix-layout {
+.vibe-layout {
   position: relative;
   display: grid;
   grid-template-columns: 250px 1fr 250px;
@@ -140,13 +140,13 @@
 }
 
 @media (max-width: 1200px) {
-  .matrix-layout {
+  .vibe-layout {
     grid-template-columns: 200px 1fr 200px;
   }
 }
 
 @media (max-width: 900px) {
-  .matrix-layout {
+  .vibe-layout {
     grid-template-columns: 1fr;
     grid-template-rows: 80px 1fr 80px;
   }
@@ -268,7 +268,7 @@
 /* MAIN CONTENT AREA */
 /* ============================================================================ */
 
-.matrix-content {
+.vibe-content {
   background: linear-gradient(135deg, 
     rgba(var(--bg-primary), 0.95) 0%, 
     rgba(var(--bg-tertiary), 0.8) 50%,
@@ -286,23 +286,23 @@
     inset -10px 0 20px var(--glow-secondary);
 }
 
-.matrix-content::-webkit-scrollbar {
+.vibe-content::-webkit-scrollbar {
   width: 12px;
 }
 
-.matrix-content::-webkit-scrollbar-track {
+.vibe-content::-webkit-scrollbar-track {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
 }
 
-.matrix-content::-webkit-scrollbar-thumb {
+.vibe-content::-webkit-scrollbar-thumb {
   background: linear-gradient(45deg, var(--primary), var(--secondary), var(--accent));
   border-radius: 6px;
   border: 1px solid var(--border-color);
   box-shadow: 0 0 15px var(--glow-primary);
 }
 
-.matrix-content::-webkit-scrollbar-thumb:hover {
+.vibe-content::-webkit-scrollbar-thumb:hover {
   box-shadow: 0 0 25px var(--glow-primary), 0 0 35px var(--glow-secondary);
 }
 
@@ -310,7 +310,7 @@
 /* HEADER SECTION */
 /* ============================================================================ */
 
-.matrix-header {
+.vibe-header {
   text-align: center;
   margin-bottom: 3rem;
   padding: 2rem;
@@ -323,7 +323,7 @@
   overflow: hidden;
 }
 
-.matrix-header::before {
+.vibe-header::before {
   content: '';
   position: absolute;
   top: 0;
@@ -342,7 +342,7 @@
   100% { left: 100%; }
 }
 
-.matrix-title {
+.vibe-title {
   font-family: 'Orbitron', monospace;
   font-weight: 900;
   font-size: clamp(2rem, 5vw, 4rem);
@@ -357,7 +357,7 @@
   position: relative;
 }
 
-.matrix-meta {
+.vibe-meta {
   display: flex;
   justify-content: center;
   gap: 2rem;
@@ -367,7 +367,7 @@
   font-size: 14px;
 }
 
-.matrix-meta span {
+.vibe-meta span {
   color: var(--text-accent);
   padding: 8px 16px;
   background: rgba(var(--text-accent), 0.1);
@@ -386,14 +386,14 @@
 /* ARTICLE CONTENT */
 /* ============================================================================ */
 
-.matrix-article {
+.vibe-article {
   max-width: 800px;
   margin: 0 auto;
   line-height: 1.8;
   position: relative;
 }
 
-.matrix-heading {
+.vibe-heading {
   font-family: 'Orbitron', monospace;
   font-weight: 700;
   background: linear-gradient(45deg, var(--primary), var(--secondary));
@@ -407,7 +407,7 @@
   position: relative;
 }
 
-.matrix-heading::before {
+.vibe-heading::before {
   content: '◢◣';
   position: absolute;
   left: -30px;
@@ -418,7 +418,7 @@
   animation: heading-pulse 2s ease-in-out infinite alternate;
 }
 
-.matrix-heading::after {
+.vibe-heading::after {
   content: '◤◥';
   position: absolute;
   right: -30px;
@@ -434,7 +434,7 @@
   100% { opacity: 1; transform: translateY(-50%) scale(1.2); }
 }
 
-.matrix-paragraph {
+.vibe-paragraph {
   color: var(--text-primary);
   text-shadow: 0 0 3px rgba(var(--text-primary), 0.3);
   margin: 1.5rem 0;
@@ -446,13 +446,13 @@
   transition: all 0.3s ease;
 }
 
-.matrix-paragraph:hover {
+.vibe-paragraph:hover {
   background: rgba(var(--text-primary), 0.05);
   border-left-color: var(--primary);
   box-shadow: 0 0 20px rgba(var(--primary), 0.1);
 }
 
-.matrix-link {
+.vibe-link {
   color: var(--secondary) !important;
   text-decoration: none !important;
   font-weight: 600;
@@ -464,7 +464,7 @@
   position: relative;
 }
 
-.matrix-link:hover {
+.vibe-link:hover {
   color: var(--primary) !important;
   background: rgba(var(--primary), 0.2);
   text-shadow: 0 0 12px var(--primary);
@@ -479,24 +479,24 @@
   color: var(--text-secondary);
 }
 
-.matrix-list {
+.vibe-list {
   margin: 1.5rem 0;
   padding-left: 2rem;
 }
 
-.matrix-list li {
+.vibe-list li {
   color: var(--text-primary);
   margin: 0.8rem 0;
   position: relative;
   text-shadow: 0 0 3px rgba(var(--text-primary), 0.3);
 }
 
-.matrix-list li::marker {
+.vibe-list li::marker {
   color: var(--accent);
   font-weight: bold;
 }
 
-.matrix-code {
+.vibe-code {
   background: rgba(0, 0, 0, 0.8) !important;
   color: var(--accent) !important;
   padding: 1rem !important;
@@ -510,7 +510,7 @@
   position: relative;
 }
 
-.matrix-code::before {
+.vibe-code::before {
   content: '◢◣ MATRIX CODE ◤◥';
   position: absolute;
   top: 5px;
@@ -618,7 +618,7 @@
 /* FOOTER SECTION */
 /* ============================================================================ */
 
-.matrix-footer {
+.vibe-footer {
   margin-top: 4rem;
   padding: 2rem;
   text-align: center;
@@ -655,7 +655,7 @@
 /* CONTROL PANEL */
 /* ============================================================================ */
 
-.matrix-controls {
+.vibe-controls {
   position: fixed;
   top: 20px;
   right: 20px;
@@ -745,27 +745,27 @@
 /* ============================================================================ */
 
 @media (max-width: 768px) {
-  .matrix-content {
+  .vibe-content {
     padding: 1rem;
   }
   
-  .matrix-header {
+  .vibe-header {
     padding: 1rem;
     margin-bottom: 2rem;
   }
   
-  .matrix-title {
+  .vibe-title {
     font-size: 2rem;
     letter-spacing: 2px;
   }
   
-  .matrix-meta {
+  .vibe-meta {
     flex-direction: column;
     gap: 1rem;
   }
   
-  .matrix-heading::before,
-  .matrix-heading::after {
+  .vibe-heading::before,
+  .vibe-heading::after {
     display: none;
   }
   
@@ -774,14 +774,14 @@
     font-size: 10px;
   }
   
-  .matrix-controls {
+  .vibe-controls {
     top: 10px;
     right: 10px;
   }
 }
 
 @media (max-width: 600px) {
-  .matrix-layout {
+  .vibe-layout {
     grid-template-columns: 1fr;
     grid-template-rows: 60px 1fr 60px;
   }
@@ -847,7 +847,7 @@
 /* ACCESSIBILITY IMPROVEMENTS */
 /* ============================================================================ */
 
-.matrix-reader-container {
+.vibe-reader-container {
   /* Reduce motion for users who prefer it */
 }
 
@@ -858,17 +858,203 @@
     transition-duration: 0.01ms !important;
   }
   
-  .matrix-rain-container {
+  .vibe-rain-container {
     display: none;
   }
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-  .matrix-reader-container {
+  .vibe-reader-container {
     --primary: #ff0080;
     --secondary: #00ffff;
     --text-primary: #ffffff;
     --bg-primary: #000000;
+  }
+}
+
+/* ============================================================================ */
+/* MEDIA WRAPPER SYSTEM - 3-MODE DISPLAY */
+/* ============================================================================ */
+
+.media-wrapper {
+  margin: 20px 0;
+  padding: 15px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.media-wrapper:hover {
+  border-color: var(--secondary);
+  box-shadow: 0 0 20px var(--glow-secondary);
+  transform: scale(1.02);
+}
+
+.media-transition {
+  animation: cyber-glitch 0.3s ease-in-out;
+}
+
+@keyframes cyber-glitch {
+  0% { transform: scale(1) skew(0deg); filter: hue-rotate(0deg); }
+  25% { transform: scale(1.05) skew(-2deg); filter: hue-rotate(90deg); }
+  50% { transform: scale(0.95) skew(2deg); filter: hue-rotate(180deg); }
+  75% { transform: scale(1.02) skew(-1deg); filter: hue-rotate(270deg); }
+  100% { transform: scale(1) skew(0deg); filter: hue-rotate(360deg); }
+}
+
+/* EMOJI MODE */
+.media-emoji-display {
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.emoji-icon {
+  font-size: 4em;
+  display: block;
+  margin-bottom: 15px;
+  text-shadow: 0 0 20px var(--glow-primary);
+}
+
+.cyber-glow {
+  animation: emoji-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes emoji-pulse {
+  0% { 
+    text-shadow: 0 0 20px var(--glow-primary);
+    transform: scale(1);
+  }
+  100% { 
+    text-shadow: 0 0 40px var(--glow-primary), 0 0 60px var(--glow-secondary);
+    transform: scale(1.1);
+  }
+}
+
+.media-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.2em;
+  color: var(--primary);
+  text-shadow: 0 0 10px var(--glow-primary);
+  margin-bottom: 10px;
+}
+
+.mode-hint {
+  font-family: 'VT323', monospace;
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* ASCII MODE */
+.media-ascii-display {
+  text-align: center;
+  padding: 20px;
+}
+
+.ascii-content {
+  background: var(--bg-primary);
+  border: 1px solid var(--secondary);
+  border-radius: 4px;
+  padding: 20px;
+  margin-bottom: 15px;
+  overflow-x: auto;
+}
+
+.ascii-art {
+  font-family: 'VT323', monospace;
+  font-size: 0.8em;
+  line-height: 1.2;
+  color: var(--secondary);
+  text-shadow: 0 0 8px var(--glow-secondary);
+  white-space: pre;
+  text-align: left;
+}
+
+.ascii-art.loading {
+  animation: ascii-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes ascii-loading {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* NORMAL MODE */
+.media-normal-display {
+  padding: 10px;
+}
+
+.cyber-frame {
+  border: 2px solid var(--secondary);
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  box-shadow: 
+    inset 0 0 20px rgba(0, 0, 0, 0.5),
+    0 0 20px var(--glow-secondary);
+}
+
+.cyber-media {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  filter: contrast(1.1) saturate(1.2);
+}
+
+.cyber-media.loaded {
+  animation: media-materialize 0.5s ease-out;
+}
+
+@keyframes media-materialize {
+  0% { 
+    opacity: 0; 
+    transform: scale(0.8) rotateX(90deg); 
+    filter: blur(10px);
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1) rotateX(0deg); 
+    filter: blur(0px);
+  }
+}
+
+/* ============================================================================ */
+/* MATRIX RAIN EFFECT */
+/* ============================================================================ */
+
+.vibe-rain-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.3;
+}
+
+.matrix-drop {
+  position: absolute;
+  top: -100px;
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: var(--secondary);
+  text-shadow: 0 0 8px var(--glow-secondary);
+  animation: matrix-fall linear infinite;
+  line-height: 1.2;
+}
+
+@keyframes matrix-fall {
+  0% {
+    transform: translateY(-100px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
   }
 }

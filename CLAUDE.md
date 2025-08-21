@@ -1,13 +1,12 @@
 
 ## Project Overview
-Matrix Reader is a Firefox browser extension that transforms any webpage into a **90s cyberpunk retrofuture reading experience**. It provides an immersive interface with synthwave aesthetics, terminal-style side panels, and Imagus-style image previews.
+Matrix Reader is a Firefox browser extension that transforms any webpage into a **90s cyberpunk retrofuture reading experience**. It provides an immersive interface with synthwave aesthetics and terminal-style side panels.
 
 ## Key Features
 - **90s Retrofuture Interface**: Clean reader mode with cyberpunk web design
 - **Terminal-style side panels**: System info and network status displays  
 - **Scanline effects**: Authentic CRT monitor aesthetics
 - **Four synthwave themes**: Nightdrive, Neon Surge, Outrun Storm, Strange Days
-- **Imagus-style image preview**: Hover to preview images instantly
 - **Readability.js integration**: Clean content extraction
 - **Enhanced typography**: Neon glow effects and retrofuture styling
 - **Keyboard shortcuts**: Ctrl+Shift+M to toggle Matrix Reader mode
@@ -17,7 +16,6 @@ Matrix Reader is a Firefox browser extension that transforms any webpage into a 
 - **Manifest Version**: 2 (Firefox compatible)
 - **Libraries**: 
   - Readability.js (Mozilla's content extraction)
-  - Custom Image Preview system
 - **Styling**: CSS Grid & Flexbox with retrofuture themes
 - **Fonts**: VT323, Share Tech Mono, Orbitron (Google Fonts)
 
@@ -31,7 +29,7 @@ matrix-reader-extension/
 ├── proxy-controller.js       # Bidirectional proxy communication (NEW)  
 ├── lib/
 │   ├── readability.js         # Content extraction library
-│   └── image-preview.js       # Imagus-style preview system
+│   └── (moved to legacy/)
 ├── styles/
 │   ├── retrofuture-theme.css  # 90s cyberpunk aesthetics
 │   └── matrix-theme.css       # Additional matrix styling
@@ -79,8 +77,6 @@ Now focuses on display rather than extraction:
 - `handleUserInteraction()` - Captures events for proxy forwarding
 - `updateFromHiddenTab()` - Receives and displays new content
 
-### ImagePreview (lib/image-preview.js)
-Provides Imagus-style hover image previews with smart positioning.
 
 ## Installation & Development
 
@@ -101,7 +97,6 @@ Provides Imagus-style hover image previews with smart positioning.
 ```javascript
 {
     theme: 'nightdrive',        // Theme selection
-    imagePreview: true,         // Imagus-style previews  
     sideScrolls: true,          // Terminal side panels
     matrixRain: false,          // Optional digital rain
     autoActivate: false,        // Auto-transform pages

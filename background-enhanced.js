@@ -12,7 +12,7 @@ class HiddenTabManager {
     init() {
         // Listen for browser action clicks
         browser.browserAction.onClicked.addListener((tab) => {
-            this.toggleMatrixMode(tab);
+            this.toggleVibeMode(tab);
         });
         
         // Listen for messages from content scripts
@@ -35,17 +35,17 @@ class HiddenTabManager {
         
         // Listen for keyboard commands
         browser.commands.onCommand.addListener((command) => {
-            if (command === 'toggle-matrix-mode') {
+            if (command === 'toggle-vibe-mode') {
                 browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                     if (tabs[0]) {
-                        this.toggleMatrixMode(tabs[0]);
+                        this.toggleVibeMode(tabs[0]);
                     }
                 });
             }
         });
     }
     
-    async toggleMatrixMode(tab) {
+    async toggleVibeMode(tab) {
         const isActive = this.activeTabIds.has(tab.id);
         
         if (isActive) {
@@ -80,15 +80,19 @@ class HiddenTabManager {
             this.activeTabIds.add(tab.id);
             this.updateBadge(tab.id, true);
             
-            // Step 5: Initiate content extraction
-            browser.tabs.sendMessage(hiddenTab.id, {
-                action: 'extractContent',
-                config: {
-                    waitForFramework: true,
-                    simulateScroll: true,
-                    extractDelay: 2000 // Wait 2s for React/Vue hydration
-                }
-            });
+            // Step 5: Initiate content extraction (with delay for script initialization)
+            setTimeout(() => {
+                browser.tabs.sendMessage(hiddenTab.id, {
+                    action: 'extractContent',
+                    config: {
+                        waitForFramework: true,
+                        simulateScroll: true,
+                        extractDelay: 2000 // Wait 2s for React/Vue hydration
+                    }
+                }).catch(error => {
+                    console.error('❌ Failed to send extract message:', error);
+                });
+            }, 500); // Give scripts time to initialize
             
             console.log('✅ vibeReader.init() // background processes active');
             
@@ -120,6 +124,8 @@ class HiddenTabManager {
     }
     
     async createHiddenTab(url) {
+        console.log('🔧 vibeReader.createHiddenTab() // creating hidden tab for:', url);
+        
         // Create hidden tab in background
         const hiddenTab = await browser.tabs.create({
             url: url,
@@ -127,10 +133,13 @@ class HiddenTabManager {
             pinned: true   // Minimize resource usage
         });
         
+        console.log('🔧 vibeReader.createHiddenTab() // hidden tab created with ID:', hiddenTab.id);
+        
         // Wait for tab to be ready
         return new Promise((resolve) => {
             const listener = (tabId, changeInfo) => {
                 if (tabId === hiddenTab.id && changeInfo.status === 'complete') {
+                    console.log('🔧 vibeReader.createHiddenTab() // hidden tab ready:', hiddenTab.id);
                     browser.tabs.onUpdated.removeListener(listener);
                     resolve(hiddenTab);
                 }
@@ -152,14 +161,22 @@ class HiddenTabManager {
     }
     
     async injectProxyController(tabId) {
+        // Inject aalib.js for ASCII conversion
+        await browser.tabs.executeScript(tabId, {
+            file: 'lib/aalib.js'
+        });
+        
         // Inject content display script
         await browser.tabs.executeScript(tabId, {
             file: 'proxy-controller.js'
         });
         
-        // Inject CSS for Matrix Reader interface
+        // Inject CSS for VibeReader interface
         await browser.tabs.insertCSS(tabId, {
             file: 'styles/retrofuture-theme.css'
+        });
+        await browser.tabs.insertCSS(tabId, {
+            file: 'styles/matrix-theme.css'
         });
     }
     
@@ -175,28 +192,41 @@ class HiddenTabManager {
                 
             case 'extractionProgress':
                 this.updateExtractionProgress(request, sender);
+                sendResponse({ success: true });
+                break;
+                
+            case 'toggleFromPopup':
+                // Handle toggle request from popup
+                browser.tabs.get(request.tabId, (tab) => {
+                    if (tab) {
+                        this.toggleVibeMode(tab);
+                    }
+                });
+                sendResponse({ success: true });
                 break;
                 
             case 'updateBadge':
                 if (sender.tab) {
                     this.updateBadge(sender.tab.id, request.active);
                 }
+                sendResponse({ success: true });
                 break;
                 
             case 'getSettings':
-                browser.storage.sync.get('matrixReaderSettings', (result) => {
-                    sendResponse(result.matrixReaderSettings || {});
+                browser.storage.sync.get('vibeReaderSettings', (result) => {
+                    sendResponse(result.vibeReaderSettings || {});
                 });
-                break;
+                return true; // Keep message channel open for async response
                 
             case 'saveSettings':
-                browser.storage.sync.set({ matrixReaderSettings: request.settings }, () => {
+                browser.storage.sync.set({ vibeReaderSettings: request.settings }, () => {
                     sendResponse({ success: true });
                 });
-                break;
+                return true; // Keep message channel open for async response
                 
             case 'logError':
                 console.error('❌ vibeReader.error():', request.error);
+                sendResponse({ success: true });
                 break;
                 
             default:
@@ -256,16 +286,20 @@ class HiddenTabManager {
                 progress: request.progress
             });
             
+            // Send with error handling
             browser.tabs.sendMessage(extractionInfo.visibleTabId, {
                 action: 'extractionProgress',
                 status: request.status,
                 progress: request.progress
+            }).catch(error => {
+                // Proxy controller might not be ready yet, this is ok
+                console.log('Proxy controller not ready for progress update');
             });
         }
     }
     
     handleTabUpdate(tabId, tab) {
-        // Check if this is a visible tab with active Matrix Mode
+        // Check if this is a visible tab with active Vibe Mode
         if (this.activeTabIds.has(tabId)) {
             // Re-inject proxy controller if page was refreshed
             setTimeout(() => {
@@ -329,6 +363,9 @@ class HiddenTabManager {
         browser.tabs.sendMessage(tabId, {
             action: 'showError',
             error: errorMessage
+        }).catch(error => {
+            // Can't send error to user, log it
+            console.error('❌ Could not notify user of error:', errorMessage);
         });
     }
 }
