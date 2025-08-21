@@ -283,10 +283,11 @@ if (window.__vibeReaderProxyController) {
                 <aside class="vibe-sidebar left-panel">
                     <div class="terminal-window">
                         <div class="terminal-header">
-                            <span class="terminal-title">▓ SYSTEM ▓</span>
+                            <span class="terminal-title">▓ SYSADMIN ▓</span>
+                            <div class="led-indicator"></div>
                         </div>
                         <div class="terminal-content" id="left-terminal">
-                            <div class="terminal-line">> INITIALIZING...</div>
+                            <div class="terminal-line">> SYSADMIN INIT...</div>
                         </div>
                     </div>
                 </aside>
@@ -298,10 +299,11 @@ if (window.__vibeReaderProxyController) {
                 <aside class="vibe-sidebar right-panel">
                     <div class="terminal-window">
                         <div class="terminal-header">
-                            <span class="terminal-title">▓ NETWORK ▓</span>
+                            <span class="terminal-title">▓ NETMON ▓</span>
+                            <div class="led-indicator"></div>
                         </div>
                         <div class="terminal-content" id="right-terminal">
-                            <div class="terminal-line">> CONNECTING...</div>
+                            <div class="terminal-line">> NETWORK INIT...</div>
                         </div>
                     </div>
                 </aside>
@@ -796,39 +798,43 @@ if (window.__vibeReaderProxyController) {
             const rightTerminal = this.container?.querySelector('#right-terminal');
 
             if (leftTerminal) {
+                // SYSADMIN: Foreground tab info, readability summary, console output
                 const status = this.extractedContent ? 'ACTIVE' : 'STANDBY';
-                // Cache content size to avoid repeated JSON.stringify
-                const memUsage = this.extractedContent ? (this._contentSize || 0) : 0;
-                // Cache element count to avoid repeated DOM queries
-                const elementCount = this._elementCount || 0;
+                const wordCount = this.metadata?.length || 0;
+                const readTime = Math.max(1, Math.ceil(wordCount / 200));
+                const contentScore = this.metadata?.readabilityScore || 'N/A';
+                const byline = this.metadata?.byline ? this.metadata.byline.substring(0, 15) : 'Unknown';
                 
                 leftTerminal.innerHTML = [
-                    '> VIBE READER v2.0',
+                    '> SYSADMIN CONSOLE',
                     `> STATUS: ${status}`,
-                    `> CONTENT: ${memUsage}KB`,
-                    `> ELEMENTS: ${elementCount}`,
-                    `> TIME: ${new Date().toLocaleTimeString()}`
+                    `> READABILITY: ${contentScore}`,
+                    `> AUTHOR: ${byline}`,
+                    `> WORDS: ${wordCount} (${readTime}min)`,
+                    `> LAST: ${new Date().toLocaleTimeString()}`
                 ].map(line => `<div class="terminal-line">${line}</div>`).join('');
             }
 
             if (rightTerminal) {
+                // NETWORK: Hidden tab info, DOM mutations, background console output
                 const hiddenTabStatus = this.extractedContent ? 'CONNECTED' : 'INITIALIZING';
-                const wordCount = this.metadata?.length || 0;
-                const readTime = Math.max(1, Math.ceil(wordCount / 200));
-                // Safe domain extraction with error handling
+                const framework = this.metadata?.framework || 'vanilla';
                 let domain = 'unknown';
                 try {
-                    domain = new URL(window.location.href).hostname.substring(0, 20);
+                    domain = new URL(window.location.href).hostname.substring(0, 15);
                 } catch (e) {
-                    domain = window.location.hostname || 'localhost';
+                    domain = window.location.hostname?.substring(0, 15) || 'localhost';
                 }
+                const hiddenTabElements = this.metadata?.hiddenTabElements || 0;
+                const mutations = this.metadata?.mutations || 0;
                 
                 rightTerminal.innerHTML = [
+                    '> NETWORK MONITOR',
                     `> PROXY: ${hiddenTabStatus}`,
-                    `> DOMAIN: ${domain}`,
-                    `> WORDS: ${wordCount}`,
-                    `> READ: ${readTime}min`,
-                    `> THEME: ${this.settings.theme?.toUpperCase() || 'NIGHTDRIVE'}`
+                    `> TARGET: ${domain}`,
+                    `> FRAMEWORK: ${framework}`,
+                    `> DOM_NODES: ${hiddenTabElements}`,
+                    `> MUTATIONS: ${mutations}`
                 ].map(line => `<div class="terminal-line">${line}</div>`).join('');
             }
         }

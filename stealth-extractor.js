@@ -441,6 +441,10 @@ if (window.__vibeReaderStealthExtractor) {
         reportExtraction(extractedContent) {
             console.log('📤 Sending extracted content to background');
 
+            // Gather enhanced metadata for terminal displays
+            const domStats = this.gatherDOMStats();
+            const readabilityScore = this.calculateReadabilityScore(extractedContent);
+
             browser.runtime.sendMessage({
                 action: 'contentExtracted',
                 content: extractedContent.content,
@@ -452,7 +456,13 @@ if (window.__vibeReaderStealthExtractor) {
                     siteName: extractedContent.siteName,
                     url: window.location.href,
                     extractedAt: Date.now(),
-                    framework: this.frameworkDetected
+                    framework: this.frameworkDetected,
+                    // Enhanced metadata for terminal displays
+                    readabilityScore: readabilityScore,
+                    hiddenTabElements: domStats.totalElements,
+                    mutations: domStats.mutations,
+                    jsFrameworks: domStats.frameworks,
+                    performanceMetrics: domStats.performance
                 }
             }).catch(error => {
                 console.error('Failed to send content:', error);
@@ -592,6 +602,63 @@ if (window.__vibeReaderStealthExtractor) {
             }).catch(error => {
                 console.log('Could not send progress:', error);
             });
+        }
+
+        gatherDOMStats() {
+            return {
+                totalElements: document.querySelectorAll('*').length,
+                mutations: this.mutationCount || 0,
+                frameworks: this.detectFrameworks(),
+                performance: {
+                    domContentLoaded: performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart,
+                    loadComplete: performance.timing.loadEventEnd - performance.timing.navigationStart
+                }
+            };
+        }
+
+        detectFrameworks() {
+            const frameworks = [];
+            if (window.React) frameworks.push('React');
+            if (window.Vue) frameworks.push('Vue');
+            if (window.angular) frameworks.push('Angular');
+            if (window.jQuery || window.$) frameworks.push('jQuery');
+            if (document.querySelector('#__next')) frameworks.push('Next.js');
+            if (document.querySelector('[data-svelte]')) frameworks.push('Svelte');
+            return frameworks.join(', ') || 'Vanilla';
+        }
+
+        calculateReadabilityScore(content) {
+            if (!content || !content.content) return 'N/A';
+            
+            const text = content.content.replace(/<[^>]*>/g, ''); // Strip HTML
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            const words = text.split(/\s+/).filter(w => w.length > 0);
+            
+            if (sentences.length === 0 || words.length === 0) return 'N/A';
+            
+            const avgWordsPerSentence = words.length / sentences.length;
+            const avgSyllablesPerWord = this.estimateSyllables(words);
+            
+            // Simplified Flesch Reading Ease score
+            const score = 206.835 - (1.015 * avgWordsPerSentence) - (84.6 * avgSyllablesPerWord);
+            
+            if (score >= 90) return 'EASY';
+            if (score >= 80) return 'GOOD';
+            if (score >= 70) return 'OK';
+            if (score >= 60) return 'HARD';
+            return 'VERY_HARD';
+        }
+
+        estimateSyllables(words) {
+            let totalSyllables = 0;
+            for (const word of words.slice(0, 100)) { // Sample first 100 words for performance
+                const syllables = word.toLowerCase()
+                    .replace(/[^a-z]/g, '')
+                    .replace(/e$/, '')
+                    .match(/[aeiouy]+/g);
+                totalSyllables += syllables ? syllables.length : 1;
+            }
+            return totalSyllables / Math.min(words.length, 100);
         }
     }
 
