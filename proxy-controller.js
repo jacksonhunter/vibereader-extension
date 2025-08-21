@@ -788,22 +788,29 @@ if (window.__vibeReaderProxyController) {
 
             if (leftTerminal) {
                 const status = this.extractedContent ? 'ACTIVE' : 'STANDBY';
+                const memUsage = this.extractedContent ? Math.round(JSON.stringify(this.extractedContent).length / 1024) : 0;
+                const elementCount = this.container ? this.container.querySelectorAll('*').length : 0;
+                
                 leftTerminal.innerHTML = [
                     '> VIBE READER v2.0',
                     `> STATUS: ${status}`,
-                    `> CPU: ${Math.floor(Math.random() * 100)}%`,
-                    `> MEM: ${Math.floor(Math.random() * 100)}%`,
+                    `> CONTENT: ${memUsage}KB`,
+                    `> ELEMENTS: ${elementCount}`,
                     `> TIME: ${new Date().toLocaleTimeString()}`
                 ].map(line => `<div class="terminal-line">${line}</div>`).join('');
             }
 
             if (rightTerminal) {
                 const hiddenTabStatus = this.extractedContent ? 'CONNECTED' : 'INITIALIZING';
+                const wordCount = this.metadata?.length || 0;
+                const readTime = Math.max(1, Math.ceil(wordCount / 200));
+                const domain = new URL(window.location.href).hostname;
+                
                 rightTerminal.innerHTML = [
                     `> PROXY: ${hiddenTabStatus}`,
-                    `> PACKETS: ${Math.floor(Math.random() * 10000)}`,
-                    `> ERRORS: ${Math.floor(Math.random() * 10)}`,
-                    `> UPTIME: ${Math.floor((Date.now() - performance.timing.navigationStart) / 1000)}s`,
+                    `> DOMAIN: ${domain.substring(0, 20)}`,
+                    `> WORDS: ${wordCount}`,
+                    `> READ: ${readTime}min`,
                     `> THEME: ${this.settings.theme?.toUpperCase() || 'NIGHTDRIVE'}`
                 ].map(line => `<div class="terminal-line">${line}</div>`).join('');
             }
