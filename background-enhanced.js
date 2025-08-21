@@ -476,18 +476,9 @@ class HiddenTabManager {
                 extractedAt: Date.now()
             });
 
-            // Schedule hidden tab cleanup - but only if extraction is complete
-            const cleanupTimer = setTimeout(() => {
-                this.safeExecute(() => {
-                    // Double-check the tab still exists and extraction is done
-                    const currentStatus = this.extractionStatus.get(sender.tab.id);
-                    if (currentStatus && currentStatus.status === 'complete') {
-                        browser.tabs.remove(sender.tab.id).catch(() => {
-                            console.log('Hidden tab already closed');
-                        });
-                    }
-                }, 'hiddenTabCleanup');
-            }, 8000); // Increased delay to prevent premature closure
+            // Don't automatically cleanup hidden tab - let it stay for future interactions
+            // Only cleanup when user manually deactivates or tab is actually closed
+            console.log('💫 Hidden tab kept alive for future interactions');
 
             return { success: true };
 
@@ -554,6 +545,18 @@ class HiddenTabManager {
     cleanupTab(tabId) {
         console.log('🗑️ Cleaning up tab:', tabId);
 
+        // Check if this is actually a tab close (not refresh) by verifying tab still exists
+        browser.tabs.get(tabId).then(tab => {
+            // Tab still exists - this might be a refresh, don't cleanup hidden tab
+            console.log('Tab still exists, skipping cleanup for refresh');
+        }).catch(() => {
+            // Tab doesn't exist - this is a real tab close, proceed with cleanup
+            console.log('Tab actually closed, proceeding with cleanup');
+            this.performActualCleanup(tabId);
+        });
+    }
+
+    performActualCleanup(tabId) {
         // Clean up visible tab resources including timers
         if (this.activeTabIds.has(tabId)) {
             // Clean up timers
