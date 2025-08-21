@@ -341,6 +341,12 @@
   box-shadow: 
     inset 10px 0 20px var(--glow-primary),
     inset -10px 0 20px var(--glow-secondary);
+  
+  /* Enhanced centering and vertical flow */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .vibe-content::-webkit-scrollbar {
@@ -491,9 +497,10 @@
 
 .vibe-article {
   max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
   line-height: 1.8;
   position: relative;
+  flex-shrink: 0;
 }
 
 .vibe-heading {

@@ -21,7 +21,72 @@ if (window.__vibeReaderProxyController) {
                 autoActivate: false
             };
 
+            // Console logging buffers
+            this.sysadminLogs = [];
+            this.networkLogs = [];
+            this.maxLogsPerTerminal = 10;
+
             this.init();
+        }
+
+        initConsoleCapture() {
+            // Store original console methods
+            this._originalConsole = {
+                log: console.log,
+                error: console.error,
+                warn: console.warn,
+                info: console.info
+            };
+
+            // Override console methods to capture output
+            const self = this;
+            
+            console.log = function(...args) {
+                self._originalConsole.log.apply(console, args);
+                self.addToSysadminLog('LOG', args.join(' '));
+            };
+
+            console.error = function(...args) {
+                self._originalConsole.error.apply(console, args);
+                self.addToSysadminLog('ERR', args.join(' '));
+            };
+
+            console.warn = function(...args) {
+                self._originalConsole.warn.apply(console, args);
+                self.addToSysadminLog('WARN', args.join(' '));
+            };
+
+            console.info = function(...args) {
+                self._originalConsole.info.apply(console, args);
+                self.addToSysadminLog('INFO', args.join(' '));
+            };
+
+            // Capture background script messages
+            browser.runtime.onMessage.addListener((message) => {
+                if (message.action && message.action.includes('extraction')) {
+                    self.addToNetworkLog('BG', `${message.action}: ${message.status || 'processing'}`);
+                }
+            });
+        }
+
+        addToSysadminLog(level, message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${level}: ${message.substring(0, 40)}`;
+            
+            this.sysadminLogs.unshift(logEntry);
+            if (this.sysadminLogs.length > this.maxLogsPerTerminal) {
+                this.sysadminLogs.pop();
+            }
+        }
+
+        addToNetworkLog(source, message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${source}: ${message.substring(0, 40)}`;
+            
+            this.networkLogs.unshift(logEntry);
+            if (this.networkLogs.length > this.maxLogsPerTerminal) {
+                this.networkLogs.pop();
+            }
         }
 
         init() {
@@ -32,6 +97,9 @@ if (window.__vibeReaderProxyController) {
                     url: window.location.href,
                     timestamp: new Date().toISOString()
                 });
+
+                // Initialize console logging capture
+                this.initConsoleCapture();
 
                 // Set up message listener with error handling
                 browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -431,17 +499,27 @@ if (window.__vibeReaderProxyController) {
         processImages() {
             const images = this.container?.querySelectorAll('.article-content img') || [];
             images.forEach(img => this.createMediaWrapper(img));
+            
+            // Also process any videos
+            const videos = this.container?.querySelectorAll('.article-content video') || [];
+            videos.forEach(video => this.createMediaWrapper(video));
         }
 
         createMediaWrapper(mediaElement) {
             const wrapper = document.createElement('div');
             wrapper.className = 'media-wrapper';
+            // Always use current media mode setting for consistency
             wrapper.setAttribute('data-mode', this.settings.mediaMode);
 
             wrapper._originalElement = mediaElement.cloneNode(true);
-            wrapper._originalSrc = mediaElement.src || mediaElement.getAttribute('data-src');
+            wrapper._originalSrc = mediaElement.src || 
+                                   mediaElement.getAttribute('data-src') ||
+                                   mediaElement.getAttribute('data-lazy-src') ||
+                                   mediaElement.getAttribute('data-original');
             wrapper._isVideo = mediaElement.tagName === 'VIDEO';
+            wrapper._mediaType = mediaElement.tagName.toLowerCase();
 
+            // Apply current media mode immediately
             this.updateMediaDisplay(wrapper);
 
             mediaElement.parentNode?.insertBefore(wrapper, mediaElement);
@@ -506,27 +584,54 @@ if (window.__vibeReaderProxyController) {
                     return;
                 }
 
+                // Correct aalib.js API usage based on library structure
                 window.aalib.read.image.fromURL(src)
                     .map(window.aalib.aa({
                         width: 60,
                         height: 30,
                         colored: false
                     }))
+                    .map(window.aalib.render.html(document.createElement('div')))
                     .subscribe({
                         next: (result) => {
                             const asciiEl = wrapper.querySelector('.ascii-art');
-                            if (asciiEl && result.textContent) {
-                                asciiEl.textContent = result.textContent;
+                            if (asciiEl && result.el) {
+                                // Extract text content from the generated HTML
+                                asciiEl.textContent = result.el.textContent || result.el.innerText;
                             }
                         },
                         error: (err) => {
                             console.error('ASCII conversion failed:', err);
+                            // Fallback to placeholder
+                            const asciiEl = wrapper.querySelector('.ascii-art');
+                            if (asciiEl) {
+                                asciiEl.textContent = this.getAsciiPlaceholder();
+                            }
                         }
                     });
 
             } catch (error) {
                 console.error('ASCII conversion error:', error);
+                // Fallback to placeholder
+                const asciiEl = wrapper.querySelector('.ascii-art');
+                if (asciiEl) {
+                    asciiEl.textContent = this.getAsciiPlaceholder();
+                }
             }
+        }
+
+        getAsciiPlaceholder() {
+            return `
+╔══════════════════╗
+║    ASCII ART     ║
+║  ██████████████  ║
+║  ██░░░░░░░░░░██  ║
+║  ██░░██████░░██  ║
+║  ██░░██████░░██  ║
+║  ██░░░░░░░░░░██  ║
+║  ██████████████  ║
+║                  ║
+╚══════════════════╝`;
         }
 
         cycleMediaItem(wrapper) {
@@ -659,6 +764,14 @@ if (window.__vibeReaderProxyController) {
         deactivate() {
             try {
                 console.log('🔌 Deactivating Vibe Mode');
+
+                // Restore original console methods
+                if (this._originalConsole) {
+                    console.log = this._originalConsole.log;
+                    console.error = this._originalConsole.error;
+                    console.warn = this._originalConsole.warn;
+                    console.info = this._originalConsole.info;
+                }
 
                 if (this.container) {
                     this.container.remove();
@@ -798,25 +911,31 @@ if (window.__vibeReaderProxyController) {
             const rightTerminal = this.container?.querySelector('#right-terminal');
 
             if (leftTerminal) {
-                // SYSADMIN: Foreground tab info, readability summary, console output
+                // SYSADMIN: Status info + recent console output
                 const status = this.extractedContent ? 'ACTIVE' : 'STANDBY';
                 const wordCount = this.metadata?.length || 0;
                 const readTime = Math.max(1, Math.ceil(wordCount / 200));
                 const contentScore = this.metadata?.readabilityScore || 'N/A';
-                const byline = this.metadata?.byline ? this.metadata.byline.substring(0, 15) : 'Unknown';
                 
-                leftTerminal.innerHTML = [
+                const statusLines = [
                     '> SYSADMIN CONSOLE',
-                    `> STATUS: ${status}`,
-                    `> READABILITY: ${contentScore}`,
-                    `> AUTHOR: ${byline}`,
-                    `> WORDS: ${wordCount} (${readTime}min)`,
-                    `> LAST: ${new Date().toLocaleTimeString()}`
-                ].map(line => `<div class="terminal-line">${line}</div>`).join('');
+                    `> STATUS: ${status} | SCORE: ${contentScore}`,
+                    `> CONTENT: ${wordCount}w (${readTime}min)`,
+                    `> CONSOLE OUTPUT:`
+                ];
+                
+                // Add recent console logs
+                const recentLogs = this.sysadminLogs.slice(0, 6);
+                const logLines = recentLogs.length > 0 
+                    ? recentLogs.map(log => `  ${log}`)
+                    : ['  [No recent logs]'];
+                
+                leftTerminal.innerHTML = [...statusLines, ...logLines]
+                    .map(line => `<div class="terminal-line">${line}</div>`).join('');
             }
 
             if (rightTerminal) {
-                // NETWORK: Hidden tab info, DOM mutations, background console output
+                // NETWORK: Connection info + background activity
                 const hiddenTabStatus = this.extractedContent ? 'CONNECTED' : 'INITIALIZING';
                 const framework = this.metadata?.framework || 'vanilla';
                 let domain = 'unknown';
@@ -826,16 +945,22 @@ if (window.__vibeReaderProxyController) {
                     domain = window.location.hostname?.substring(0, 15) || 'localhost';
                 }
                 const hiddenTabElements = this.metadata?.hiddenTabElements || 0;
-                const mutations = this.metadata?.mutations || 0;
                 
-                rightTerminal.innerHTML = [
+                const statusLines = [
                     '> NETWORK MONITOR',
                     `> PROXY: ${hiddenTabStatus}`,
-                    `> TARGET: ${domain}`,
-                    `> FRAMEWORK: ${framework}`,
-                    `> DOM_NODES: ${hiddenTabElements}`,
-                    `> MUTATIONS: ${mutations}`
-                ].map(line => `<div class="terminal-line">${line}</div>`).join('');
+                    `> TARGET: ${domain} (${framework})`,
+                    `> NODES: ${hiddenTabElements} | ACTIVITY:`
+                ];
+                
+                // Add recent network logs
+                const recentLogs = this.networkLogs.slice(0, 6);
+                const logLines = recentLogs.length > 0 
+                    ? recentLogs.map(log => `  ${log}`)
+                    : ['  [No network activity]'];
+                
+                rightTerminal.innerHTML = [...statusLines, ...logLines]
+                    .map(line => `<div class="terminal-line">${line}</div>`).join('');
             }
         }
     }
