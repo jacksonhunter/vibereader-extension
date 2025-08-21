@@ -69,7 +69,7 @@
 }
 
 /* ============================================================================ */
-/* MATRIX READER CONTAINER */
+/* VIBE READER CONTAINER */
 /* ============================================================================ */
 
 .vibe-reader-container {
@@ -159,6 +159,12 @@
   animation: cyber-scan 3s linear infinite;
 }
 
+.vibe-sidebar-spacer {
+  /* Empty spacer when sidebars are disabled */
+  width: 100%;
+  height: 100%;
+}
+
 /* ============================================================================ */
 /* MAIN LAYOUT STRUCTURE */
 /* ============================================================================ */
@@ -183,6 +189,24 @@
     grid-template-columns: 1fr;
     grid-template-rows: 80px 1fr 80px;
   }
+  
+  .vibe-sidebar {
+    height: 80px !important;
+    overflow: hidden;
+  }
+  
+  .terminal-content {
+    display: flex;
+    flex-direction: row !important;
+    gap: 10px;
+    overflow-x: auto;
+  }
+  
+  .terminal-line {
+    white-space: nowrap;
+    font-size: 12px;
+  }
+}
   
   .side-scroller {
     height: 80px !important;

@@ -6,9 +6,9 @@ class VibeReaderPopup {
         this.currentTab = null;
         this.settings = {
             theme: 'nightdrive',
-            asciiImages: true,
+            mediaMode: 'emoji', // 'emoji', 'ascii', 'normal'
             sideScrolls: true,
-            vibeRain: true,
+            vibeRain: false,
             autoActivate: false
         };
         
@@ -53,8 +53,8 @@ class VibeReaderPopup {
             this.updateSetting('theme', e.target.value);
         });
         
-        document.getElementById('ascii-images').addEventListener('change', (e) => {
-            this.updateSetting('asciiImages', e.target.checked);
+        document.getElementById('media-mode').addEventListener('change', (e) => {
+            this.updateSetting('mediaMode', e.target.value);
         });
         
         document.getElementById('side-scrolls').addEventListener('change', (e) => {
@@ -119,7 +119,7 @@ class VibeReaderPopup {
     
     updateSettingsUI() {
         document.getElementById('theme-select').value = this.settings.theme;
-        document.getElementById('ascii-images').checked = this.settings.asciiImages;
+        document.getElementById('media-mode').value = this.settings.mediaMode || 'emoji';
         document.getElementById('side-scrolls').checked = this.settings.sideScrolls;
         document.getElementById('vibe-rain').checked = this.settings.vibeRain;
         document.getElementById('auto-activate').checked = this.settings.autoActivate;

@@ -25,6 +25,7 @@ class HiddenTabManager {
         browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             if (changeInfo.status === 'complete') {
                 this.handleTabUpdate(tabId, tab);
+                this.checkAutoActivate(tabId, tab);
             }
         });
         
@@ -367,6 +368,33 @@ class HiddenTabManager {
             // Can't send error to user, log it
             console.error('❌ Could not notify user of error:', errorMessage);
         });
+    }
+    
+    async checkAutoActivate(tabId, tab) {
+        try {
+            // Skip if already active or not a normal web page
+            if (this.activeTabIds.has(tabId) || !tab.url || 
+                tab.url.startsWith('chrome://') || 
+                tab.url.startsWith('moz-extension://') ||
+                tab.url.startsWith('about:') ||
+                tab.url.startsWith('file://')) {
+                return;
+            }
+            
+            // Get settings to check if autoActivate is enabled
+            const result = await browser.storage.sync.get('vibeReaderSettings');
+            const settings = result.vibeReaderSettings || {};
+            
+            if (settings.autoActivate) {
+                console.log('🔥 HiddenTabManager.checkAutoActivate() // auto-activating for tab:', tabId);
+                // Small delay to ensure page is fully loaded
+                setTimeout(() => {
+                    this.activateVibeMode(tabId);
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('Auto-activate check failed:', error);
+        }
     }
 }
 

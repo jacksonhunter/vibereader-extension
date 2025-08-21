@@ -12,7 +12,8 @@ class ProxyController {
             theme: 'nightdrive',
             sideScrolls: true,
             vibeRain: false,
-            mediaMode: 'emoji' // 'emoji', 'ascii', 'normal'
+            mediaMode: 'emoji', // 'emoji', 'ascii', 'normal'
+            autoActivate: false
         };
         this.init();
     }
@@ -161,15 +162,14 @@ class ProxyController {
                         <span class="vibe-status">[ BACKGROUND PROCESS ]</span>
                     </div>
                     <div class="vibe-header-right">
-                        <button class="vibe-btn media-btn" title="Toggle Media Mode">📺 .media()</button>
-                        <button class="vibe-btn load-all-btn" title="Load All Media">📥 .loadAll()</button>
-                        <button class="vibe-btn theme-btn" title="Cycle Theme">🎨 .setTheme()</button>
-                        <button class="vibe-btn disconnect-btn" title="vibeReader.kill()">⚡ .kill()</button>
+                        <button class="vibe-btn media-btn" title="Toggle Media Mode">📺</button>
+                        <button class="vibe-btn theme-btn" title="Cycle Theme">🎨</button>
+                        <button class="vibe-btn disconnect-btn" title="vibeReader.kill()">⚡</button>
                     </div>
                 </div>
                 
                 <div class="vibe-layout">
-                    ${this.settings.sideScrolls ? this.createSidePanels() : ''}
+                    ${this.settings.sideScrolls ? this.createLeftPanel() : '<div class="vibe-sidebar-spacer"></div>'}
                     
                     <main class="vibe-content">
                         <div class="extraction-progress">
@@ -183,6 +183,8 @@ class ProxyController {
                             </div>
                         </div>
                     </main>
+                    
+                    ${this.settings.sideScrolls ? this.createRightPanel() : '<div class="vibe-sidebar-spacer"></div>'}
                 </div>
                 
                 ${this.settings.vibeRain ? '<div class="vibe-rain-container"></div>' : ''}
@@ -201,7 +203,7 @@ class ProxyController {
         this.initializeEffects();
     }
     
-    createSidePanels() {
+    createLeftPanel() {
         return `
             <aside class="vibe-sidebar left-panel">
                 <div class="terminal-window">
@@ -221,7 +223,11 @@ class ProxyController {
                     </div>
                 </div>
             </aside>
-            
+        `;
+    }
+    
+    createRightPanel() {
+        return `
             <aside class="vibe-sidebar right-panel">
                 <div class="terminal-window">
                     <div class="terminal-header">
@@ -247,12 +253,6 @@ class ProxyController {
         const mediaBtn = this.container.querySelector('.media-btn');
         if (mediaBtn) {
             mediaBtn.addEventListener('click', () => this.cycleMediaMode());
-        }
-        
-        // Load all media button
-        const loadAllBtn = this.container.querySelector('.load-all-btn');
-        if (loadAllBtn) {
-            loadAllBtn.addEventListener('click', () => this.loadAllMedia());
         }
         
         // Theme button
@@ -695,14 +695,6 @@ class ProxyController {
         }
     }
     
-    loadAllMedia() {
-        const mediaWrappers = this.container.querySelectorAll('.media-wrapper');
-        mediaWrappers.forEach(wrapper => {
-            wrapper.setAttribute('data-mode', 'normal');
-            this.updateMediaDisplay(wrapper);
-        });
-    }
-    
     processTables() {
         const tables = this.container.querySelectorAll('.article-content table');
         tables.forEach(table => {
@@ -813,8 +805,8 @@ class ProxyController {
         // Update media button
         const mediaBtn = this.container.querySelector('.media-btn');
         if (mediaBtn) {
-            const modeNames = { emoji: 'EMOJI', ascii: 'ASCII', normal: 'NORMAL' };
-            mediaBtn.textContent = `📺 ${modeNames[this.settings.mediaMode]}`;
+            const modeEmojis = { emoji: '🖼️', ascii: '🎨', normal: '📸' };
+            mediaBtn.textContent = modeEmojis[this.settings.mediaMode] || '📺';
         }
     }
     
