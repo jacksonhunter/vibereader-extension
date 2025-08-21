@@ -786,21 +786,25 @@ if (window.__vibeReaderProxyController) {
             const leftTerminal = this.container?.querySelector('#left-terminal');
             const rightTerminal = this.container?.querySelector('#right-terminal');
 
-            if (leftTerminal && this.extractedContent) {
+            if (leftTerminal) {
+                const status = this.extractedContent ? 'ACTIVE' : 'STANDBY';
                 leftTerminal.innerHTML = [
                     '> VIBE READER v2.0',
+                    `> STATUS: ${status}`,
                     `> CPU: ${Math.floor(Math.random() * 100)}%`,
                     `> MEM: ${Math.floor(Math.random() * 100)}%`,
                     `> TIME: ${new Date().toLocaleTimeString()}`
                 ].map(line => `<div class="terminal-line">${line}</div>`).join('');
             }
 
-            if (rightTerminal && this.extractedContent) {
+            if (rightTerminal) {
+                const hiddenTabStatus = this.extractedContent ? 'CONNECTED' : 'INITIALIZING';
                 rightTerminal.innerHTML = [
-                    '> PROXY: CONNECTED',
+                    `> PROXY: ${hiddenTabStatus}`,
                     `> PACKETS: ${Math.floor(Math.random() * 10000)}`,
                     `> ERRORS: ${Math.floor(Math.random() * 10)}`,
-                    `> UPTIME: ${Math.floor((Date.now() - performance.timing.navigationStart) / 1000)}s`
+                    `> UPTIME: ${Math.floor((Date.now() - performance.timing.navigationStart) / 1000)}s`,
+                    `> THEME: ${this.settings.theme?.toUpperCase() || 'NIGHTDRIVE'}`
                 ].map(line => `<div class="terminal-line">${line}</div>`).join('');
             }
         }
