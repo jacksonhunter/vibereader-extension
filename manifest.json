@@ -49,6 +49,7 @@
     "fonts/*",
     "assets/*",
     "lib/readability.js",
+    "lib/rxjs.min.js",
     "lib/aalib.js",
     "stealth-extractor.js",
     "proxy-controller.js"

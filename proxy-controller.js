@@ -659,29 +659,51 @@ if (window.__vibeReaderProxyController) {
                         return;
                     }
 
-                    // Correct aalib.js API usage based on library structure
+                    const asciiContainer = wrapper.querySelector('.ascii-art');
+                    if (!asciiContainer) return;
+
+                    // Clear existing content and show loading
+                    asciiContainer.innerHTML = '<span style="opacity: 0.5;">Converting to ASCII...</span>';
+
+                    // Get current theme for styling
+                    const theme = this.currentTheme || 'nightdrive';
+
+                    console.log('🎯 ASCII Conversion starting:', {
+                        src: src,
+                        theme: theme,
+                        aalibAvailable: !!window.aalib
+                    });
+
+                    // Correct aalib.js usage based on repository examples
                     window.aalib.read.image.fromURL(src)
                         .map(window.aalib.aa({
                             width: 60,
                             height: 30,
-                            colored: false
+                            colored: true  // Enable colored ASCII for neon effects
                         }))
-                        .map(window.aalib.render.html(document.createElement('div')))
+                        .map(window.aalib.render.html({
+                            background: "transparent",
+                            fontFamily: "monospace",
+                            fontSize: "8px"
+                        }))
                         .subscribe({
-                            next: (result) => {
-                                const asciiEl = wrapper.querySelector('.ascii-art');
-                                if (asciiEl && result.el) {
-                                    // Extract text content from the generated HTML
-                                    asciiEl.textContent = result.el.textContent || result.el.innerText;
-                                }
+                            next: (renderedElement) => {
+                                console.log('✅ ASCII conversion successful');
+                                
+                                // Clear loading message
+                                asciiContainer.innerHTML = '';
+                                
+                                // Apply theme-specific styling
+                                this.applyAsciiTheme(renderedElement, theme);
+                                
+                                // Append the rendered element directly (no textContent extraction!)
+                                asciiContainer.appendChild(renderedElement);
                             },
                             error: (err) => {
-                                console.error('ASCII conversion failed:', err);
-                                // Fallback to placeholder
-                                const asciiEl = wrapper.querySelector('.ascii-art');
-                                if (asciiEl) {
-                                    asciiEl.textContent = this.getAsciiPlaceholder();
-                                }
+                                console.error('❌ ASCII conversion failed:', err);
+                                // Fallback to themed placeholder
+                                asciiContainer.innerHTML = '';
+                                asciiContainer.textContent = this.getThemedAsciiPlaceholder(theme);
                             }
                         });
 
@@ -690,23 +712,75 @@ if (window.__vibeReaderProxyController) {
                     // Fallback to placeholder
                     const asciiEl = wrapper.querySelector('.ascii-art');
                     if (asciiEl) {
-                        asciiEl.textContent = this.getAsciiPlaceholder();
+                        asciiEl.textContent = this.getThemedAsciiPlaceholder(this.currentTheme || 'nightdrive');
                     }
                 }
             }
 
+            applyAsciiTheme(element, theme) {
+                // Apply theme-specific CSS filters and styling
+                element.style.filter = this.getAsciiFilter(theme);
+                element.style.textShadow = this.getAsciiGlow(theme);
+                element.classList.add(`ascii-${theme}`);
+                element.style.lineHeight = '1.1';
+                element.style.letterSpacing = '0.5px';
+                
+                console.log(`🎨 Applied ${theme} ASCII theme styling`);
+            }
+
+            getAsciiFilter(theme) {
+                const filters = {
+                    'nightdrive': 'hue-rotate(320deg) saturate(1.5) brightness(1.2) contrast(1.1)',
+                    'neon-surge': 'hue-rotate(200deg) saturate(2) brightness(1.5) contrast(1.3)',
+                    'outrun-storm': 'hue-rotate(270deg) saturate(1.8) brightness(1.1) contrast(1.2)',
+                    'strange-days': 'hue-rotate(90deg) saturate(1.6) brightness(1.3) contrast(1.1)'
+                };
+                return filters[theme] || filters['nightdrive'];
+            }
+
+            getAsciiGlow(theme) {
+                const glows = {
+                    'nightdrive': '0 0 5px rgba(249, 38, 114, 0.6), 0 0 10px rgba(102, 217, 239, 0.4)',
+                    'neon-surge': '0 0 5px rgba(255, 20, 147, 0.8), 0 0 10px rgba(0, 255, 255, 0.6)',
+                    'outrun-storm': '0 0 5px rgba(138, 43, 226, 0.7), 0 0 10px rgba(255, 111, 32, 0.5)',
+                    'strange-days': '0 0 5px rgba(255, 70, 184, 0.6), 0 0 10px rgba(50, 205, 50, 0.4)'
+                };
+                return glows[theme] || glows['nightdrive'];
+            }
+
+            getThemedAsciiPlaceholder(theme) {
+                const placeholders = {
+                    'nightdrive': `
+╔════════════════════╗
+║  ░░ NIGHT SYNC ░░  ║
+║  ░░  RETRO DATA ░░ ║
+║  ░░ ◕‿◕ LOAD? ░░   ║
+╚════════════════════╝`,
+                    'neon-surge': `
+┏━━━━━━━━━━━━━━━━━━━━┓
+┃ ⚡ ELECTRIC ⚡     ┃
+┃ ⚡ PROCESSING ⚡   ┃
+┃ ⚡ ╰(°ω°)╯ ⚡      ┃
+┗━━━━━━━━━━━━━━━━━━━━┛`,
+                    'outrun-storm': `
+╭────────────────────╮
+│ ⛈️  STORM DATA ⛈️   │
+│ ⛈️  RACING LOAD ⛈️  │
+│ ⛈️  ლ(╹◡╹ლ) ⛈️    │
+╰────────────────────╯`,
+                    'strange-days': `
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓ 👻 PHANTOM 👻     ▓
+▓ 👻 CORRUPTED 👻   ▓
+▓ 👻 (¬‿¬) ??? ▓    ▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓`
+                };
+                return placeholders[theme] || placeholders['nightdrive'];
+            }
+
             getAsciiPlaceholder() {
-                return `
-╔══════════════════╗
-║    ASCII ART     ║
-║  ██████████████  ║
-║  ██░░░░░░░░░░██  ║
-║  ██░░██████░░██  ║
-║  ██░░██████░░██  ║
-║  ██░░░░░░░░░░██  ║
-║  ██████████████  ║
-║                  ║
-╚══════════════════╝`;
+                // Fallback for legacy usage
+                return this.getThemedAsciiPlaceholder(this.currentTheme || 'nightdrive');
             }
 
             cycleMediaItem(wrapper) {

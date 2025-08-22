@@ -4,7 +4,9 @@
       "Bash(git push:*)",
       "Bash(node:*)",
       "WebFetch(domain:www.npmjs.com)",
-      "Bash(web-ext run:*)"
+      "Bash(web-ext run:*)",
+      "WebFetch(domain:unpkg.com)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

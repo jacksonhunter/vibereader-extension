@@ -383,7 +383,12 @@ class HiddenTabManager {
             // Not injected yet, proceed
         }
 
-        // Inject dependencies
+        // Inject dependencies in correct order
+        await browser.tabs.executeScript(tabId, {
+            file: 'lib/rxjs.min.js',
+            runAt: 'document_end'
+        });
+        
         await browser.tabs.executeScript(tabId, {
             file: 'lib/aalib.js',
             runAt: 'document_end'

@@ -689,30 +689,103 @@ if (window.__vibeReaderStealthExtractor) {
                 );
                 score += structureScore;
 
-                // 4. Media Richness (0-10 points) - Visual content
-                const images = (htmlContent.match(/<img/gi) || []).length;
-                const videos = (htmlContent.match(/<video/gi) || []).length;
+                // 4. Enhanced Media Quality (0-10 points) - Size and quality-based scoring
+                let mediaScore = 0;
+                
+                // Parse images from HTML and check their dimensions
+                const imgRegex = /<img[^>]*>/gi;
+                const imgMatches = htmlContent.match(imgRegex) || [];
+                let qualityImages = 0;
+                let greatImages = 0;
+                
+                imgMatches.forEach(imgTag => {
+                    const widthMatch = imgTag.match(/width\s*=\s*["']?(\d+)/i);
+                    const heightMatch = imgTag.match(/height\s*=\s*["']?(\d+)/i);
+                    
+                    if (widthMatch && heightMatch) {
+                        const width = parseInt(widthMatch[1]);
+                        const height = parseInt(heightMatch[1]);
+                        const pixels = width * height;
+                        
+                        // Great size range: 600x400 to 1920x1080 (240K to 2M pixels)
+                        if (pixels >= 240000 && pixels <= 2073600 && width >= 600 && height >= 400) {
+                            greatImages++;
+                        }
+                        // OK size range: 300x200 to 1200x800 (60K to 960K pixels)  
+                        else if (pixels >= 60000 && pixels <= 960000 && width >= 300 && height >= 200) {
+                            qualityImages++;
+                        }
+                    }
+                });
+                
+                // Parse videos and check dimensions
+                const videoRegex = /<video[^>]*>/gi;
+                const videoMatches = htmlContent.match(videoRegex) || [];
+                let qualityVideos = 0;
+                let greatVideos = 0;
+                
+                videoMatches.forEach(videoTag => {
+                    const widthMatch = videoTag.match(/width\s*=\s*["']?(\d+)/i);
+                    const heightMatch = videoTag.match(/height\s*=\s*["']?(\d+)/i);
+                    
+                    if (widthMatch && heightMatch) {
+                        const width = parseInt(widthMatch[1]);
+                        const height = parseInt(heightMatch[1]);
+                        
+                        // Great video size: 720p+ (1280x720 or larger)
+                        if (width >= 1280 && height >= 720) {
+                            greatVideos++;
+                        }
+                        // OK video size: 480p+ (854x480 or larger)
+                        else if (width >= 854 && height >= 480) {
+                            qualityVideos++;
+                        }
+                    }
+                });
+                
+                // Tables still count as structured data
                 const tables = (htmlContent.match(/<table/gi) || []).length;
                 
-                const mediaScore = Math.min(10,
-                    (images * 0.5) + // Images add value
-                    (videos * 2) + // Videos are highly valuable
+                mediaScore = Math.min(10,
+                    (greatImages * 1.5) + // High-quality images
+                    (qualityImages * 0.8) + // OK quality images  
+                    (greatVideos * 3) + // High-quality videos
+                    (qualityVideos * 2) + // OK quality videos
                     (tables * 1.5) // Tables show structured data
                 );
+                
                 score += mediaScore;
 
-                // 5. Readability Metrics (0-10 points) - Text quality
-                const sentences = textContent.split(/[.!?]+/).filter(s => s.trim().length > 0);
-                if (sentences.length > 0) {
-                    const avgSentenceLength = textContent.length / sentences.length;
-                    if (avgSentenceLength >= 50 && avgSentenceLength <= 150) {
-                        score += 10; // Optimal sentence length
-                    } else if (avgSentenceLength >= 30 && avgSentenceLength <= 200) {
-                        score += 7; // Good sentence length
-                    } else if (avgSentenceLength >= 20) {
-                        score += 5; // Acceptable sentence length
+                // 5. Enhanced Text Quality (0-10 points) - Favor proper sentences over script leakage
+                let textQualityScore = 0;
+                
+                // Find proper sentences: start with capital, end with punctuation, reasonable internal punctuation
+                const properSentences = textContent.match(/[A-Z][^.!?]*[,.;:\-–—'']*[^.!?]*[.!?]/g) || [];
+                const totalTextInSentences = properSentences.join('').length;
+                const sentenceTextRatio = totalTextInSentences / Math.max(textContent.length, 1);
+                
+                // Score based on how much text is in proper sentences (weighted heavily)
+                textQualityScore += sentenceTextRatio * 6; // Up to 6 points for sentence structure
+                
+                if (properSentences.length > 0) {
+                    // Check sentence length distribution (20-300 characters)
+                    const validLengthSentences = properSentences.filter(s => s.length >= 20 && s.length <= 300);
+                    const validLengthRatio = validLengthSentences.length / properSentences.length;
+                    textQualityScore += validLengthRatio * 2; // Up to 2 points for proper length
+                    
+                    // Check average word length in sentences (3-5 chars = English-like)
+                    const wordsInSentences = properSentences.join(' ').split(/\s+/).filter(w => w.length > 0);
+                    if (wordsInSentences.length > 0) {
+                        const avgWordLength = wordsInSentences.reduce((sum, word) => sum + word.replace(/[^\w]/g, '').length, 0) / wordsInSentences.length;
+                        if (avgWordLength >= 3 && avgWordLength <= 5) {
+                            textQualityScore += 2; // 2 points for English-like word length
+                        } else if (avgWordLength >= 2.5 && avgWordLength <= 6) {
+                            textQualityScore += 1; // 1 point for reasonable word length
+                        }
                     }
                 }
+                
+                score += Math.min(10, textQualityScore);
 
                 return Math.round(Math.min(100, score));
             }
@@ -725,39 +798,6 @@ if (window.__vibeReaderStealthExtractor) {
                 return 'VERY_POOR';
             }
 
-            // Backup method using Flesch if needed
-            calculateFleschScore(content) {
-                if (!content || !content.textContent) return 'N/A';
-
-                const text = content.textContent;
-                const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-                const words = text.split(/\s+/).filter(w => w.length > 0);
-
-                if (sentences.length === 0 || words.length === 0) return 'N/A';
-
-                const avgWordsPerSentence = words.length / sentences.length;
-                const avgSyllablesPerWord = this.estimateSyllables(words);
-
-                const score = 206.835 - (1.015 * avgWordsPerSentence) - (84.6 * avgSyllablesPerWord);
-
-                if (score >= 90) return 'EASY';
-                if (score >= 80) return 'GOOD';
-                if (score >= 70) return 'OK';
-                if (score >= 60) return 'HARD';
-                return 'VERY_HARD';
-            }
-
-            estimateSyllables(words) {
-                let totalSyllables = 0;
-                for (const word of words.slice(0, 100)) {
-                    const syllables = word.toLowerCase()
-                        .replace(/[^a-z]/g, '')
-                        .replace(/e$/, '')
-                        .match(/[aeiouy]+/g);
-                    totalSyllables += syllables ? syllables.length : 1;
-                }
-                return totalSyllables / Math.min(words.length, 100);
-            }
         }
 
         // Create singleton instance
