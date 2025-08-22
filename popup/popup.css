@@ -1,7 +1,8 @@
 /* VibeReader Popup - Based on Neon Dream CSS */
 /* Cyberpunk popup interface for the VibeReader extension */
 
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+/* Removed Google Fonts import to prevent CSP violations */
+/* Using system fonts with Fira Code fallbacks for cyberpunk aesthetic */
 
 /* ============================================================================ */
 /* ROOT VARIABLES - NEON DREAM BASE */
@@ -50,7 +51,7 @@ body {
   width: 350px;
   min-height: 500px;
   background: radial-gradient(circle at center, var(--bg-primary), var(--bg-secondary)) !important;
-  font-family: 'Orbitron', 'Share Tech Mono', monospace;
+  font-family: 'Orbitron', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
   color: var(--text-primary);
   overflow-x: hidden;
   position: relative;
@@ -116,7 +117,7 @@ body::before {
 }
 
 .popup-title {
-  font-family: 'Orbitron', monospace;
+  font-family: 'Orbitron', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
   font-weight: 900;
   font-size: 18px;
   background: linear-gradient(45deg, var(--neon-pink), var(--neon-cyan), var(--neon-yellow));
@@ -130,7 +131,7 @@ body::before {
 }
 
 .version-info {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Orbitron', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
   font-size: 10px;
   color: var(--text-accent);
   text-shadow: 0 0 8px var(--glow-secondary);
@@ -175,7 +176,7 @@ body::before {
 }
 
 .status-text {
-  font-family: 'Orbitron', monospace;
+  font-family: 'Orbitron', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
   font-weight: 700;
   font-size: 14px;
   color: var(--neon-cyan);
@@ -210,7 +211,7 @@ body::before {
   color: white;
   border: 2px solid var(--neon-pink);
   border-radius: 6px;
-  font-family: 'Orbitron', monospace;
+  font-family: 'Orbitron', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
   font-weight: 700;
   font-size: 12px;
   cursor: pointer;
@@ -322,7 +323,7 @@ body::before {
 }
 
 .settings-header h3 {
-  font-family: 'Orbitron', monospace;
+  font-family: 'Orbitron', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
   font-size: 14px;
   color: var(--neon-cyan);
   text-shadow: 0 0 10px var(--neon-cyan);
@@ -336,7 +337,7 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Orbitron', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
   font-size: 12px;
   color: var(--text-primary);
   cursor: pointer;
@@ -352,7 +353,7 @@ body::before {
   border-radius: 4px;
   color: var(--neon-cyan);
   padding: 6px 8px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Orbitron', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
   font-size: 10px;
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
   transition: all 0.3s ease;
@@ -454,7 +455,7 @@ body::before {
 
 .shortcut-info {
   margin-bottom: 15px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Orbitron', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
   font-size: 11px;
   color: var(--text-secondary);
 }
@@ -469,7 +470,7 @@ body::before {
   border: 1px solid var(--neon-cyan);
   border-radius: 4px;
   padding: 4px 8px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Orbitron', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
   color: var(--neon-cyan);
   text-shadow: 0 0 8px var(--neon-cyan);
   margin-left: 5px;
@@ -484,7 +485,7 @@ body::before {
 .footer-link {
   color: var(--text-accent);
   text-decoration: none;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'Orbitron', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
   font-size: 10px;
   padding: 5px 10px;
   border: 1px solid var(--text-accent);

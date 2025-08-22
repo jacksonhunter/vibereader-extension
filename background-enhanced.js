@@ -331,17 +331,41 @@ class HiddenTabManager {
             // Not injected yet, proceed
         }
 
-        // Inject dependencies first
-        await browser.tabs.executeScript(tabId, {
-            file: 'lib/readability.js',
-            runAt: 'document_end'
-        });
+        try {
+            // Inject dependencies first with error checking
+            console.log('📚 Injecting Readability.js into hidden tab');
+            await browser.tabs.executeScript(tabId, {
+                file: 'lib/readability.js',
+                runAt: 'document_end'
+            });
 
-        // Inject stealth extractor directly as file
-        await browser.tabs.executeScript(tabId, {
-            file: 'stealth-extractor.js',
-            runAt: 'document_end'
-        });
+            // Wait a moment for Readability to be available
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Verify Readability loaded correctly
+            const readabilityCheck = await browser.tabs.executeScript(tabId, {
+                code: 'typeof Readability !== "undefined"',
+                runAt: 'document_end'
+            });
+
+            if (!readabilityCheck || !readabilityCheck[0]) {
+                throw new Error('Readability.js failed to load properly');
+            }
+
+            console.log('✅ Readability.js loaded successfully');
+
+            // Inject stealth extractor directly as file
+            await browser.tabs.executeScript(tabId, {
+                file: 'stealth-extractor.js',
+                runAt: 'document_end'
+            });
+
+            console.log('✅ Stealth extractor injected successfully');
+
+        } catch (error) {
+            console.error('❌ Failed to inject stealth extractor:', error);
+            throw new Error(`Injection failed: ${error.message}`);
+        }
     }
 
     async injectProxyController(tabId) {
