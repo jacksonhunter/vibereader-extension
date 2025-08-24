@@ -14,6 +14,10 @@ class HiddenTabManager {
 
         // Enhanced injection tracking with cleanup support
         this.injectionStatus = new Map(); // tab ID -> { proxy: boolean, extractor: boolean, timers: [] }
+        
+        // DEBUG: Tab creation monitoring (for debugging + future tab manager foundation)
+        this.tabCreationLog = new Map(); // visible tab ID -> array of creation attempts
+        this.debugMode = true; // Enable tab creation debugging
 
         this.init();
     }
@@ -127,6 +131,22 @@ class HiddenTabManager {
         return { success: true };
     }
 
+    async logToVisible(tabId, level, message, category = 'SYSTEM') {
+        // Send log to proxy-controller for centralized logging and dump() output
+        try {
+            await browser.tabs.sendMessage(tabId, {
+                action: 'logFromBackground',
+                level,
+                message,
+                category,
+                source: 'background'
+            });
+        } catch (error) {
+            // Fallback to console if proxy not ready yet
+            console.log(`[BG-${category}] ${level}: ${message}`);
+        }
+    }
+
     async toggleVibeMode(tab) {
         const isActive = this.activeTabIds.has(tab.id);
 
@@ -177,7 +197,7 @@ class HiddenTabManager {
             this.injectionStatus.set(tab.id, { proxy: false, extractor: false });
 
             // Step 1: Create hidden tab
-            const hiddenTab = await this.createHiddenTab(tab.url);
+            const hiddenTab = await this.createHiddenTab(tab.url, tab.id);
             this.hiddenTabs.set(tab.id, hiddenTab.id);
 
             // Store extraction status
@@ -289,8 +309,48 @@ class HiddenTabManager {
         }
     }
 
-    async createHiddenTab(url) {
+    async createHiddenTab(url, visibleTabId = 'unknown') {
+        // Get stack trace for debugging
+        const stack = new Error().stack;
+        const caller = stack.split('\n')[2]?.trim() || 'unknown';
+        
         console.log('🔧 Creating hidden tab for:', url);
+        console.log('📍 Called from:', caller);
+        
+        // Log tab creation attempt for debugging + future tab manager
+        if (!this.tabCreationLog.has(visibleTabId)) {
+            this.tabCreationLog.set(visibleTabId, []);
+        }
+        
+        const creationAttempt = {
+            timestamp: Date.now(),
+            url: url,
+            caller: caller,
+            visibleTabId: visibleTabId
+        };
+        
+        this.tabCreationLog.get(visibleTabId).push(creationAttempt);
+        
+        // DEBUG: Block additional tabs while debugging (temporary safeguard)
+        if (this.debugMode && this.hiddenTabs.has(visibleTabId)) {
+            const existingAttempts = this.tabCreationLog.get(visibleTabId).length;
+            console.warn(`🚨 BLOCKED: Tab ${visibleTabId} trying to create ${existingAttempts} hidden tabs!`);
+            console.warn('📋 Creation attempts:', this.tabCreationLog.get(visibleTabId));
+            
+            if (typeof dump !== 'undefined') {
+                dump(`[TAB-DEBUG] BLOCKED: ${visibleTabId} -> ${url} | Attempts: ${existingAttempts} | Caller: ${caller.substring(0, 30)}\n`);
+            }
+            
+            // Return existing hidden tab instead of creating new one
+            const existingHiddenTabId = this.hiddenTabs.get(visibleTabId);
+            try {
+                const existingTab = await browser.tabs.get(existingHiddenTabId);
+                console.log('↩️ Returning existing hidden tab:', existingHiddenTabId);
+                return existingTab;
+            } catch (e) {
+                console.warn('Existing hidden tab not found, allowing creation');
+            }
+        }
 
         const hiddenTab = await browser.tabs.create({
             url: url,
@@ -298,6 +358,12 @@ class HiddenTabManager {
             pinned: true,
             index: 9999 // Move to end
         });
+
+        console.log('✅ Hidden tab created:', hiddenTab.id);
+        
+        if (typeof dump !== 'undefined') {
+            dump(`[TAB-CREATE] ${visibleTabId} -> ${hiddenTab.id} | URL: ${url.substring(0, 50)} | Caller: ${caller.substring(0, 30)}\n`);
+        }
 
         // Wait for tab to be ready
         return new Promise((resolve, reject) => {
@@ -383,18 +449,49 @@ class HiddenTabManager {
             // Not injected yet, proceed
         }
 
-        // Inject dependencies in correct order
+        // Inject dependencies in correct order with verification
+        await this.logToVisible(tabId, 'INFO', '🔧 Injecting RxJS for Observable patterns', 'ASCII');
         await browser.tabs.executeScript(tabId, {
             file: 'lib/rxjs.min.js',
             runAt: 'document_end'
         });
         
+        await this.logToVisible(tabId, 'INFO', '🔧 Injecting aalib.js library for ASCII conversion', 'ASCII');
         await browser.tabs.executeScript(tabId, {
             file: 'lib/aalib.js',
             runAt: 'document_end'
         });
 
+        // Verify script loading with immediate check
+        await this.logToVisible(tabId, 'INFO', '🔍 Verifying aalib.js loading...', 'ASCII');
+        try {
+            const verifyResult = await browser.tabs.executeScript(tabId, {
+                code: `
+                    console.log('🔍 Script verification check:', {
+                        rxjs: typeof window.Rx !== 'undefined',
+                        aalib: typeof window.aalib !== 'undefined',
+                        aalibMethods: window.aalib ? Object.keys(window.aalib) : null
+                    });
+                    ({
+                        aalibLoaded: typeof window.aalib !== 'undefined',
+                        aalibMethods: window.aalib ? Object.keys(window.aalib).length : 0,
+                        rxjsLoaded: typeof window.Rx !== 'undefined'
+                    });
+                `
+            });
+            
+            const result = verifyResult[0];
+            if (result.aalibLoaded) {
+                await this.logToVisible(tabId, 'INFO', `✅ aalib.js loaded successfully - ${result.aalibMethods} methods available`, 'ASCII');
+            } else {
+                await this.logToVisible(tabId, 'ERR', '❌ aalib.js failed to load - window.aalib is undefined', 'ASCII');
+            }
+        } catch (error) {
+            await this.logToVisible(tabId, 'ERR', `❌ aalib.js verification failed: ${error.message}`, 'ASCII');
+        }
+
         // Inject proxy controller directly as file
+        await this.logToVisible(tabId, 'INFO', '🔧 Injecting proxy-controller for UI management', 'SYSTEM');
         await browser.tabs.executeScript(tabId, {
             file: 'proxy-controller.js',
             runAt: 'document_end'
@@ -402,10 +499,10 @@ class HiddenTabManager {
 
         // Inject CSS
         await browser.tabs.insertCSS(tabId, {
-            file: 'styles/retrofuture-theme.css'
+            file: 'styles/base.css'
         });
         await browser.tabs.insertCSS(tabId, {
-            file: 'styles/matrix-theme.css'
+            file: 'styles/themes.css'
         });
     }
 

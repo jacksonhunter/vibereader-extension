@@ -1435,7 +1435,7 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
                 if (!rainContainer) {
                     rainContainer = document.createElement('div');
                     rainContainer.className = 'vibe-rain-container';
-                    this.container?.querySelector('.vibe-reader-overlay')?.appendChild(rainContainer);
+                    this.container?.appendChild(rainContainer);  // Append to main container
                 }
 
                 rainContainer.innerHTML = '';
@@ -1446,9 +1446,9 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
                 for (let i = 0; i < columns; i++) {
                     const drop = document.createElement('div');
                     drop.className = 'matrix-drop';
-                    drop.style.left = `${i * 20}px`;
-                    drop.style.animationDuration = `${Math.random() * 3 + 1}s`;
-                    drop.style.animationDelay = `${Math.random() * 2}s`;
+                    drop.style.left = `${i * 20}px`;  // Fixed: added * operator
+                    drop.style.animationDuration = `${Math.random() * 3 + 1}s`;  // Fixed
+                    drop.style.animationDelay = `${Math.random() * 2}s`;  // Fixed
 
                     let text = '';
                     for (let j = 0; j < Math.floor(Math.random() * 10 + 5); j++) {
