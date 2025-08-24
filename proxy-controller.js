@@ -14,6 +14,7 @@ if (window.__vibeReaderProxyController) {
                 this.extractedContent = null;
                 this.metadata = null;
                 this.isActive = false;
+                this.fontMetrics = this.measureFontMetricsFromCSS()
                 this.settings = {
                     theme: 'nightdrive',
                     mediaMode: 'emoji',
@@ -22,7 +23,16 @@ if (window.__vibeReaderProxyController) {
                     autoActivate: false
                 };
 
-                // Console logging buffers
+                // Enhanced diagnostic system with categorization
+                this.diagnosticCategories = {
+                    ERRORS: {logs: [], expanded: true, icon: '🔴', color: '#ff4757'},
+                    MEDIA: {logs: [], expanded: true, icon: '🎬', color: '#3742fa'},
+                    SYSTEM: {logs: [], expanded: false, icon: '⚙️', color: '#2ed573'},
+                    NETWORK: {logs: [], expanded: false, icon: '🌐', color: '#ff6348'},
+                    ASCII: {logs: [], expanded: true, icon: '🎨', color: '#ff9ff3'}
+                };
+
+                // Legacy log buffers (keep for compatibility)
                 this.sysadminLogs = [];
                 this.networkLogs = [];
                 this.maxLogsPerTerminal = 10;
@@ -30,7 +40,47 @@ if (window.__vibeReaderProxyController) {
                 this.init();
             }
 
+            // Measure font metrics from CSS computed styles
+            measureFontMetricsFromCSS() {
+                // Create a temporary element with CSS classes
+                const tester = document.createElement('div');
+                tester.className = 'ascii-art';
+                tester.style.position = 'absolute';
+                tester.style.visibility = 'hidden';
+                tester.style.width = 'auto';
+                tester.style.height = 'auto';
+                tester.textContent = 'M';
+
+                document.body.appendChild(tester);
+
+                // Get computed styles
+                const computedStyle = getComputedStyle(tester);
+                const fontSize = parseFloat(computedStyle.fontSize) || 10;
+                const fontFamily = computedStyle.fontFamily;
+
+                // Create canvas for precise measurement
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.font = `${fontSize}px ${fontFamily}`;
+
+                // Measure character width
+                const metrics = ctx.measureText('M');
+                const charWidth = metrics.width;
+
+                // Use computed line height
+                tester.textContent = 'M\nM';
+                const doubleHeight = tester.offsetHeight;
+                const lineHeight = doubleHeight / 2;
+
+                document.body.removeChild(tester);
+
+                return {
+                    fontSize, charWidth, lineHeight, fontFamily
+                };
+            }
+
             initConsoleCapture() {
+
                 // Store original console methods
                 this._originalConsole = {
                     log: console.log,
@@ -72,9 +122,12 @@ if (window.__vibeReaderProxyController) {
                     }
                 };
 
-                // Capture background script messages
+                // Capture background script messages + external logging
                 browser.runtime.onMessage.addListener((message) => {
-                    if (message.action && message.action.includes('extraction')) {
+                    if (message.action === 'terminalLog') {
+                        // External logging from background script or other sources
+                        self.logToTerminal(message.level || 'INFO', message.message || 'Unknown message', message.category || 'SYSTEM', message.source || 'external', message.metadata || {});
+                    } else if (message.action && message.action.includes('extraction')) {
                         self.addToNetworkLog('BG', `${message.action}: ${message.status || 'processing'}`);
                     }
                 });
@@ -82,29 +135,95 @@ if (window.__vibeReaderProxyController) {
 
             shouldLogMessage(message) {
                 // Filter out noisy/irrelevant messages
-                const ignorePatterns = [
-                    'Content-Security-Policy',
-                    'Partitioned cookie',
-                    'Navigation API not supported',
-                    'GSI_LOGGER',
-                    'GRECAPTCHA',
-                    'Ignoring unsupported entryTypes',
-                    'downloadable font: failed',
-                    '📨 Received message: ping', // Too noisy
+                const ignorePatterns = ['Content-Security-Policy', 'Partitioned cookie', 'Navigation API not supported', 'GSI_LOGGER', 'GRECAPTCHA', 'Ignoring unsupported entryTypes', 'downloadable font: failed', '📨 Received message: ping', // Too noisy
                     'extractionProgress', // Handle separately
-                    '[object Object]'
-                ];
+                    '[object Object]'];
 
                 return !ignorePatterns.some(pattern => message.includes(pattern));
             }
 
+            categorizeLog(level, message) {
+                // Smart category detection
+                if (message.includes('ERR:') || message.includes('❌') || message.includes('failed') || message.includes('error') || level === 'ERR') {
+                    return 'ERRORS';
+                }
+                if (message.includes('MEDIA') || message.includes('🔍') || message.includes('images') || message.includes('videos') || message.includes('📦') || message.includes('Found')) {
+                    return 'MEDIA';
+                }
+                if (message.includes('ASCII') || message.includes('🎯') || message.includes('conversion') || message.includes('aalib') || message.includes('🎨')) {
+                    return 'ASCII';
+                }
+                if (message.includes('BG:') || message.includes('extraction') || message.includes('proxy') || message.includes('NETMON') || message.includes('framework')) {
+                    return 'NETWORK';
+                }
+                return 'SYSTEM';
+            }
+
+            addToDiagnostics(level, message, source = 'SYSADMIN') {
+                const category = this.categorizeLog(level, message);
+                const cleanMessage = message.substring(0, 50); // Slightly longer for better context
+                const timestamp = Date.now();
+
+                // Find existing log entry to consolidate
+                const existing = this.diagnosticCategories[category].logs.find(log => log.message.includes(cleanMessage.substring(0, 25)));
+
+                if (existing) {
+                    existing.count++;
+                    existing.lastSeen = timestamp;
+                } else {
+                    this.diagnosticCategories[category].logs.unshift({
+                        level,
+                        message: cleanMessage,
+                        count: 1,
+                        timestamp,
+                        lastSeen: timestamp,
+                        source
+                    });
+
+                    // Limit logs per category
+                    if (this.diagnosticCategories[category].logs.length > 8) {
+                        this.diagnosticCategories[category].logs.pop();
+                    }
+                }
+            }
+
+            // ====== CENTRALIZED LOGGING API ======
+            logToTerminal(level, message, category = 'SYSTEM', source = 'proxy', metadata = {}) {
+                // Enhanced unified logging system - single entry point for all logs
+                const logEntry = {
+                    level,
+                    message,
+                    category: category.toUpperCase(),
+                    source,
+                    timestamp: Date.now(),
+                    metadata
+                };
+
+                // Add to diagnostic categories
+                this.addToDiagnostics(level, message, source);
+
+                // Auto-dump to terminal for external visibility
+                if (typeof dump !== 'undefined') {
+                    const categoryIcon = this.getCategoryIcon(logEntry.category);
+                    const prefix = source === 'background' ? '[BG]' : source === 'extractor' ? '[EXT]' : '[PROXY]';
+                    dump(`${prefix} ${categoryIcon} ${level}: ${message}\n`);
+                }
+
+                // Legacy compatibility - still populate old logs for existing code
+                this.addToLegacySysadminLog(level, message);
+            }
+
             addToSysadminLog(level, message) {
-                // Consolidate repetitive messages
+                // Route through centralized system
+                this.logToTerminal(level, message, this.categorizeMessage(message), 'proxy');
+            }
+
+            addToLegacySysadminLog(level, message) {
+                // Legacy compatibility - still populate old logs
                 const cleanMessage = message.substring(0, 35);
                 const existing = this.sysadminLogs.find(log => log.includes(cleanMessage));
 
                 if (existing) {
-                    // Update count instead of adding duplicate
                     const countMatch = existing.match(/x(\d+)$/);
                     const count = countMatch ? parseInt(countMatch[1]) + 1 : 2;
                     const baseEntry = existing.replace(/ x\d+$/, '');
@@ -119,12 +238,14 @@ if (window.__vibeReaderProxyController) {
             }
 
             addToNetworkLog(source, message) {
-                // Consolidate repetitive messages
+                // Enhanced logging with categorization
+                this.addToDiagnostics('INFO', message, 'NETMON');
+
+                // Legacy compatibility
                 const cleanMessage = message.substring(0, 35);
                 const existing = this.networkLogs.find(log => log.includes(cleanMessage));
 
                 if (existing) {
-                    // Update count instead of adding duplicate
                     const countMatch = existing.match(/x(\d+)$/);
                     const count = countMatch ? parseInt(countMatch[1]) + 1 : 2;
                     const baseEntry = existing.replace(/ x\d+$/, '');
@@ -138,17 +259,50 @@ if (window.__vibeReaderProxyController) {
                 }
             }
 
+            // Comprehensive error capture
+            setupEnhancedErrorCapture() {
+                const self = this;
+
+                // Capture unhandled promise rejections
+                window.addEventListener('unhandledrejection', (event) => {
+                    self.addToDiagnostics('ERR', `Promise rejection: ${event.reason}`);
+                });
+
+                // Capture global errors
+                window.addEventListener('error', (event) => {
+                    self.addToDiagnostics('ERR', `Global error: ${event.message} at ${event.filename}:${event.lineno}`);
+                });
+
+                // Enhanced extension API error capture
+                if (browser?.runtime?.onMessage) {
+                    const originalAddListener = browser.runtime.onMessage.addListener;
+                    browser.runtime.onMessage.addListener = function (callback) {
+                        const wrappedCallback = (request, sender, sendResponse) => {
+                            try {
+                                return callback(request, sender, sendResponse);
+                            } catch (error) {
+                                self.addToDiagnostics('ERR', `Message handler error: ${error.message}`);
+                                throw error;
+                            }
+                        };
+                        return originalAddListener.call(this, wrappedCallback);
+                    };
+                }
+            }
+
             init() {
                 const initStart = performance.now();
 
                 try {
                     console.log('🎮 ProxyController.init() starting:', {
-                        url: window.location.href,
-                        timestamp: new Date().toISOString()
+                        url: window.location.href, timestamp: new Date().toISOString()
                     });
 
                     // Initialize console logging capture
                     this.initConsoleCapture();
+
+                    // Setup enhanced error capture
+                    this.setupEnhancedErrorCapture();
 
                     // Set up message listener with error handling
                     browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -177,10 +331,38 @@ if (window.__vibeReaderProxyController) {
                 } catch (error) {
                     console.error('❌ Message handling error:', error);
                     sendResponse({
-                        success: false,
-                        error: error.message || 'Unknown error'
+                        success: false, error: error.message || 'Unknown error'
                     });
                 }
+            }
+
+            // ====== LOGGING HELPER METHODS ======
+            categorizeMessage(message) {
+                // Auto-categorize messages based on content
+                const lowerMsg = message.toLowerCase();
+
+                if (lowerMsg.includes('err') || lowerMsg.includes('❌') || lowerMsg.includes('failed') || lowerMsg.includes('error')) {
+                    return 'ERRORS';
+                } else if (lowerMsg.includes('media') || lowerMsg.includes('🔍') || lowerMsg.includes('images') || lowerMsg.includes('videos') || lowerMsg.includes('📦') || lowerMsg.includes('found')) {
+                    return 'MEDIA';
+                } else if (lowerMsg.includes('ascii') || lowerMsg.includes('🎯') || lowerMsg.includes('conversion') || lowerMsg.includes('aalib') || lowerMsg.includes('🎨')) {
+                    return 'ASCII';
+                } else if (lowerMsg.includes('bg:') || lowerMsg.includes('extraction') || lowerMsg.includes('proxy') || lowerMsg.includes('netmon') || lowerMsg.includes('framework') || lowerMsg.includes('injection')) {
+                    return 'NETWORK';
+                } else {
+                    return 'SYSTEM';
+                }
+            }
+
+            getCategoryIcon(category) {
+                const icons = {
+                    'ERRORS': '❌',
+                    'MEDIA': '🔍',
+                    'ASCII': '🎯',
+                    'NETWORK': '🌐',
+                    'SYSTEM': '✅'
+                };
+                return icons[category] || '📝';
             }
 
             makeSerializable(obj) {
@@ -275,8 +457,7 @@ if (window.__vibeReaderProxyController) {
                 }
 
                 browser.runtime.sendMessage({
-                    action: 'saveSettings',
-                    settings: this.settings
+                    action: 'saveSettings', settings: this.settings
                 }).catch(error => {
                     console.error('Failed to save settings:', error);
                 });
@@ -292,8 +473,7 @@ if (window.__vibeReaderProxyController) {
                     this.createInterface();
 
                     browser.runtime.sendMessage({
-                        action: 'updateBadge',
-                        active: true
+                        action: 'updateBadge', active: true
                     }).catch(error => {
                         console.error('Failed to update badge:', error);
                     });
@@ -320,8 +500,7 @@ if (window.__vibeReaderProxyController) {
                         const originalDisplay = el.style.display;
                         el.style.display = 'none';
                         this.originalState.hiddenElements.push({
-                            element: el,
-                            display: originalDisplay
+                            element: el, display: originalDisplay
                         });
                     }
                 }
@@ -391,6 +570,7 @@ if (window.__vibeReaderProxyController) {
                     </div>
                     
                     ${this.settings.vibeRain ? '<div class="vibe-rain-container"></div>' : ''}
+                    <div class="retrofuture-bg-effects"></div>
                 </div>
             `;
             }
@@ -547,10 +727,18 @@ if (window.__vibeReaderProxyController) {
 
             processImages() {
                 const images = this.container?.querySelectorAll('.article-content img') || [];
+                console.log(`🔍 Media Debug: Found ${images.length} images in .article-content`);
+                if (typeof dump !== 'undefined') {
+                    dump(`[MEDIA] Found ${images.length} images for processing\n`);
+                }
                 images.forEach(img => this.createMediaWrapper(img));
 
                 // Also process any videos
                 const videos = this.container?.querySelectorAll('.article-content video') || [];
+                console.log(`🔍 Media Debug: Found ${videos.length} videos in .article-content`);
+                if (typeof dump !== 'undefined') {
+                    dump(`[MEDIA] Found ${videos.length} videos for processing\n`);
+                }
                 videos.forEach(video => this.createMediaWrapper(video));
             }
 
@@ -561,12 +749,18 @@ if (window.__vibeReaderProxyController) {
                 wrapper.setAttribute('data-mode', this.settings.mediaMode);
 
                 wrapper._originalElement = mediaElement.cloneNode(true);
-                wrapper._originalSrc = mediaElement.src ||
-                    mediaElement.getAttribute('data-src') ||
-                    mediaElement.getAttribute('data-lazy-src') ||
-                    mediaElement.getAttribute('data-original');
+                wrapper._originalSrc = mediaElement.src || mediaElement.getAttribute('data-src') || mediaElement.getAttribute('data-lazy-src') || mediaElement.getAttribute('data-original');
                 wrapper._isVideo = mediaElement.tagName === 'VIDEO';
                 wrapper._mediaType = mediaElement.tagName.toLowerCase();
+
+                console.log(`📦 Creating media wrapper:`, {
+                    type: wrapper._mediaType,
+                    src: wrapper._originalSrc,
+                    mode: this.settings.mediaMode
+                });
+                if (typeof dump !== 'undefined') {
+                    dump(`[MEDIA] Creating wrapper for ${wrapper._mediaType} in ${this.settings.mediaMode} mode\n`);
+                }
 
                 // Apply current media mode immediately
                 this.updateMediaDisplay(wrapper);
@@ -618,49 +812,83 @@ if (window.__vibeReaderProxyController) {
                 if (!config) {
                     const THEME_CONFIGS = {
                         'nightdrive': {
-                            mediaIcons: { image: '💽', video: '📼' }
-                        },
-                        'neon-surge': {
-                            mediaIcons: { image: '📸', video: '📀' }
-                        },
-                        'outrun-storm': {
-                            mediaIcons: { image: '🖼️', video: '🎬' }
-                        },
-                        'strange-days': {
-                            mediaIcons: { image: '🎴', video: '📹' }
+                            mediaIcons: {image: '💽', video: '📼'}
+                        }, 'neon-surge': {
+                            mediaIcons: {image: '📸', video: '📀'}
+                        }, 'outrun-storm': {
+                            mediaIcons: {image: '🖼️', video: '🎬'}
+                        }, 'strange-days': {
+                            mediaIcons: {image: '🎴', video: '📹'}
                         }
                     };
                     config = THEME_CONFIGS[this.currentTheme] || THEME_CONFIGS['nightdrive'];
                 }
-                
+
                 return isVideo ? config.mediaIcons.video : config.mediaIcons.image;
             }
 
             createAsciiDisplay(isVideo) {
-                const label = isVideo ? 'ASCII VIDEO' : 'ASCII IMAGE';
+                const theme = this.getThemedAsciiPlaceholder(this.currentTheme);
+                const label = isVideo ? theme['video'] : theme['image'];
 
                 return `
                 <div class="media-ascii-display">
-                    <pre class="ascii-art">
-╔════════════════╗
-║  ░░░░░░░░░░░░  ║
-║  ░░ ${label.padEnd(8)} ░░  ║
-║  ░░░░░░░░░░░░  ║
-╚════════════════╝
-                    </pre>
+                    <pre class="ascii-art">${label}</pre>
+                    <canvas class="ascii-canvas"></canvas>
                 </div>
             `;
             }
 
+            async getImageDimensions(src) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+
+                    img.onload = function () {
+                        resolve({
+                            width: img.naturalWidth, height: img.naturalHeight
+                        });
+                    };
+
+                    img.onerror = function () {
+                        // Fallback to reasonable default dimensions if image fails to load
+                        console.warn('Failed to load image for dimension extraction:', src);
+                        resolve({
+                            width: 600,  // Default landscape aspect
+                            height: 400
+                        });
+                    };
+
+                    img.src = src;
+                });
+            }
+
             async convertToAscii(src, wrapper) {
                 try {
-                    if (!window.aalib) {
-                        console.warn('aalib not available');
+                    // Enhanced debug logging with dump() output
+                    console.log('🎯 ASCII Conversion ENTRY POINT:', {
+                        src: src, wrapperExists: !!wrapper, aalibExists: !!aalib
+                    });
+                    if (typeof dump !== 'undefined') {
+                        dump(`[ASCII] 🎯 ASCII Conversion starting for: ${src}\n`);
+                    }
+
+                    if (!aalib) {
+                        console.warn('❌ ASCII FAIL: aalib not available');
+                        if (typeof dump !== 'undefined') {
+                            dump(`[ASCII] ❌ FAIL: aalib not available\n`);
+                        }
                         return;
                     }
 
                     const asciiContainer = wrapper.querySelector('.ascii-art');
-                    if (!asciiContainer) return;
+                    if (!asciiContainer) {
+                        console.warn('❌ ASCII FAIL: No .ascii-art container found');
+                        if (typeof dump !== 'undefined') {
+                            dump(`[ASCII] ❌ FAIL: No .ascii-art container found\n`);
+                        }
+                        return;
+                    }
 
                     // Clear existing content and show loading
                     asciiContainer.innerHTML = '<span style="opacity: 0.5;">Converting to ASCII...</span>';
@@ -668,42 +896,108 @@ if (window.__vibeReaderProxyController) {
                     // Get current theme for styling
                     const theme = this.currentTheme || 'nightdrive';
 
-                    console.log('🎯 ASCII Conversion starting:', {
-                        src: src,
-                        theme: theme,
-                        aalibAvailable: !!window.aalib
+
+                    // Get image dimensions
+                    const imageDimensions = await this.getImageDimensions(src);
+                    const {width: imgWidth, height: imgHeight} = imageDimensions;
+                    const aspectRatio = imgWidth / imgHeight;
+
+                    // Get computed font from CSS (respects theme)
+                    const computedStyle = getComputedStyle(document.documentElement);
+                    const fontFamily = computedStyle.fontFamily || "'Fira Code', monospace";
+
+                    // Measure the actual font metrics
+                    this.fontMetrics = this.measureFontMetricsFromCSS();
+
+                    // Quality multiplier for better ASCII representation
+                    const QUALITY_MULTIPLIER = 2.5;
+
+                    // Calculate display size (maintain aspect ratio, reasonable limits)
+                    const maxDisplayWidth = 800;
+                    const maxDisplayHeight = 600;
+
+                    let displayWidth, displayHeight;
+
+                    if (aspectRatio > maxDisplayWidth / maxDisplayHeight) {
+                        displayWidth = Math.min(imgWidth, maxDisplayWidth);
+                        displayHeight = displayWidth / aspectRatio;
+                    } else {
+                        displayHeight = Math.min(imgHeight, maxDisplayHeight);
+                        displayWidth = displayHeight * aspectRatio;
+                    }
+
+                    // Calculate high-quality render dimensions
+                    const renderWidth = displayWidth * QUALITY_MULTIPLIER;
+                    const renderHeight = displayHeight * QUALITY_MULTIPLIER;
+
+                    // Calculate character grid dimensions
+                    const charsWide = Math.floor(renderWidth / this.fontMetrics.charWidth);
+                    const charsTall = Math.floor(renderHeight / this.fontMetrics.lineHeight);
+
+                    console.log('📐 ASCII Canvas calculations:', {
+                        image: `${imgWidth}x${imgHeight}`,
+                        display: `${Math.round(displayWidth)}x${Math.round(displayHeight)}`,
+                        render: `${renderWidth}x${renderHeight}`,
+                        chars: `${charsWide}x${charsTall}`,
+                        fontMetrics: this.fontMetrics
                     });
 
-                    // Correct aalib.js usage based on repository examples
-                    window.aalib.read.image.fromURL(src)
-                        .map(window.aalib.aa({
-                            width: 60,
-                            height: 30,
-                            colored: true  // Enable colored ASCII for neon effects
+                    if (typeof dump !== 'undefined') {
+                        dump(`[ASCII] 📐 Canvas calc: ${imgWidth}x${imgHeight} -> ${Math.round(displayWidth)}x${Math.round(displayHeight)}px (${charsWide}x${charsTall} chars)\n`);
+                    }
+
+                    // Create canvas element
+                    const canvas = document.createElement('canvas');
+                    canvas.width = renderWidth;
+                    canvas.height = renderHeight;
+                    canvas.className = 'ascii-canvas';
+
+                    // CSS will handle the display size
+                    canvas.style.width = `${displayWidth}px`;
+                    canvas.style.height = `${displayHeight}px`;
+
+                    // Process with aalib
+                    aalib.read.image.fromURL(src)
+                        .map(aalib.aa({
+                            width: charsWide, height: charsTall, colored: true
                         }))
-                        .map(window.aalib.render.html({
-                            background: "transparent",
-                            fontFamily: "monospace",
-                            fontSize: "8px"
+                        .map(aalib.render.canvas({
+                            el: canvas,
+                            fontFamily: fontFamily,
+                            fontSize: this.fontMetrics.fontSize,
+                            charWidth: this.fontMetrics.charWidth,
+                            lineHeight: this.fontMetrics.lineHeight,
+                            width: renderWidth,
+                            height: renderHeight,
+                            background: 'transparent',
+                            charset: aalib.charset.ASCII_CHARSET
                         }))
                         .subscribe({
-                            next: (renderedElement) => {
-                                console.log('✅ ASCII conversion successful');
-                                
-                                // Clear loading message
+                            next: () => {
+                                console.log('✅ Canvas ASCII conversion successful');
+
+                                // Clear container and add canvas
                                 asciiContainer.innerHTML = '';
-                                
-                                // Apply theme-specific styling
-                                this.applyAsciiTheme(renderedElement, theme);
-                                
-                                // Append the rendered element directly (no textContent extraction!)
-                                asciiContainer.appendChild(renderedElement);
-                            },
-                            error: (err) => {
-                                console.error('❌ ASCII conversion failed:', err);
+                                asciiContainer.appendChild(canvas);
+
+                                console.log('✅ ASCII conversion successful for:', src);
+                                if (typeof dump !== 'undefined') {
+                                    dump(`[ASCII] ✅ SUCCESS: Conversion complete for ${src}\n`);
+                                }
+
+                                // Wait for next frame to ensure element is rendered, then measure
+                                requestAnimationFrame(() => {
+                                    this.sizeWrapperToCanvas(wrapper, displayWidth, displayHeight);
+                                });
+                            }, error: (err) => {
+                                console.error('❌ ASCII conversion failed:', err, 'for src:', src);
+                                if (typeof dump !== 'undefined') {
+                                    dump(`[ASCII] ❌ ERROR: ${err.message || err} for ${src}\n`);
+                                }
                                 // Fallback to themed placeholder
                                 asciiContainer.innerHTML = '';
-                                asciiContainer.textContent = this.getThemedAsciiPlaceholder(theme);
+                                const themeData = this.getThemedAsciiPlaceholder(theme);
+                                asciiContainer.textContent = themeData['image'] || '⚠️ CONVERSION FAILED';
                             }
                         });
 
@@ -712,76 +1006,148 @@ if (window.__vibeReaderProxyController) {
                     // Fallback to placeholder
                     const asciiEl = wrapper.querySelector('.ascii-art');
                     if (asciiEl) {
-                        asciiEl.textContent = this.getThemedAsciiPlaceholder(this.currentTheme || 'nightdrive');
+                        const themeData = this.getThemedAsciiPlaceholder(this.currentTheme || 'nightdrive');
+                        asciiEl.textContent = themeData['image'] || '⚠️ CONVERSION FAILED';
                     }
                 }
             }
 
-            applyAsciiTheme(element, theme) {
-                // Apply theme-specific CSS filters and styling
-                element.style.filter = this.getAsciiFilter(theme);
-                element.style.textShadow = this.getAsciiGlow(theme);
-                element.classList.add(`ascii-${theme}`);
-                element.style.lineHeight = '1.1';
-                element.style.letterSpacing = '0.5px';
-                
-                console.log(`🎨 Applied ${theme} ASCII theme styling`);
-            }
+            // Simplified wrapper sizing with CSS constraints
+            sizeWrapperToCanvas(wrapper, displayWidth, displayHeight) {
+                try {
+                    const asciiDisplayWrapper = wrapper.querySelector('.media-ascii-display');
+                    if (asciiDisplayWrapper) {
+                        // Respect CSS max constraints (800px width, 400px height)
+                        const constrainedWidth = Math.min(displayWidth, 800);
+                        const constrainedHeight = Math.min(displayHeight, 400);
+                        
+                        // Let CSS handle most of the styling, just set constrained dimensions
+                        asciiDisplayWrapper.style.width = `${constrainedWidth}px`;
+                        asciiDisplayWrapper.style.height = `${constrainedHeight}px`;
 
-            getAsciiFilter(theme) {
-                const filters = {
-                    'nightdrive': 'hue-rotate(320deg) saturate(1.5) brightness(1.2) contrast(1.1)',
-                    'neon-surge': 'hue-rotate(200deg) saturate(2) brightness(1.5) contrast(1.3)',
-                    'outrun-storm': 'hue-rotate(270deg) saturate(1.8) brightness(1.1) contrast(1.2)',
-                    'strange-days': 'hue-rotate(90deg) saturate(1.6) brightness(1.3) contrast(1.1)'
-                };
-                return filters[theme] || filters['nightdrive'];
-            }
-
-            getAsciiGlow(theme) {
-                const glows = {
-                    'nightdrive': '0 0 5px rgba(249, 38, 114, 0.6), 0 0 10px rgba(102, 217, 239, 0.4)',
-                    'neon-surge': '0 0 5px rgba(255, 20, 147, 0.8), 0 0 10px rgba(0, 255, 255, 0.6)',
-                    'outrun-storm': '0 0 5px rgba(138, 43, 226, 0.7), 0 0 10px rgba(255, 111, 32, 0.5)',
-                    'strange-days': '0 0 5px rgba(255, 70, 184, 0.6), 0 0 10px rgba(50, 205, 50, 0.4)'
-                };
-                return glows[theme] || glows['nightdrive'];
+                        console.log('📏 Canvas ASCII wrapper sized with constraints:', {
+                            original: `${Math.round(displayWidth)}x${Math.round(displayHeight)}px`,
+                            constrained: `${constrainedWidth}x${constrainedHeight}px`
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Failed to size ASCII wrapper:', error);
+                    dump('Failed to size ASCII wrapper:', error);
+                }
             }
 
             getThemedAsciiPlaceholder(theme) {
                 const placeholders = {
-                    'nightdrive': `
-╔════════════════════╗
-║  ░░ NIGHT SYNC ░░  ║
-║  ░░  RETRO DATA ░░ ║
-║  ░░ ◕‿◕ LOAD? ░░   ║
-╚════════════════════╝`,
-                    'neon-surge': `
-┏━━━━━━━━━━━━━━━━━━━━┓
-┃ ⚡ ELECTRIC ⚡     ┃
-┃ ⚡ PROCESSING ⚡   ┃
-┃ ⚡ ╰(°ω°)╯ ⚡      ┃
-┗━━━━━━━━━━━━━━━━━━━━┛`,
-                    'outrun-storm': `
-╭────────────────────╮
-│ ⛈️  STORM DATA ⛈️   │
-│ ⛈️  RACING LOAD ⛈️  │
-│ ⛈️  ლ(╹◡╹ლ) ⛈️    │
-╰────────────────────╯`,
-                    'strange-days': `
-▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-▓ 👻 PHANTOM 👻     ▓
-▓ 👻 CORRUPTED 👻   ▓
-▓ 👻 (¬‿¬) ??? ▓    ▓
-▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓`
+                    'nightdrive': {'image': `
+________/\\\\\\\\\\\\\\\\\\\\\\__/\\\\\\\\____________/\\\\\\\\_____/\\\\\\\\\\\\\\\\\\\\\\\\_        
+ _______\\/////\\\\\\///__\\/\\\\\\\\\\\\________/\\\\\\\\\\\\___/\\\\\\//////////__       
+  ___________\\/\\\\\\_____\\/\\\\\\//\\\\\\____/\\\\\\//\\\\\\__/\\\\\\_____________      
+   ___________\\/\\\\\\_____\\/\\\\\\\\///\\\\\\/\\\\\\/_\\/\\\\\\_\\/\\\\\\____/\\\\\\\\\\\\\\_     
+    ___________\\/\\\\\\_____\\/\\\\\\__\\///\\\\\\/___\\/\\\\\\_\\/\\\\\\___\\/////\\\\\\_    
+     ___________\\/\\\\\\_____\\/\\\\\\____\\///_____\\/\\\\\\_\\/\\\\\\_______\\/\\\\\\_   
+      ___________\\/\\\\\\_____\\/\\\\\\_____________\\/\\\\\\_\\/\\\\\\_______\\/\\\\\\_  
+       __/\\\\\\__/\\\\\\\\\\\\\\\\\\\\\\_\\/\\\\\\_____________\\/\\\\\\_\\//\\\\\\\\\\\\\\\\\\\\\\\\/__ 
+        _\\///__\\///////////__\\///______________\\///___\\////////////____`,
+                        'video':`
+________/\\\\\\________/\\\\\\__/\\\\\\\\\\\\\\\\\\\\\\__/\\\\\\\\\\\\\\\\\\\\\\\\____        
+ _______\\/\\\\\\_______\\/\\\\\\_\\/////\\\\\\///__\\/\\\\\\////////\\\\\\__       
+  _______\\//\\\\\\______/\\\\\\______\\/\\\\\\_____\\/\\\\\\______\\//\\\\\\_      
+   ________\\//\\\\\\____/\\\\\\_______\\/\\\\\\_____\\/\\\\\\_______\\/\\\\\\_     
+    _________\\//\\\\\\__/\\\\\\________\\/\\\\\\_____\\/\\\\\\_______\\/\\\\\\_    
+     __________\\//\\\\\\/\\\\\\_________\\/\\\\\\_____\\/\\\\\\_______\\/\\\\\\_   
+      ___________\\//\\\\\\\\\\__________\\/\\\\\\_____\\/\\\\\\_______/\\\\\\__  
+       __/\\\\\\______\\//\\\\\\________/\\\\\\\\\\\\\\\\\\\\\\_\\/\\\\\\\\\\\\\\\\\\\\\\\\/___ 
+        _\\///________\\///________\\///////////__\\////////////_____`},
+
+                    'neon-surge': {
+                        'image': `
+,e,                                     
+ "  888 888 8e   ,"Y88b  e88 888  ,e e, 
+888 888 888 88b "8" 888 d888 888 d88 88b
+888 888 888 888 ,ee 888 Y888 888 888   ,
+888 888 888 888 "88 888  "88 888  "YeeP"
+                          ,  88P        
+                         "8",P"         `,
+                        'video':`
+          ,e,      888                  
+Y8b Y888P  "   e88 888  ,e e,   e88 88e 
+ Y8b Y8P  888 d888 888 d88 88b d888 888b
+  Y8b "   888 Y888 888 888   , Y888 888P
+   Y8P    888  "88 888  "YeeP"  "88 88" `},
+
+                    'outrun-storm': {
+                        'image': `
+::::::::::::::::::::::::::::::::::::::::::::::::::::
+::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: ______                                         ::
+::/\\__  _\\                                        ::
+::\\/_/\\ \\/     ___ ___      __       __      __   ::
+::   \\ \\ \\   /' __\` __\`\\  /'__\`\\   /'_ \`\\  /'__\`\\ ::
+::    \\_\\ \\__/\\ \\/\\ \\/\\ \\/\\ \\L\\.\\_/\\ \\L\\ \\/\\  __/ ::
+::    /\\_____\\ \\_\\ \\_\\ \\_\\ \\__/.\\_\\ \\____ \\ \\____\\::
+::    \\/_____/\\/_/\\/_/\\/_/\\/__/\\/_/\\/___L\\ \\/____/::
+::                                   /\\____/      ::
+::                                   \\_/__/       ::
+::                                                ::
+::::::::::::::::::::::::::::::::::::::::::::::::::::
+::::::::::::::::::::::::::::::::::::::::::::::::::::`,
+                        'video': `
+::::::::::::::::::::::::::::::::::::::::::
+::::::::::::::::::::::::::::::::::::::::::
+:: __  __          __                   ::
+::/\\ \\/\\ \\  __    /\\ \\                  ::
+::\\ \\ \\ \\ \\/\\_\\   \\_\\ \\     __    ___   ::
+:: \\ \\ \\ \\ \\/\\ \\  /'_\` \\  /'__\`\\ / __\`\\ ::
+::  \\ \\ \\_/ \\ \\ \\/\\ \\L\\ \\/\\  __//\\ \\L\\ \\::
+::   \\ \`\\___/\\ \\_\\ \\___,_\\ \\____\\ \\____/::
+::    \`\\/__/  \\/_/\\/__,_ /\\/____/\\/___/ ::
+::                                      ::
+::::::::::::::::::::::::::::::::::::::::::
+::::::::::::::::::::::::::::::::::::::::::`},
+
+                    'strange-days': {'image': `
+ /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\ 
+( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )
+ > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ < 
+ /\\_/\\            _         _   _         _                   _              _       /\\_/\\ 
+( o.o )          /\\ \\      /\\_\\/\\_\\ _    / /\\                /\\ \\           /\\ \\    ( o.o )
+ > ^ <           \\ \\ \\    / / / / //\\_\\ / /  \\              /  \\ \\         /  \\ \\    > ^ < 
+ /\\_/\\           /\\ \\_\\  /\\ \\/ \\ \\/ / // / /\\ \\            / /\\ \\_\\       / /\\ \\ \\   /\\_/\\ 
+( o.o )         / /\\/_/ /  \\____\\__/ // / /\\ \\ \\          / / /\\/_/      / / /\\ \\_\\ ( o.o )
+ > ^ <         / / /   / /\\/________// / /  \\ \\ \\        / / / ______   / /_/_ \\/_/  > ^ < 
+ /\\_/\\        / / /   / / /\\/_// / // / /___/ /\\ \\      / / / /\\_____\\ / /____/\\     /\\_/\\ 
+( o.o )      / / /   / / /    / / // / /_____/ /\\ \\    / / /  \\/____ // /\\____\\/    ( o.o )
+ > ^ <   ___/ / /__ / / /    / / // /_________/\\ \\ \\  / / /_____/ / // / /______     > ^ < 
+ /\\_/\\  /\\__\\/_/___\\\\/_/    / / // / /_       __\\ \\_\\/ / /______\\/ // / /_______\\    /\\_/\\ 
+( o.o ) \\/_________/        \\/_/ \\_\\___\\     /____/_/\\/___________/ \\/__________/   ( o.o )
+ > ^ <                                                                               > ^ < 
+ /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\  /\\_/\\ 
+( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )( o.o )
+ > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ < `, 'video':`
+   _      _      _      _      _      _      _      _      _      _      _   
+ _( )_  _( )_  _( )_  _( )_  _( )_  _( )_  _( )_  _( )_  _( )_  _( )_  _( )_ 
+(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)
+ (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_) 
+   _    _          _        _        _            _            _         _   
+ _( )_ /\\ \\    _ / /\\      /\\ \\     /\\ \\         /\\ \\         /\\ \\     _( )_ 
+(_ o _)\\ \\ \\  /_/ / /      \\ \\ \\   /  \\ \\____   /  \\ \\       /  \\ \\   (_ o _)
+ (_,_)  \\ \\ \\ \\___\\/       /\\ \\_\\ / /\\ \\_____\\ / /\\ \\ \\     / /\\ \\ \\   (_,_) 
+   _    / / /  \\ \\ \\      / /\\/_// / /\\/___  // / /\\ \\_\\   / / /\\ \\ \\    _   
+ _( )_  \\ \\ \\   \\_\\ \\    / / /  / / /   / / // /_/_ \\/_/  / / /  \\ \\_\\ _( )_ 
+(_ o _)  \\ \\ \\  / / /   / / /  / / /   / / // /____/\\    / / /   / / /(_ o _)
+ (_,_)    \\ \\ \\/ / /   / / /  / / /   / / // /\\____\\/   / / /   / / /  (_,_) 
+   _       \\ \\ \\/ /___/ / /__ \\ \\ \\__/ / // / /______  / / /___/ / /     _   
+ _( )_      \\ \\  //\\__\\/_/___\\ \\ \\___\\/ // / /_______\\/ / /____\\/ /    _( )_ 
+(_ o _)      \\_\\/ \\/_________/  \\/_____/ \\/__________/\\/_________/    (_ o _)
+ (_,_)                                                                 (_,_) 
+   _      _      _      _      _      _      _      _      _      _      _   
+ _( )_  _( )_  _( )_  _( )_  _( )_  _( )_  _( )_  _( )_  _( )_  _( )_  _( )_ 
+(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)(_ o _)
+ (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_) `},
                 };
                 return placeholders[theme] || placeholders['nightdrive'];
             }
 
-            getAsciiPlaceholder() {
-                // Fallback for legacy usage
-                return this.getThemedAsciiPlaceholder(this.currentTheme || 'nightdrive');
-            }
 
             cycleMediaItem(wrapper) {
                 const modes = ['emoji', 'ascii', 'normal'];
@@ -819,19 +1185,11 @@ if (window.__vibeReaderProxyController) {
                 const rightTerminal = this.container?.querySelector('#right-terminal');
 
                 if (leftTerminal) {
-                    leftTerminal.innerHTML = [
-                        `> STATUS: ${status}`,
-                        `> PROGRESS: ${progress}%`,
-                        `> TIME: ${new Date().toLocaleTimeString()}`
-                    ].map(line => `<div class="terminal-line">${line}</div>`).join('');
+                    leftTerminal.innerHTML = [`> STATUS: ${status}`, `> PROGRESS: ${progress}%`, `> TIME: ${new Date().toLocaleTimeString()}`].map(line => `<div class="terminal-line">${line}</div>`).join('');
                 }
 
                 if (rightTerminal) {
-                    rightTerminal.innerHTML = [
-                        `> PROXY: ACTIVE`,
-                        `> EXTRACTION: ${progress}%`,
-                        `> MODE: ${this.currentTheme}`
-                    ].map(line => `<div class="terminal-line">${line}</div>`).join('');
+                    rightTerminal.innerHTML = [`> PROXY: ACTIVE`, `> EXTRACTION: ${progress}%`, `> MODE: ${this.currentTheme}`].map(line => `<div class="terminal-line">${line}</div>`).join('');
                 }
             }
 
@@ -840,21 +1198,11 @@ if (window.__vibeReaderProxyController) {
                 const rightTerminal = this.container?.querySelector('#right-terminal');
 
                 if (leftTerminal) {
-                    leftTerminal.innerHTML = [
-                        '> EXTRACTION: COMPLETE',
-                        `> TITLE: ${(metadata?.title || 'UNTITLED').substring(0, 30)}`,
-                        `> WORDS: ${metadata?.length || 0}`,
-                        `> TIME: ${new Date().toLocaleTimeString()}`
-                    ].map(line => `<div class="terminal-line">${line}</div>`).join('');
+                    leftTerminal.innerHTML = ['> EXTRACTION: COMPLETE', `> TITLE: ${(metadata?.title || 'UNTITLED').substring(0, 30)}`, `> WORDS: ${metadata?.length || 0}`, `> TIME: ${new Date().toLocaleTimeString()}`].map(line => `<div class="terminal-line">${line}</div>`).join('');
                 }
 
                 if (rightTerminal) {
-                    rightTerminal.innerHTML = [
-                        '> PROXY: CONNECTED',
-                        `> SOURCE: ${metadata?.siteName || 'Unknown'}`,
-                        `> FRAMEWORK: ${metadata?.framework || 'vanilla'}`,
-                        '> STATUS: ACTIVE'
-                    ].map(line => `<div class="terminal-line">${line}</div>`).join('');
+                    rightTerminal.innerHTML = ['> PROXY: CONNECTED', `> SOURCE: ${metadata?.siteName || 'Unknown'}`, `> FRAMEWORK: ${metadata?.framework || 'vanilla'}`, '> STATUS: ACTIVE'].map(line => `<div class="terminal-line">${line}</div>`).join('');
                 }
             }
 
@@ -873,6 +1221,20 @@ if (window.__vibeReaderProxyController) {
                 if (this.container) {
                     this.container.setAttribute('data-theme', themeName);
                 }
+
+                const _fontMetrics = this.measureFontMetricsFromCSS();
+                if (_fontMetrics != this.fontMetrics) {
+
+                    const asciiWrappers = document.querySelectorAll('.media-wrapper[data-mode="ascii"]');
+                    if (asciiWrappers) {
+
+                        asciiWrappers.forEach(wrapper => {
+                            if (wrapper._originalSrc && !wrapper._isVideo) {
+                                this.convertToAscii(wrapper._originalSrc, wrapper);
+                            }
+                        });
+                    }
+                }
             }
 
             updateButtonTexts() {
@@ -884,27 +1246,24 @@ if (window.__vibeReaderProxyController) {
                 const THEME_CONFIGS = {
                     'nightdrive': {
                         themeBtn: '🌆',
-                        mediaBtns: { emoji: '🌌', ascii: 'ᴀsᴄɪɪ', normal: '⚛️' },
+                        mediaBtns: {emoji: '🌌', ascii: 'ᴀsᴄɪɪ', normal: '⚛️'},
                         disconnectBtn: '🌑',
-                        mediaIcons: { image: '💽', video: '📼' }
-                    },
-                    'neon-surge': {
+                        mediaIcons: {image: '💽', video: '📼'}
+                    }, 'neon-surge': {
                         themeBtn: '⚡',
-                        mediaBtns: { emoji: '🌩️', ascii: 'ﾑ丂ᄃﾉﾉ', normal: '💡' },
+                        mediaBtns: {emoji: '🌩️', ascii: 'ﾑ丂ᄃﾉﾉ', normal: '💡'},
                         disconnectBtn: '🪫',
-                        mediaIcons: { image: '📸', video: '📀' }
-                    },
-                    'outrun-storm': {
+                        mediaIcons: {image: '📸', video: '📀'}
+                    }, 'outrun-storm': {
                         themeBtn: '🛣️',
-                        mediaBtns: { emoji: '🚘', ascii: '🅰🆂🅲🅸🅸', normal: '🏁' },
+                        mediaBtns: {emoji: '🚘', ascii: '🅰🆂🅲🅸🅸', normal: '🏁'},
                         disconnectBtn: '📴',
-                        mediaIcons: { image: '🖼️', video: '🎬' }
-                    },
-                    'strange-days': {
+                        mediaIcons: {image: '🖼️', video: '🎬'}
+                    }, 'strange-days': {
                         themeBtn: '🎇',
-                        mediaBtns: { emoji: '👾', ascii: 'ₐₛʗᵢᵢ', normal: '👁️' },
+                        mediaBtns: {emoji: '👾', ascii: 'ₐₛʗᵢᵢ', normal: '👁️'},
                         disconnectBtn: '💤',
-                        mediaIcons: { image: '🎴', video: '📹' }
+                        mediaIcons: {image: '🎴', video: '📹'}
                     }
                 };
 
@@ -928,8 +1287,7 @@ if (window.__vibeReaderProxyController) {
 
             requestDeactivation() {
                 browser.runtime.sendMessage({
-                    action: 'updateBadge',
-                    active: false
+                    action: 'updateBadge', active: false
                 }).catch(error => {
                     console.error('Failed to update badge:', error);
                 });
@@ -959,8 +1317,7 @@ if (window.__vibeReaderProxyController) {
                         document.documentElement.style.overflow = this.originalState.htmlOverflow || '';
 
                         this.originalState.hiddenElements.forEach(({
-                                                                       element,
-                                                                       display
+                                                                       element, display
                                                                    }) => {
                             if (element && element.style) {
                                 element.style.display = display || '';
@@ -1109,71 +1466,144 @@ if (window.__vibeReaderProxyController) {
                 }, 3000);
             }
 
+            // Generate zen console output
+            getDiagnosticSummary() {
+                const categories = Object.keys(this.diagnosticCategories);
+                const summary = categories.map(cat => {
+                    const count = this.diagnosticCategories[cat].logs.length;
+                    return `${cat}:${count}`;
+                }).join(' ');
+
+                // Get latest meaningful message
+                let latestMessage = '';
+                for (const cat of categories) {
+                    const logs = this.diagnosticCategories[cat].logs;
+                    if (logs.length > 0) {
+                        const latest = logs[0];
+                        if (latest.count > 1) {
+                            latestMessage = `${latest.message.substring(0, 30)} x${latest.count}`;
+                        } else {
+                            latestMessage = latest.message.substring(0, 40);
+                        }
+                        break;
+                    }
+                }
+
+                return {summary, latestMessage};
+            }
+
+            // Create dropdown category UI
+            createCategoryDropdown(categoryName, categoryData) {
+                const isExpanded = categoryData.expanded;
+                const count = categoryData.logs.length;
+                const arrow = isExpanded ? '▼' : '▶';
+
+                if (count === 0 && !isExpanded) return ''; // Hide empty collapsed categories
+
+                let html = `
+                    <div class="diagnostic-category" data-category="${categoryName}">
+                        <div class="category-header" data-category="${categoryName}">
+                            ${categoryData.icon} ${arrow} ${categoryName} (${count})
+                        </div>
+                `;
+
+                if (isExpanded && count > 0) {
+                    html += '<div class="category-content">';
+                    categoryData.logs.slice(0, 5).forEach(log => {
+                        const countDisplay = log.count > 1 ? ` x${log.count}` : '';
+                        html += `<div class="terminal-line">  ${log.level}: ${log.message}${countDisplay}</div>`;
+                    });
+                    html += '</div>';
+                } else if (isExpanded && count === 0) {
+                    html += '<div class="category-content"><div class="terminal-line">  [No activity]</div></div>';
+                }
+
+                html += '</div>';
+                return html;
+            }
+
+            toggleCategory(categoryName) {
+                if (this.diagnosticCategories[categoryName]) {
+                    this.diagnosticCategories[categoryName].expanded = !this.diagnosticCategories[categoryName].expanded;
+                    this.updateLiveTerminals(); // Refresh display
+                }
+            }
+
+            setupDropdownEventListeners(terminalElement) {
+                // Remove existing listeners to prevent duplicates
+                terminalElement.removeEventListener('click', this.handleDropdownClick);
+
+                // Add event delegation for category header clicks
+                this.handleDropdownClick = (event) => {
+                    const categoryHeader = event.target.closest('.category-header');
+                    if (categoryHeader) {
+                        const categoryName = categoryHeader.getAttribute('data-category');
+                        if (categoryName) {
+                            this.toggleCategory(categoryName);
+                        }
+                    }
+                };
+
+                terminalElement.addEventListener('click', this.handleDropdownClick);
+            }
+
             updateLiveTerminals() {
                 const leftTerminal = this.container?.querySelector('#left-terminal');
                 const rightTerminal = this.container?.querySelector('#right-terminal');
 
                 if (leftTerminal) {
-                    // SYSADMIN: Concise status + filtered logs
-                    const status = this.extractedContent ? 'ACTIVE' : 'EXTRACTING';
-                    const wordCount = this.metadata?.length || 0;
-                    const readTime = Math.max(1, Math.ceil(wordCount / 200));
-                    const contentScore = this.metadata?.readabilityScore || 'N/A';
+                    // SYSADMIN: Enhanced dropdown categories
+                    let html = '';
+                    const sysadminCategories = ['ERRORS', 'MEDIA', 'ASCII', 'SYSTEM'];
 
-                    const statusLines = [
-                        `> STATUS: ${status} | SCORE: ${contentScore}`,
-                        `> CONTENT: ${wordCount}w (${readTime}min)`,
-                        `> RECENT ACTIVITY:`
-                    ];
+                    sysadminCategories.forEach(cat => {
+                        if (this.diagnosticCategories[cat]) {
+                            html += this.createCategoryDropdown(cat, this.diagnosticCategories[cat]);
+                        }
+                    });
 
-                    // Show only meaningful logs (errors, key events)
-                    const meaningfulLogs = this.sysadminLogs.filter(log =>
-                        log.includes('ERR:') ||
-                        log.includes('extracted') ||
-                        log.includes('initialized') ||
-                        log.includes('activated')
-                    ).slice(0, 5);
+                    if (!html) {
+                        html = '<div class="terminal-line">> [Waiting for events...]</div>';
+                    }
 
-                    const logLines = meaningfulLogs.length > 0
-                        ? meaningfulLogs.map(log => `  ${log}`)
-                        : ['  [No critical events]'];
+                    leftTerminal.innerHTML = html;
 
-                    leftTerminal.innerHTML = [...statusLines, ...logLines]
-                        .map(line => `<div class="terminal-line">${line}</div>`).join('');
+                    // Add event delegation for dropdown clicks
+                    this.setupDropdownEventListeners(leftTerminal);
+
+                    // Zen console output
+                    const {summary, latestMessage} = this.getDiagnosticSummary();
+                    if (typeof dump !== 'undefined' && latestMessage) {
+                        dump(`[DIAG] ${summary} | Latest: ${latestMessage}\n`);
+                    }
                 }
 
                 if (rightTerminal) {
-                    // NETMON: Hidden tab info + connection status
-                    const hiddenTabStatus = this.extractedContent ? 'CONNECTED' : 'EXTRACTING';
-                    const framework = this.metadata?.framework || 'detecting';
-                    let domain = 'unknown';
-                    try {
-                        domain = new URL(window.location.href).hostname.substring(0, 20);
-                    } catch (e) {
-                        domain = window.location.hostname?.substring(0, 20) || 'localhost';
+                    // NETMON: Enhanced dropdown categories  
+                    let html = '';
+                    const netmonCategories = ['NETWORK', 'ERRORS', 'SYSTEM'];
+
+                    netmonCategories.forEach(cat => {
+                        if (this.diagnosticCategories[cat]) {
+                            html += this.createCategoryDropdown(cat, this.diagnosticCategories[cat]);
+                        }
+                    });
+
+                    if (!html) {
+                        html = '<div class="terminal-line">> [Monitoring network...]</div>';
                     }
-                    const hiddenTabElements = this.metadata?.hiddenTabElements || 0;
 
-                    const statusLines = [
-                        `> PROXY: ${hiddenTabStatus}`,
-                        `> TARGET: ${domain}`,
-                        `> FRAMEWORK: ${framework} | NODES: ${hiddenTabElements}`,
-                        `> BACKGROUND ACTIVITY:`
-                    ];
+                    rightTerminal.innerHTML = html;
 
-                    // Show extraction-related logs only
-                    const networkLogs = this.networkLogs.filter(log =>
-                        log.includes('extraction') ||
-                        log.includes('BG:') ||
-                        log.includes('content')
-                    ).slice(0, 5);
+                    // Add event delegation for dropdown clicks
+                    this.setupDropdownEventListeners(rightTerminal);
 
-                    const logLines = networkLogs.length > 0
-                        ? networkLogs.map(log => `  ${log}`)
-                        : ['  [Monitoring...]'];
-
-                    rightTerminal.innerHTML = [...statusLines, ...logLines]
-                        .map(line => `<div class="terminal-line">${line}</div>`).join('');
+                    // Minimal dump for NETMON 
+                    const networkCount = this.diagnosticCategories.NETWORK?.logs.length || 0;
+                    if (typeof dump !== 'undefined' && networkCount > 0) {
+                        const latestNetwork = this.diagnosticCategories.NETWORK.logs[0];
+                        dump(`[NETMON] NETWORK:${networkCount} | ${latestNetwork.message.substring(0, 30)}\n`);
+                    }
                 }
             }
         }
