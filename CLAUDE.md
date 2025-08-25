@@ -41,8 +41,13 @@ VibeReader is a Firefox browser extension that transforms any webpage into a **9
 cd "C:\Users\jacks\PycharmProjects\NightDrive theme\theme_exports\synthwave-themes\vibe-reader-extension"
 web-ext run --verbose --devtools --browser-console --firefox="C:\Program Files\Firefox Developer Edition\firefox.exe" > dump.log 2>&1
 
+# CSS Build Commands (Tailwind)
+npm run build:css:prod    # Production build with minification
+npm run dev              # Development watch mode
+npm run build            # Alias for production build
+
 # Package for distribution  
-zip -r vibe-reader.xpi * -x "*.DS_Store" "*.git*" "*.md" "test-exports/*"
+zip -r vibe-reader.xpi * -x "*.DS_Store" "*.git*" "*.md" "test-exports/*" "node_modules/*" "src/*"
 ```
 
 ## Development Notes
@@ -73,6 +78,7 @@ zip -r vibe-reader.xpi * -x "*.DS_Store" "*.git*" "*.md" "test-exports/*"
 ### Core Technologies
 - **Extension**: VibeReader v2.0.0 (Firefox Manifest V2)
 - **Libraries**: Readability.js, aalib.js, RxJS v5.4.3
+- **CSS Framework**: Tailwind CSS v3.4.17 with PostCSS build pipeline
 - **Architecture**: Hidden tab proxy system with WeakMap memory management
 
 ### File Structure
@@ -83,7 +89,15 @@ vibe-reader-extension/
 ├── stealth-extractor.js         # Hidden tab content extraction
 ├── proxy-controller.js          # Visible tab UI management
 ├── lib/                         # External libraries
-├── styles/                      # CSS themes (retrofuture + matrix)
+├── styles/                      # CSS themes (retrofuture + matrix + generated)
+│   ├── generated.css            # Compiled Tailwind output (production)
+│   ├── matrix-theme.css         # Legacy matrix theme (deprecated)
+│   └── retrofuture-theme.css    # Legacy retrofuture theme (deprecated)
+├── src/styles/                  # Tailwind source files
+│   └── tailwind.css             # Complete Tailwind component system
+├── tailwind.config.js           # Tailwind configuration with themes
+├── postcss.config.js            # PostCSS build configuration
+├── package.json                 # NPM build pipeline
 ├── popup/                       # Settings interface
 └── icons/                       # Extension icons
 ```
@@ -189,12 +203,48 @@ SYSTEM: 'LOG:', '✅', 'initialized', 'activated'
 
 ## ⚠️ **ACTIVE DEVELOPMENT STATUS**
 
-**🚧 Current Phase**: Debugging ASCII conversion system + enhanced diagnostics  
-**📋 For ongoing troubleshooting**: See `DEBUG.md` for latest issues and next steps  
-**🎯 Focus Areas**: Tab management stability, media CSS sizing, ASCII pipeline completion 
+**🚧 Current Phase**: Tailwind CSS Migration Complete - Phase 1 ✅  
+**📋 Next Phase**: Integration of generated.css into extension architecture  
+**🎯 Focus Areas**: Replace legacy CSS injection with Tailwind utilities, convert components to utility classes
 **IMPORTANT**: before and after editing CSS check CSS-API.md every time!
-**IMPORTANT**: wehen editing terminal logging review terminal-log-API.md 
+**IMPORTANT**: when editing terminal logging review terminal-log-API.md 
 **IMPORTANT**: rewrite 'DEBUG.md' and update claude.md and README.md before exit
+
+## 🆕 **TAILWIND CSS MIGRATION (v2.2 - Framework Modernization)**
+
+### ✅ **Phase 1 Complete - Build Pipeline & Component System:**
+
+1. **Complete Build Pipeline** - NPM & PostCSS integration
+   - **Package.json configuration** with Tailwind CSS v3.4.17, PostCSS, autoprefixer, cssnano
+   - **Production builds** (`npm run build:css:prod`) → 1,600 lines generated CSS
+   - **Development watch** (`npm run dev`) → Real-time compilation with `--watch`
+   - **Windows compatibility** with proper `set NODE_ENV=production` syntax
+
+2. **Comprehensive Component System** - Complete legacy port + enhancements  
+   - **50+ Tailwind components** ported from legacy nightdrive-tailwind.css
+   - **Terminal variants** (left/right + modal versions) for sidebar system
+   - **Button system** with neon/cyber border effects and gradient preservation
+   - **Glass morphism** components with backdrop-blur utilities
+   - **Enhanced animations** (neon-pulse, synthwave-scan) with keyframe definitions
+
+3. **Advanced Theme System** - Multi-theme CSS variable integration
+   - **4 complete themes** with full 50-900 color spectrums for all colors
+   - **CSS custom properties** seamlessly integrated with Tailwind utilities
+   - **Theme-responsive utilities** maintaining existing data-theme attribute switching
+   - **Coherent z-index system** (extension/header/sidebar/content/media/modal/dropdown/tooltip/notification)
+
+4. **Enhanced Utilities & Features** - Beyond basic Tailwind
+   - **Custom utilities** (bg-glass, text-glow, border-neon, animate-synthwave-scan)
+   - **Clip-path utilities** for cyberpunk geometric effects (preserved from config)
+   - **Enhanced scrollbar styling** with theme-aware gradients
+   - **Production optimization** with cssnano minification
+
+### **🔧 Technical Implementation:**
+
+- **Generated Output**: `styles/generated.css` (1,600 lines) ready for production use
+- **Source System**: `src/styles/tailwind.css` with complete component definitions  
+- **Configuration**: `tailwind.config.js` with themes, animations, z-index scale, custom utilities
+- **Legacy Preservation**: Original CSS files maintained as fallback during transition
 
 ---
 

@@ -497,15 +497,9 @@ class HiddenTabManager {
             runAt: 'document_end'
         });
 
-        // Inject CSS
+        // Inject Tailwind CSS - Complete theme system
         await browser.tabs.insertCSS(tabId, {
-            file: 'styles/matrix-theme.css'
-        });
-        await browser.tabs.insertCSS(tabId, {
-            file: 'styles/retrofuture-theme.css'
-        });
-        await browser.tabs.insertCSS(tabId, {
-            file: 'styles/missing_effects.css'
+            file: 'styles/generated.css'
         });
     }
 

@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "VibeReader",
-  "version": "2.0.0",
-  "description": "Set Vibes // Transform any webpage into a cyberpunk coding aesthetic with hidden tab proxy architecture",
+  "version": "2.2.0",
+  "description": "Set Vibes // Transform any webpage into a cyberpunk coding aesthetic with Tailwind CSS framework and hidden tab proxy architecture",
   
   "applications": {
     "gecko": {

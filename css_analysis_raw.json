@@ -1,0 +1,4037 @@
+{
+  "js_references": {
+    "background-enhanced.js": {
+      "classes": [],
+      "ids": [],
+      "variables": [],
+      "inline_styles": [],
+      "selectors": []
+    },
+    "stealth-extractor.js": {
+      "classes": [],
+      "ids": [],
+      "variables": [],
+      "inline_styles": [
+        {
+          "value": "display",
+          "type": "style property assignment",
+          "file": "stealth-extractor.js",
+          "line": 315,
+          "context": "el.style.display = '';"
+        }
+      ],
+      "selectors": [
+        {
+          "value": "[data-reactroot]",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 94,
+          "context": "if (window.React || document.querySelector('[data-reactroot]') || document.querySelector('#root')) {"
+        },
+        {
+          "value": "#root",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 94,
+          "context": "if (window.React || document.querySelector('[data-reactroot]') || document.querySelector('#root')) {"
+        },
+        {
+          "value": "#app[data-v-]",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 96,
+          "context": "} else if (window.Vue || document.querySelector('#app[data-v-]') || document.querySelector('[data-server-rendered]')) {"
+        },
+        {
+          "value": "[data-server-rendered]",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 96,
+          "context": "} else if (window.Vue || document.querySelector('#app[data-v-]') || document.querySelector('[data-server-rendered]')) {"
+        },
+        {
+          "value": "[ng-app]",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 98,
+          "context": "} else if (window.angular || document.querySelector('[ng-app]') || document.querySelector('[ng-version]')) {"
+        },
+        {
+          "value": "[ng-version]",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 98,
+          "context": "} else if (window.angular || document.querySelector('[ng-app]') || document.querySelector('[ng-version]')) {"
+        },
+        {
+          "value": "[data-svelte]",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 100,
+          "context": "} else if (document.querySelector('[data-svelte]')) {"
+        },
+        {
+          "value": "#__next",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 102,
+          "context": "} else if (document.querySelector('#__next')) {"
+        },
+        {
+          "value": "[data-reactroot], #root, #__next",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 173,
+          "context": "const reactRoot = document.querySelector('[data-reactroot], #root, #__next');"
+        },
+        {
+          "value": "#app",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 178,
+          "context": "const vueApp = document.querySelector('#app');"
+        },
+        {
+          "value": "[ng-app], [ng-version]",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 183,
+          "context": "const ngApp = document.querySelector('[ng-app], [ng-version]');"
+        },
+        {
+          "value": "[hidden]",
+          "type": "querySelectorAll",
+          "file": "stealth-extractor.js",
+          "line": 318,
+          "context": "doc.querySelectorAll('[hidden]').forEach(el => {"
+        },
+        {
+          "value": "img[data-src], img[data-lazy-src]",
+          "type": "querySelectorAll",
+          "file": "stealth-extractor.js",
+          "line": 322,
+          "context": "doc.querySelectorAll('img[data-src], img[data-lazy-src]').forEach(img => {"
+        },
+        {
+          "value": "p",
+          "type": "querySelectorAll",
+          "file": "stealth-extractor.js",
+          "line": 336,
+          "context": "tempDiv.querySelectorAll('p').forEach(p => {"
+        },
+        {
+          "value": "img, a",
+          "type": "querySelectorAll",
+          "file": "stealth-extractor.js",
+          "line": 342,
+          "context": "tempDiv.querySelectorAll('img, a').forEach(el => {"
+        },
+        {
+          "value": "div, section, article",
+          "type": "querySelectorAll",
+          "file": "stealth-extractor.js",
+          "line": 387,
+          "context": "document.querySelectorAll('div, section, article').forEach(el => {"
+        },
+        {
+          "value": "*",
+          "type": "querySelectorAll",
+          "file": "stealth-extractor.js",
+          "line": 623,
+          "context": "totalElements: document.querySelectorAll('*').length,"
+        },
+        {
+          "value": "#__next",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 639,
+          "context": "if (document.querySelector('#__next')) frameworks.push('Next.js');"
+        },
+        {
+          "value": "[data-svelte]",
+          "type": "querySelector",
+          "file": "stealth-extractor.js",
+          "line": 640,
+          "context": "if (document.querySelector('[data-svelte]')) frameworks.push('Svelte');"
+        }
+      ]
+    },
+    "proxy-controller.js": {
+      "classes": [
+        {
+          "value": "ascii-art",
+          "type": "className assignment",
+          "file": "proxy-controller.js",
+          "line": 47,
+          "context": "tester.className = 'ascii-art';"
+        },
+        {
+          "value": "vibe-reader-container",
+          "type": "classList.contains",
+          "file": "proxy-controller.js",
+          "line": 499,
+          "context": "if (!el.classList.contains('vibe-reader-container')) {"
+        },
+        {
+          "value": "vibe-reader-container",
+          "type": "className assignment",
+          "file": "proxy-controller.js",
+          "line": 516,
+          "context": "this.container.className = 'vibe-reader-container vibe-reader-proxy';"
+        },
+        {
+          "value": "vibe-reader-proxy",
+          "type": "className assignment",
+          "file": "proxy-controller.js",
+          "line": 516,
+          "context": "this.container.className = 'vibe-reader-container vibe-reader-proxy';"
+        },
+        {
+          "value": "vibe-reader-overlay",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 530,
+          "context": "<div class=\"vibe-reader-overlay\">"
+        },
+        {
+          "value": "vibe-reader-overlay",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 530,
+          "context": "<div class=\"vibe-reader-overlay\">"
+        },
+        {
+          "value": "vibe-header",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 531,
+          "context": "<div class=\"vibe-header\">"
+        },
+        {
+          "value": "vibe-header",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 531,
+          "context": "<div class=\"vibe-header\">"
+        },
+        {
+          "value": "vibe-header-left",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 532,
+          "context": "<div class=\"vibe-header-left\">"
+        },
+        {
+          "value": "vibe-header-left",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 532,
+          "context": "<div class=\"vibe-header-left\">"
+        },
+        {
+          "value": "vibe-brand",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 533,
+          "context": "<span class=\"vibe-brand\">▓▓ VIBE READER v2.0 ▓▓</span>"
+        },
+        {
+          "value": "vibe-brand",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 533,
+          "context": "<span class=\"vibe-brand\">▓▓ VIBE READER v2.0 ▓▓</span>"
+        },
+        {
+          "value": "vibe-status",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 534,
+          "context": "<span class=\"vibe-status\">[ EXTRACTING ]</span>"
+        },
+        {
+          "value": "vibe-status",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 534,
+          "context": "<span class=\"vibe-status\">[ EXTRACTING ]</span>"
+        },
+        {
+          "value": "vibe-header-right",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 536,
+          "context": "<div class=\"vibe-header-right\">"
+        },
+        {
+          "value": "vibe-header-right",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 536,
+          "context": "<div class=\"vibe-header-right\">"
+        },
+        {
+          "value": "vibe-btn",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 537,
+          "context": "<button class=\"vibe-btn media-btn\" title=\"Toggle Media Mode\">🌌</button>"
+        },
+        {
+          "value": "media-btn",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 537,
+          "context": "<button class=\"vibe-btn media-btn\" title=\"Toggle Media Mode\">🌌</button>"
+        },
+        {
+          "value": "vibe-btn",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 537,
+          "context": "<button class=\"vibe-btn media-btn\" title=\"Toggle Media Mode\">🌌</button>"
+        },
+        {
+          "value": "media-btn",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 537,
+          "context": "<button class=\"vibe-btn media-btn\" title=\"Toggle Media Mode\">🌌</button>"
+        },
+        {
+          "value": "vibe-btn",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 538,
+          "context": "<button class=\"vibe-btn theme-btn\" title=\"Cycle Theme\">🌆</button>"
+        },
+        {
+          "value": "theme-btn",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 538,
+          "context": "<button class=\"vibe-btn theme-btn\" title=\"Cycle Theme\">🌆</button>"
+        },
+        {
+          "value": "vibe-btn",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 538,
+          "context": "<button class=\"vibe-btn theme-btn\" title=\"Cycle Theme\">🌆</button>"
+        },
+        {
+          "value": "theme-btn",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 538,
+          "context": "<button class=\"vibe-btn theme-btn\" title=\"Cycle Theme\">🌆</button>"
+        },
+        {
+          "value": "vibe-btn",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 539,
+          "context": "<button class=\"vibe-btn disconnect-btn\" title=\"Disconnect\">🌑</button>"
+        },
+        {
+          "value": "disconnect-btn",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 539,
+          "context": "<button class=\"vibe-btn disconnect-btn\" title=\"Disconnect\">🌑</button>"
+        },
+        {
+          "value": "vibe-btn",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 539,
+          "context": "<button class=\"vibe-btn disconnect-btn\" title=\"Disconnect\">🌑</button>"
+        },
+        {
+          "value": "disconnect-btn",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 539,
+          "context": "<button class=\"vibe-btn disconnect-btn\" title=\"Disconnect\">🌑</button>"
+        },
+        {
+          "value": "vibe-layout",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 543,
+          "context": "<div class=\"vibe-layout\">"
+        },
+        {
+          "value": "vibe-layout",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 543,
+          "context": "<div class=\"vibe-layout\">"
+        },
+        {
+          "value": "vibe-sidebar-spacer",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 544,
+          "context": "${this.settings.sideScrolls ? this.createLeftPanel() : '<div class=\"vibe-sidebar-spacer\"></div>'}"
+        },
+        {
+          "value": "vibe-sidebar-spacer",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 544,
+          "context": "${this.settings.sideScrolls ? this.createLeftPanel() : '<div class=\"vibe-sidebar-spacer\"></div>'}"
+        },
+        {
+          "value": "vibe-content",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 546,
+          "context": "<main class=\"vibe-content\">"
+        },
+        {
+          "value": "vibe-content",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 546,
+          "context": "<main class=\"vibe-content\">"
+        },
+        {
+          "value": "vibe-article",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 547,
+          "context": "<article class=\"vibe-article\">"
+        },
+        {
+          "value": "vibe-article",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 547,
+          "context": "<article class=\"vibe-article\">"
+        },
+        {
+          "value": "article-header",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 548,
+          "context": "<header class=\"article-header\">"
+        },
+        {
+          "value": "article-header",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 548,
+          "context": "<header class=\"article-header\">"
+        },
+        {
+          "value": "article-title",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 549,
+          "context": "<h1 class=\"article-title glitch\" data-text=\"INITIALIZING\">"
+        },
+        {
+          "value": "glitch",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 549,
+          "context": "<h1 class=\"article-title glitch\" data-text=\"INITIALIZING\">"
+        },
+        {
+          "value": "article-title",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 549,
+          "context": "<h1 class=\"article-title glitch\" data-text=\"INITIALIZING\">"
+        },
+        {
+          "value": "glitch",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 549,
+          "context": "<h1 class=\"article-title glitch\" data-text=\"INITIALIZING\">"
+        },
+        {
+          "value": "article-meta",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 552,
+          "context": "<div class=\"article-meta\">"
+        },
+        {
+          "value": "article-meta",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 552,
+          "context": "<div class=\"article-meta\">"
+        },
+        {
+          "value": "meta-item",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 553,
+          "context": "<span class=\"meta-item\">🔥 VIBE MODE ENGAGED</span>"
+        },
+        {
+          "value": "meta-item",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 553,
+          "context": "<span class=\"meta-item\">🔥 VIBE MODE ENGAGED</span>"
+        },
+        {
+          "value": "meta-item",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 554,
+          "context": "<span class=\"meta-item\">⚡ EXTRACTING CONTENT</span>"
+        },
+        {
+          "value": "meta-item",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 554,
+          "context": "<span class=\"meta-item\">⚡ EXTRACTING CONTENT</span>"
+        },
+        {
+          "value": "article-content",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 558,
+          "context": "<div class=\"article-content\">"
+        },
+        {
+          "value": "article-content",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 558,
+          "context": "<div class=\"article-content\">"
+        },
+        {
+          "value": "extraction-progress",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 559,
+          "context": "<div class=\"extraction-progress\">"
+        },
+        {
+          "value": "extraction-progress",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 559,
+          "context": "<div class=\"extraction-progress\">"
+        },
+        {
+          "value": "progress-bar",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 560,
+          "context": "<div class=\"progress-bar\">"
+        },
+        {
+          "value": "progress-bar",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 560,
+          "context": "<div class=\"progress-bar\">"
+        },
+        {
+          "value": "progress-fill",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 561,
+          "context": "<div class=\"progress-fill\" style=\"width: 0%\"></div>"
+        },
+        {
+          "value": "progress-fill",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 561,
+          "context": "<div class=\"progress-fill\" style=\"width: 0%\"></div>"
+        },
+        {
+          "value": "extraction-status",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 563,
+          "context": "<p class=\"extraction-status\">Initializing extraction...</p>"
+        },
+        {
+          "value": "extraction-status",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 563,
+          "context": "<p class=\"extraction-status\">Initializing extraction...</p>"
+        },
+        {
+          "value": "vibe-sidebar-spacer",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 569,
+          "context": "${this.settings.sideScrolls ? this.createRightPanel() : '<div class=\"vibe-sidebar-spacer\"></div>'}"
+        },
+        {
+          "value": "vibe-sidebar-spacer",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 569,
+          "context": "${this.settings.sideScrolls ? this.createRightPanel() : '<div class=\"vibe-sidebar-spacer\"></div>'}"
+        },
+        {
+          "value": "vibe-rain-container",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 572,
+          "context": "${this.settings.vibeRain ? '<div class=\"vibe-rain-container\"></div>' : ''}"
+        },
+        {
+          "value": "vibe-rain-container",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 572,
+          "context": "${this.settings.vibeRain ? '<div class=\"vibe-rain-container\"></div>' : ''}"
+        },
+        {
+          "value": "retrofuture-bg-effects",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 573,
+          "context": "<div class=\"retrofuture-bg-effects\"></div>"
+        },
+        {
+          "value": "retrofuture-bg-effects",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 573,
+          "context": "<div class=\"retrofuture-bg-effects\"></div>"
+        },
+        {
+          "value": "vibe-sidebar",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 580,
+          "context": "<aside class=\"vibe-sidebar left-panel\">"
+        },
+        {
+          "value": "left-panel",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 580,
+          "context": "<aside class=\"vibe-sidebar left-panel\">"
+        },
+        {
+          "value": "vibe-sidebar",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 580,
+          "context": "<aside class=\"vibe-sidebar left-panel\">"
+        },
+        {
+          "value": "left-panel",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 580,
+          "context": "<aside class=\"vibe-sidebar left-panel\">"
+        },
+        {
+          "value": "terminal-window",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 581,
+          "context": "<div class=\"terminal-window\">"
+        },
+        {
+          "value": "terminal-window",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 581,
+          "context": "<div class=\"terminal-window\">"
+        },
+        {
+          "value": "terminal-header",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 582,
+          "context": "<div class=\"terminal-header\">"
+        },
+        {
+          "value": "terminal-header",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 582,
+          "context": "<div class=\"terminal-header\">"
+        },
+        {
+          "value": "terminal-title",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 583,
+          "context": "<span class=\"terminal-title\">▓ SYSADMIN ▓</span>"
+        },
+        {
+          "value": "terminal-title",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 583,
+          "context": "<span class=\"terminal-title\">▓ SYSADMIN ▓</span>"
+        },
+        {
+          "value": "led-indicator",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 584,
+          "context": "<div class=\"led-indicator\"></div>"
+        },
+        {
+          "value": "led-indicator",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 584,
+          "context": "<div class=\"led-indicator\"></div>"
+        },
+        {
+          "value": "terminal-content",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 586,
+          "context": "<div class=\"terminal-content\" id=\"left-terminal\">"
+        },
+        {
+          "value": "terminal-content",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 586,
+          "context": "<div class=\"terminal-content\" id=\"left-terminal\">"
+        },
+        {
+          "value": "terminal-line",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 587,
+          "context": "<div class=\"terminal-line\">> SYSADMIN INIT...</div>"
+        },
+        {
+          "value": "terminal-line",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 587,
+          "context": "<div class=\"terminal-line\">> SYSADMIN INIT...</div>"
+        },
+        {
+          "value": "vibe-sidebar",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 596,
+          "context": "<aside class=\"vibe-sidebar right-panel\">"
+        },
+        {
+          "value": "right-panel",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 596,
+          "context": "<aside class=\"vibe-sidebar right-panel\">"
+        },
+        {
+          "value": "vibe-sidebar",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 596,
+          "context": "<aside class=\"vibe-sidebar right-panel\">"
+        },
+        {
+          "value": "right-panel",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 596,
+          "context": "<aside class=\"vibe-sidebar right-panel\">"
+        },
+        {
+          "value": "terminal-window",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 597,
+          "context": "<div class=\"terminal-window\">"
+        },
+        {
+          "value": "terminal-window",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 597,
+          "context": "<div class=\"terminal-window\">"
+        },
+        {
+          "value": "terminal-header",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 598,
+          "context": "<div class=\"terminal-header\">"
+        },
+        {
+          "value": "terminal-header",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 598,
+          "context": "<div class=\"terminal-header\">"
+        },
+        {
+          "value": "terminal-title",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 599,
+          "context": "<span class=\"terminal-title\">▓ NETMON ▓</span>"
+        },
+        {
+          "value": "terminal-title",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 599,
+          "context": "<span class=\"terminal-title\">▓ NETMON ▓</span>"
+        },
+        {
+          "value": "led-indicator",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 600,
+          "context": "<div class=\"led-indicator\"></div>"
+        },
+        {
+          "value": "led-indicator",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 600,
+          "context": "<div class=\"led-indicator\"></div>"
+        },
+        {
+          "value": "terminal-content",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 602,
+          "context": "<div class=\"terminal-content\" id=\"right-terminal\">"
+        },
+        {
+          "value": "terminal-content",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 602,
+          "context": "<div class=\"terminal-content\" id=\"right-terminal\">"
+        },
+        {
+          "value": "terminal-line",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 603,
+          "context": "<div class=\"terminal-line\">> NETWORK INIT...</div>"
+        },
+        {
+          "value": "terminal-line",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 603,
+          "context": "<div class=\"terminal-line\">> NETWORK INIT...</div>"
+        },
+        {
+          "value": "media-btn",
+          "type": "classList.contains",
+          "file": "proxy-controller.js",
+          "line": 614,
+          "context": "if (target.classList.contains('media-btn')) {"
+        },
+        {
+          "value": "theme-btn",
+          "type": "classList.contains",
+          "file": "proxy-controller.js",
+          "line": 616,
+          "context": "} else if (target.classList.contains('theme-btn')) {"
+        },
+        {
+          "value": "disconnect-btn",
+          "type": "classList.contains",
+          "file": "proxy-controller.js",
+          "line": 618,
+          "context": "} else if (target.classList.contains('disconnect-btn')) {"
+        },
+        {
+          "value": "vibe-article",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 666,
+          "context": "<article class=\"vibe-article\">"
+        },
+        {
+          "value": "vibe-article",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 666,
+          "context": "<article class=\"vibe-article\">"
+        },
+        {
+          "value": "article-header",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 667,
+          "context": "<header class=\"article-header\">"
+        },
+        {
+          "value": "article-header",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 667,
+          "context": "<header class=\"article-header\">"
+        },
+        {
+          "value": "article-title",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 668,
+          "context": "<h1 class=\"article-title glitch\" data-text=\"${this.escapeHtml(metadata?.title || 'UNTITLED')}\">"
+        },
+        {
+          "value": "glitch",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 668,
+          "context": "<h1 class=\"article-title glitch\" data-text=\"${this.escapeHtml(metadata?.title || 'UNTITLED')}\">"
+        },
+        {
+          "value": "article-title",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 668,
+          "context": "<h1 class=\"article-title glitch\" data-text=\"${this.escapeHtml(metadata?.title || 'UNTITLED')}\">"
+        },
+        {
+          "value": "glitch",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 668,
+          "context": "<h1 class=\"article-title glitch\" data-text=\"${this.escapeHtml(metadata?.title || 'UNTITLED')}\">"
+        },
+        {
+          "value": "article-byline",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 671,
+          "context": "${metadata?.byline ? `<div class=\"article-byline\">BY: ${this.escapeHtml(metadata.byline)}</div>` : ''}"
+        },
+        {
+          "value": "article-byline",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 671,
+          "context": "${metadata?.byline ? `<div class=\"article-byline\">BY: ${this.escapeHtml(metadata.byline)}</div>` : ''}"
+        },
+        {
+          "value": "article-meta",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 672,
+          "context": "<div class=\"article-meta\">"
+        },
+        {
+          "value": "article-meta",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 672,
+          "context": "<div class=\"article-meta\">"
+        },
+        {
+          "value": "meta-item",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 673,
+          "context": "<span class=\"meta-item\">📍 ${metadata?.siteName || 'Unknown'}</span>"
+        },
+        {
+          "value": "meta-item",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 673,
+          "context": "<span class=\"meta-item\">📍 ${metadata?.siteName || 'Unknown'}</span>"
+        },
+        {
+          "value": "meta-item",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 674,
+          "context": "<span class=\"meta-item\">📝 ${this.formatWordCount(metadata?.length || 0)}</span>"
+        },
+        {
+          "value": "meta-item",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 674,
+          "context": "<span class=\"meta-item\">📝 ${this.formatWordCount(metadata?.length || 0)}</span>"
+        },
+        {
+          "value": "meta-item",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 675,
+          "context": "<span class=\"meta-item\">⏱️ ${this.calculateReadingTime(metadata?.length || 0)} min</span>"
+        },
+        {
+          "value": "meta-item",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 675,
+          "context": "<span class=\"meta-item\">⏱️ ${this.calculateReadingTime(metadata?.length || 0)} min</span>"
+        },
+        {
+          "value": "article-content",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 679,
+          "context": "<div class=\"article-content\">"
+        },
+        {
+          "value": "article-content",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 679,
+          "context": "<div class=\"article-content\">"
+        },
+        {
+          "value": "cyber-heading",
+          "type": "classList.add",
+          "file": "proxy-controller.js",
+          "line": 712,
+          "context": "heading.classList.add('cyber-heading');"
+        },
+        {
+          "value": "cyber-link",
+          "type": "classList.add",
+          "file": "proxy-controller.js",
+          "line": 716,
+          "context": "link.classList.add('cyber-link');"
+        },
+        {
+          "value": "cyber-code",
+          "type": "classList.add",
+          "file": "proxy-controller.js",
+          "line": 722,
+          "context": "code.classList.add('cyber-code');"
+        },
+        {
+          "value": "media-wrapper",
+          "type": "className assignment",
+          "file": "proxy-controller.js",
+          "line": 747,
+          "context": "wrapper.className = 'media-wrapper';"
+        },
+        {
+          "value": "cyber-media",
+          "type": "classList.add",
+          "file": "proxy-controller.js",
+          "line": 788,
+          "context": "clone.classList.add('cyber-media');"
+        },
+        {
+          "value": "media-emoji-display",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 801,
+          "context": "<div class=\"media-emoji-display\">"
+        },
+        {
+          "value": "media-emoji-display",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 801,
+          "context": "<div class=\"media-emoji-display\">"
+        },
+        {
+          "value": "emoji-icon",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 802,
+          "context": "<div class=\"emoji-icon\">${emoji}</div>"
+        },
+        {
+          "value": "emoji-icon",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 802,
+          "context": "<div class=\"emoji-icon\">${emoji}</div>"
+        },
+        {
+          "value": "media-label",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 803,
+          "context": "<div class=\"media-label\">${label}</div>"
+        },
+        {
+          "value": "media-label",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 803,
+          "context": "<div class=\"media-label\">${label}</div>"
+        },
+        {
+          "value": "mode-hint",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 804,
+          "context": "<div class=\"mode-hint\">Click to cycle</div>"
+        },
+        {
+          "value": "mode-hint",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 804,
+          "context": "<div class=\"mode-hint\">Click to cycle</div>"
+        },
+        {
+          "value": "media-ascii-display",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 835,
+          "context": "<div class=\"media-ascii-display\">"
+        },
+        {
+          "value": "media-ascii-display",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 835,
+          "context": "<div class=\"media-ascii-display\">"
+        },
+        {
+          "value": "ascii-art",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 836,
+          "context": "<pre class=\"ascii-art\">${label}</pre>"
+        },
+        {
+          "value": "ascii-art",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 836,
+          "context": "<pre class=\"ascii-art\">${label}</pre>"
+        },
+        {
+          "value": "ascii-canvas",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 837,
+          "context": "<canvas class=\"ascii-canvas\"></canvas>"
+        },
+        {
+          "value": "ascii-canvas",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 837,
+          "context": "<canvas class=\"ascii-canvas\"></canvas>"
+        },
+        {
+          "value": "ascii-canvas",
+          "type": "className assignment",
+          "file": "proxy-controller.js",
+          "line": 953,
+          "context": "canvas.className = 'ascii-canvas';"
+        },
+        {
+          "value": "cyber-table",
+          "type": "classList.add",
+          "file": "proxy-controller.js",
+          "line": 1179,
+          "context": "table.classList.add('cyber-table');"
+        },
+        {
+          "value": "terminal-line",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1188,
+          "context": "leftTerminal.innerHTML = [`> STATUS: ${status}`, `> PROGRESS: ${progress}%`, `> TIME: ${new Date().toLocaleTimeString()}`].map(line => `<div class=\"terminal-line\">${line}</div>`).join('');"
+        },
+        {
+          "value": "terminal-line",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1188,
+          "context": "leftTerminal.innerHTML = [`> STATUS: ${status}`, `> PROGRESS: ${progress}%`, `> TIME: ${new Date().toLocaleTimeString()}`].map(line => `<div class=\"terminal-line\">${line}</div>`).join('');"
+        },
+        {
+          "value": "terminal-line",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1192,
+          "context": "rightTerminal.innerHTML = [`> PROXY: ACTIVE`, `> EXTRACTION: ${progress}%`, `> MODE: ${this.currentTheme}`].map(line => `<div class=\"terminal-line\">${line}</div>`).join('');"
+        },
+        {
+          "value": "terminal-line",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1192,
+          "context": "rightTerminal.innerHTML = [`> PROXY: ACTIVE`, `> EXTRACTION: ${progress}%`, `> MODE: ${this.currentTheme}`].map(line => `<div class=\"terminal-line\">${line}</div>`).join('');"
+        },
+        {
+          "value": "terminal-line",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1201,
+          "context": "leftTerminal.innerHTML = ['> EXTRACTION: COMPLETE', `> TITLE: ${(metadata?.title || 'UNTITLED').substring(0, 30)}`, `> WORDS: ${metadata?.length || 0}`, `> TIME: ${new Date().toLocaleTimeString()}`].map(line => `<div class=\"terminal-line\">${line}</div>`).join('');"
+        },
+        {
+          "value": "terminal-line",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1201,
+          "context": "leftTerminal.innerHTML = ['> EXTRACTION: COMPLETE', `> TITLE: ${(metadata?.title || 'UNTITLED').substring(0, 30)}`, `> WORDS: ${metadata?.length || 0}`, `> TIME: ${new Date().toLocaleTimeString()}`].map(line => `<div class=\"terminal-line\">${line}</div>`).join('');"
+        },
+        {
+          "value": "terminal-line",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1205,
+          "context": "rightTerminal.innerHTML = ['> PROXY: CONNECTED', `> SOURCE: ${metadata?.siteName || 'Unknown'}`, `> FRAMEWORK: ${metadata?.framework || 'vanilla'}`, '> STATUS: ACTIVE'].map(line => `<div class=\"terminal-line\">${line}</div>`).join('');"
+        },
+        {
+          "value": "terminal-line",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1205,
+          "context": "rightTerminal.innerHTML = ['> PROXY: CONNECTED', `> SOURCE: ${metadata?.siteName || 'Unknown'}`, `> FRAMEWORK: ${metadata?.framework || 'vanilla'}`, '> STATUS: ACTIVE'].map(line => `<div class=\"terminal-line\">${line}</div>`).join('');"
+        },
+        {
+          "value": "error-display",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1345,
+          "context": "<div class=\"error-display\">"
+        },
+        {
+          "value": "error-display",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1345,
+          "context": "<div class=\"error-display\">"
+        },
+        {
+          "value": "error-icon",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1346,
+          "context": "<div class=\"error-icon\">⚠️</div>"
+        },
+        {
+          "value": "error-icon",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1346,
+          "context": "<div class=\"error-icon\">⚠️</div>"
+        },
+        {
+          "value": "error-title",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1347,
+          "context": "<div class=\"error-title\">EXTRACTION FAILED</div>"
+        },
+        {
+          "value": "error-title",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1347,
+          "context": "<div class=\"error-title\">EXTRACTION FAILED</div>"
+        },
+        {
+          "value": "error-message",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1348,
+          "context": "<div class=\"error-message\">${this.escapeHtml(detailedError)}</div>"
+        },
+        {
+          "value": "error-message",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1348,
+          "context": "<div class=\"error-message\">${this.escapeHtml(detailedError)}</div>"
+        },
+        {
+          "value": "error-details",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1349,
+          "context": "<div class=\"error-details\">"
+        },
+        {
+          "value": "error-details",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1349,
+          "context": "<div class=\"error-details\">"
+        },
+        {
+          "value": "vibe-btn",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1353,
+          "context": "<button class=\"vibe-btn retry-btn\">RETRY EXTRACTION</button>"
+        },
+        {
+          "value": "retry-btn",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1353,
+          "context": "<button class=\"vibe-btn retry-btn\">RETRY EXTRACTION</button>"
+        },
+        {
+          "value": "vibe-btn",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1353,
+          "context": "<button class=\"vibe-btn retry-btn\">RETRY EXTRACTION</button>"
+        },
+        {
+          "value": "retry-btn",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1353,
+          "context": "<button class=\"vibe-btn retry-btn\">RETRY EXTRACTION</button>"
+        },
+        {
+          "value": "glitching",
+          "type": "classList.add",
+          "file": "proxy-controller.js",
+          "line": 1423,
+          "context": "el.classList.add('glitching');"
+        },
+        {
+          "value": "glitching",
+          "type": "classList.remove",
+          "file": "proxy-controller.js",
+          "line": 1425,
+          "context": "el.classList.remove('glitching');"
+        },
+        {
+          "value": "vibe-rain-container",
+          "type": "className assignment",
+          "file": "proxy-controller.js",
+          "line": 1437,
+          "context": "rainContainer.className = 'vibe-rain-container';"
+        },
+        {
+          "value": "matrix-drop",
+          "type": "className assignment",
+          "file": "proxy-controller.js",
+          "line": 1448,
+          "context": "drop.className = 'matrix-drop';"
+        },
+        {
+          "value": "diagnostic-category",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1504,
+          "context": "<div class=\"diagnostic-category\" data-category=\"${categoryName}\">"
+        },
+        {
+          "value": "diagnostic-category",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1504,
+          "context": "<div class=\"diagnostic-category\" data-category=\"${categoryName}\">"
+        },
+        {
+          "value": "category-header",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1505,
+          "context": "<div class=\"category-header\" data-category=\"${categoryName}\">"
+        },
+        {
+          "value": "category-header",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1505,
+          "context": "<div class=\"category-header\" data-category=\"${categoryName}\">"
+        },
+        {
+          "value": "category-content",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1511,
+          "context": "html += '<div class=\"category-content\">';"
+        },
+        {
+          "value": "category-content",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1511,
+          "context": "html += '<div class=\"category-content\">';"
+        },
+        {
+          "value": "terminal-line",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1514,
+          "context": "html += `<div class=\"terminal-line\">  ${log.level}: ${log.message}${countDisplay}</div>`;"
+        },
+        {
+          "value": "terminal-line",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1514,
+          "context": "html += `<div class=\"terminal-line\">  ${log.level}: ${log.message}${countDisplay}</div>`;"
+        },
+        {
+          "value": "category-content",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1518,
+          "context": "html += '<div class=\"category-content\"><div class=\"terminal-line\">  [No activity]</div></div>';"
+        },
+        {
+          "value": "terminal-line",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1518,
+          "context": "html += '<div class=\"category-content\"><div class=\"terminal-line\">  [No activity]</div></div>';"
+        },
+        {
+          "value": "category-content",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1518,
+          "context": "html += '<div class=\"category-content\"><div class=\"terminal-line\">  [No activity]</div></div>';"
+        },
+        {
+          "value": "terminal-line",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1518,
+          "context": "html += '<div class=\"category-content\"><div class=\"terminal-line\">  [No activity]</div></div>';"
+        },
+        {
+          "value": "terminal-line",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1566,
+          "context": "html = '<div class=\"terminal-line\">> [Waiting for events...]</div>';"
+        },
+        {
+          "value": "terminal-line",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1566,
+          "context": "html = '<div class=\"terminal-line\">> [Waiting for events...]</div>';"
+        },
+        {
+          "value": "terminal-line",
+          "type": "HTML class attribute",
+          "file": "proxy-controller.js",
+          "line": 1593,
+          "context": "html = '<div class=\"terminal-line\">> [Monitoring network...]</div>';"
+        },
+        {
+          "value": "terminal-line",
+          "type": "Template literal class",
+          "file": "proxy-controller.js",
+          "line": 1593,
+          "context": "html = '<div class=\"terminal-line\">> [Monitoring network...]</div>';"
+        }
+      ],
+      "ids": [
+        {
+          "value": "left-terminal",
+          "type": "HTML id attribute",
+          "file": "proxy-controller.js",
+          "line": 586,
+          "context": "<div class=\"terminal-content\" id=\"left-terminal\">"
+        },
+        {
+          "value": "left-terminal",
+          "type": "Template literal id",
+          "file": "proxy-controller.js",
+          "line": 586,
+          "context": "<div class=\"terminal-content\" id=\"left-terminal\">"
+        },
+        {
+          "value": "right-terminal",
+          "type": "HTML id attribute",
+          "file": "proxy-controller.js",
+          "line": 602,
+          "context": "<div class=\"terminal-content\" id=\"right-terminal\">"
+        },
+        {
+          "value": "right-terminal",
+          "type": "Template literal id",
+          "file": "proxy-controller.js",
+          "line": 602,
+          "context": "<div class=\"terminal-content\" id=\"right-terminal\">"
+        }
+      ],
+      "variables": [],
+      "inline_styles": [
+        {
+          "value": "position",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 48,
+          "context": "tester.style.position = 'absolute';"
+        },
+        {
+          "value": "visibility",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 49,
+          "context": "tester.style.visibility = 'hidden';"
+        },
+        {
+          "value": "width",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 50,
+          "context": "tester.style.width = 'auto';"
+        },
+        {
+          "value": "height",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 51,
+          "context": "tester.style.height = 'auto';"
+        },
+        {
+          "value": "overflow",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 494,
+          "context": "document.body.style.overflow = 'hidden';"
+        },
+        {
+          "value": "overflow",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 495,
+          "context": "document.documentElement.style.overflow = 'hidden';"
+        },
+        {
+          "value": "display",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 501,
+          "context": "el.style.display = 'none';"
+        },
+        {
+          "value": "width",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 631,
+          "context": "progressFill.style.width = `${progress}%`;"
+        },
+        {
+          "value": "width",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 956,
+          "context": "canvas.style.width = `${displayWidth}px`;"
+        },
+        {
+          "value": "height",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 957,
+          "context": "canvas.style.height = `${displayHeight}px`;"
+        },
+        {
+          "value": "width",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 1025,
+          "context": "asciiDisplayWrapper.style.width = `${constrainedWidth}px`;"
+        },
+        {
+          "value": "height",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 1026,
+          "context": "asciiDisplayWrapper.style.height = `${constrainedHeight}px`;"
+        },
+        {
+          "value": "overflow",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 1316,
+          "context": "document.body.style.overflow = this.originalState.bodyOverflow || '';"
+        },
+        {
+          "value": "overflow",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 1317,
+          "context": "document.documentElement.style.overflow = this.originalState.htmlOverflow || '';"
+        },
+        {
+          "value": "display",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 1323,
+          "context": "element.style.display = display || '';"
+        },
+        {
+          "value": "left",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 1449,
+          "context": "drop.style.left = `${i * 20}px`;  // Fixed: added * operator"
+        },
+        {
+          "value": "animationDuration",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 1450,
+          "context": "drop.style.animationDuration = `${Math.random() * 3 + 1}s`;  // Fixed"
+        },
+        {
+          "value": "animationDelay",
+          "type": "style property assignment",
+          "file": "proxy-controller.js",
+          "line": 1451,
+          "context": "drop.style.animationDelay = `${Math.random() * 2}s`;  // Fixed"
+        }
+      ],
+      "selectors": [
+        {
+          "value": ".vibe-rain-container",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 451,
+          "context": "const rainContainer = this.container.querySelector('.vibe-rain-container');"
+        },
+        {
+          "value": ".vibe-reader-container",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 510,
+          "context": "const existing = document.querySelector('.vibe-reader-container');"
+        },
+        {
+          "value": ".progress-fill",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 627,
+          "context": "const progressFill = this.container?.querySelector('.progress-fill');"
+        },
+        {
+          "value": ".extraction-status",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 628,
+          "context": "const statusText = this.container?.querySelector('.extraction-status');"
+        },
+        {
+          "value": ".vibe-content",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 659,
+          "context": "const mainContent = this.container?.querySelector('.vibe-content');"
+        },
+        {
+          "value": ".vibe-status",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 688,
+          "context": "const statusEl = this.container?.querySelector('.vibe-status');"
+        },
+        {
+          "value": "*",
+          "type": "querySelectorAll",
+          "file": "proxy-controller.js",
+          "line": 698,
+          "context": "this._elementCount = this.container ? this.container.querySelectorAll('*').length : 0;"
+        },
+        {
+          "value": "h1, h2, h3, h4, h5, h6",
+          "type": "querySelectorAll",
+          "file": "proxy-controller.js",
+          "line": 711,
+          "context": "tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {"
+        },
+        {
+          "value": "a",
+          "type": "querySelectorAll",
+          "file": "proxy-controller.js",
+          "line": 715,
+          "context": "tempDiv.querySelectorAll('a').forEach(link => {"
+        },
+        {
+          "value": "pre, code",
+          "type": "querySelectorAll",
+          "file": "proxy-controller.js",
+          "line": 721,
+          "context": "tempDiv.querySelectorAll('pre, code').forEach(code => {"
+        },
+        {
+          "value": ".article-content img",
+          "type": "querySelectorAll",
+          "file": "proxy-controller.js",
+          "line": 729,
+          "context": "const images = this.container?.querySelectorAll('.article-content img') || [];"
+        },
+        {
+          "value": ".article-content video",
+          "type": "querySelectorAll",
+          "file": "proxy-controller.js",
+          "line": 737,
+          "context": "const videos = this.container?.querySelectorAll('.article-content video') || [];"
+        },
+        {
+          "value": ".ascii-art",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 884,
+          "context": "const asciiContainer = wrapper.querySelector('.ascii-art');"
+        },
+        {
+          "value": ".ascii-art",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1007,
+          "context": "const asciiEl = wrapper.querySelector('.ascii-art');"
+        },
+        {
+          "value": ".media-ascii-display",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1018,
+          "context": "const asciiDisplayWrapper = wrapper.querySelector('.media-ascii-display');"
+        },
+        {
+          "value": ".media-wrapper",
+          "type": "querySelectorAll",
+          "file": "proxy-controller.js",
+          "line": 1166,
+          "context": "const wrappers = this.container?.querySelectorAll('.media-wrapper') || [];"
+        },
+        {
+          "value": ".article-content table",
+          "type": "querySelectorAll",
+          "file": "proxy-controller.js",
+          "line": 1177,
+          "context": "const tables = this.container?.querySelectorAll('.article-content table') || [];"
+        },
+        {
+          "value": "#left-terminal",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1184,
+          "context": "const leftTerminal = this.container?.querySelector('#left-terminal');"
+        },
+        {
+          "value": "#right-terminal",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1185,
+          "context": "const rightTerminal = this.container?.querySelector('#right-terminal');"
+        },
+        {
+          "value": "#left-terminal",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1197,
+          "context": "const leftTerminal = this.container?.querySelector('#left-terminal');"
+        },
+        {
+          "value": "#right-terminal",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1198,
+          "context": "const rightTerminal = this.container?.querySelector('#right-terminal');"
+        },
+        {
+          "value": ".theme-btn",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1241,
+          "context": "const themeBtn = this.container?.querySelector('.theme-btn');"
+        },
+        {
+          "value": ".media-btn",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1242,
+          "context": "const mediaBtn = this.container?.querySelector('.media-btn');"
+        },
+        {
+          "value": ".disconnect-btn",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1243,
+          "context": "const disconnectBtn = this.container?.querySelector('.disconnect-btn');"
+        },
+        {
+          "value": ".vibe-content",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1340,
+          "context": "const content = this.container?.querySelector('.vibe-content');"
+        },
+        {
+          "value": ".retry-btn",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1357,
+          "context": "const retryBtn = content.querySelector('.retry-btn');"
+        },
+        {
+          "value": ".glitch",
+          "type": "querySelectorAll",
+          "file": "proxy-controller.js",
+          "line": 1420,
+          "context": "const glitchElements = this.container?.querySelectorAll('.glitch') || [];"
+        },
+        {
+          "value": ".vibe-rain-container",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1433,
+          "context": "let rainContainer = this.container?.querySelector('.vibe-rain-container');"
+        },
+        {
+          "value": "#left-terminal",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1551,
+          "context": "const leftTerminal = this.container?.querySelector('#left-terminal');"
+        },
+        {
+          "value": "#right-terminal",
+          "type": "querySelector",
+          "file": "proxy-controller.js",
+          "line": 1552,
+          "context": "const rightTerminal = this.container?.querySelector('#right-terminal');"
+        }
+      ]
+    }
+  },
+  "css_definitions": {
+    "styles\\matrix-theme.css": {
+      "classes": [
+        {
+          "value": "vibe-reader-container",
+          "file": "styles\\matrix-theme.css",
+          "line": 75,
+          "context": ".vibe-reader-container {"
+        },
+        {
+          "value": "vibe-rain-container",
+          "file": "styles\\matrix-theme.css",
+          "line": 101,
+          "context": ".vibe-rain-container {"
+        },
+        {
+          "value": "vibe-rain-column",
+          "file": "styles\\matrix-theme.css",
+          "line": 113,
+          "context": ".vibe-rain-column {"
+        },
+        {
+          "value": "vibe-sidebar",
+          "file": "styles\\matrix-theme.css",
+          "line": 145,
+          "context": ".vibe-sidebar {"
+        },
+        {
+          "value": "left-panel",
+          "file": "styles\\matrix-theme.css",
+          "line": 160,
+          "context": ".vibe-sidebar.left-panel {"
+        },
+        {
+          "value": "right-panel",
+          "file": "styles\\matrix-theme.css",
+          "line": 165,
+          "context": ".vibe-sidebar.right-panel {"
+        },
+        {
+          "value": "vibe-sidebar-spacer",
+          "file": "styles\\matrix-theme.css",
+          "line": 181,
+          "context": ".vibe-sidebar-spacer {"
+        },
+        {
+          "value": "vibe-layout",
+          "file": "styles\\matrix-theme.css",
+          "line": 191,
+          "context": ".vibe-layout {"
+        },
+        {
+          "value": "terminal-content",
+          "file": "styles\\matrix-theme.css",
+          "line": 218,
+          "context": ".terminal-content {"
+        },
+        {
+          "value": "terminal-line",
+          "file": "styles\\matrix-theme.css",
+          "line": 225,
+          "context": ".terminal-line {"
+        },
+        {
+          "value": "side-scroller",
+          "file": "styles\\matrix-theme.css",
+          "line": 231,
+          "context": ".side-scroller {"
+        },
+        {
+          "value": "scroller-content",
+          "file": "styles\\matrix-theme.css",
+          "line": 236,
+          "context": ".side-scroller .scroller-content {"
+        },
+        {
+          "value": "left-scroller",
+          "file": "styles\\matrix-theme.css",
+          "line": 259,
+          "context": ".left-scroller {"
+        },
+        {
+          "value": "right-scroller",
+          "file": "styles\\matrix-theme.css",
+          "line": 264,
+          "context": ".right-scroller {"
+        },
+        {
+          "value": "scroll-title",
+          "file": "styles\\matrix-theme.css",
+          "line": 293,
+          "context": ".scroll-title {"
+        },
+        {
+          "value": "metadata-line",
+          "file": "styles\\matrix-theme.css",
+          "line": 308,
+          "context": ".metadata-line,"
+        },
+        {
+          "value": "log-line",
+          "file": "styles\\matrix-theme.css",
+          "line": 309,
+          "context": ".log-line {"
+        },
+        {
+          "value": "log-prefix",
+          "file": "styles\\matrix-theme.css",
+          "line": 329,
+          "context": ".log-prefix {"
+        },
+        {
+          "value": "vibe-content",
+          "file": "styles\\matrix-theme.css",
+          "line": 372,
+          "context": ".vibe-content {"
+        },
+        {
+          "value": "vibe-header",
+          "file": "styles\\matrix-theme.css",
+          "line": 428,
+          "context": ".vibe-header {"
+        },
+        {
+          "value": "vibe-header-left",
+          "file": "styles\\matrix-theme.css",
+          "line": 444,
+          "context": ".vibe-header-left {"
+        },
+        {
+          "value": "vibe-header-right",
+          "file": "styles\\matrix-theme.css",
+          "line": 450,
+          "context": ".vibe-header-right {"
+        },
+        {
+          "value": "vibe-brand",
+          "file": "styles\\matrix-theme.css",
+          "line": 456,
+          "context": ".vibe-brand {"
+        },
+        {
+          "value": "vibe-status",
+          "file": "styles\\matrix-theme.css",
+          "line": 467,
+          "context": ".vibe-status {"
+        },
+        {
+          "value": "article-header",
+          "file": "styles\\matrix-theme.css",
+          "line": 476,
+          "context": ".article-header {"
+        },
+        {
+          "value": "vibe-title",
+          "file": "styles\\matrix-theme.css",
+          "line": 517,
+          "context": ".vibe-title {"
+        },
+        {
+          "value": "vibe-meta",
+          "file": "styles\\matrix-theme.css",
+          "line": 538,
+          "context": ".vibe-meta {"
+        },
+        {
+          "value": "vibe-article",
+          "file": "styles\\matrix-theme.css",
+          "line": 574,
+          "context": ".vibe-article {"
+        },
+        {
+          "value": "vibe-heading",
+          "file": "styles\\matrix-theme.css",
+          "line": 582,
+          "context": ".vibe-heading {"
+        },
+        {
+          "value": "vibe-paragraph",
+          "file": "styles\\matrix-theme.css",
+          "line": 631,
+          "context": ".vibe-paragraph {"
+        },
+        {
+          "value": "vibe-link",
+          "file": "styles\\matrix-theme.css",
+          "line": 649,
+          "context": ".vibe-link {"
+        },
+        {
+          "value": "link-preview",
+          "file": "styles\\matrix-theme.css",
+          "line": 669,
+          "context": ".link-preview {"
+        },
+        {
+          "value": "vibe-list",
+          "file": "styles\\matrix-theme.css",
+          "line": 676,
+          "context": ".vibe-list {"
+        },
+        {
+          "value": "vibe-code",
+          "file": "styles\\matrix-theme.css",
+          "line": 693,
+          "context": ".vibe-code {"
+        },
+        {
+          "value": "ascii-image-placeholder",
+          "file": "styles\\matrix-theme.css",
+          "line": 722,
+          "context": ".ascii-image-placeholder,"
+        },
+        {
+          "value": "ascii-image",
+          "file": "styles\\matrix-theme.css",
+          "line": 723,
+          "context": ".ascii-image {"
+        },
+        {
+          "value": "ascii-converting",
+          "file": "styles\\matrix-theme.css",
+          "line": 738,
+          "context": ".ascii-converting {"
+        },
+        {
+          "value": "loading-bar",
+          "file": "styles\\matrix-theme.css",
+          "line": 759,
+          "context": ".loading-bar {"
+        },
+        {
+          "value": "loading-progress",
+          "file": "styles\\matrix-theme.css",
+          "line": 768,
+          "context": ".loading-progress {"
+        },
+        {
+          "value": "emoji-ascii",
+          "file": "styles\\matrix-theme.css",
+          "line": 789,
+          "context": ".emoji-ascii {"
+        },
+        {
+          "value": "large",
+          "file": "styles\\matrix-theme.css",
+          "line": 795,
+          "context": ".emoji-ascii.large {"
+        },
+        {
+          "value": "medium",
+          "file": "styles\\matrix-theme.css",
+          "line": 799,
+          "context": ".emoji-ascii.medium {"
+        },
+        {
+          "value": "ascii-text",
+          "file": "styles\\matrix-theme.css",
+          "line": 803,
+          "context": ".ascii-text {"
+        },
+        {
+          "value": "ascii-caption",
+          "file": "styles\\matrix-theme.css",
+          "line": 812,
+          "context": ".ascii-caption {"
+        },
+        {
+          "value": "ascii-source",
+          "file": "styles\\matrix-theme.css",
+          "line": 819,
+          "context": ".ascii-source {"
+        },
+        {
+          "value": "ascii-error",
+          "file": "styles\\matrix-theme.css",
+          "line": 826,
+          "context": ".ascii-error {"
+        },
+        {
+          "value": "vibe-footer",
+          "file": "styles\\matrix-theme.css",
+          "line": 837,
+          "context": ".vibe-footer {"
+        },
+        {
+          "value": "signature-text",
+          "file": "styles\\matrix-theme.css",
+          "line": 850,
+          "context": ".signature-text {"
+        },
+        {
+          "value": "signature-visual",
+          "file": "styles\\matrix-theme.css",
+          "line": 860,
+          "context": ".signature-visual {"
+        },
+        {
+          "value": "vibe-btn",
+          "file": "styles\\matrix-theme.css",
+          "line": 884,
+          "context": ".vibe-btn {"
+        },
+        {
+          "value": "vibe-controls",
+          "file": "styles\\matrix-theme.css",
+          "line": 925,
+          "context": ".vibe-controls {"
+        },
+        {
+          "value": "control-btn",
+          "file": "styles\\matrix-theme.css",
+          "line": 935,
+          "context": ".control-btn {"
+        },
+        {
+          "value": "glitch",
+          "file": "styles\\matrix-theme.css",
+          "line": 971,
+          "context": ".glitch {"
+        },
+        {
+          "value": "glitching",
+          "file": "styles\\matrix-theme.css",
+          "line": 975,
+          "context": ".glitch.glitching::before,"
+        },
+        {
+          "value": "cyber-scan",
+          "file": "styles\\matrix-theme.css",
+          "line": 1174,
+          "context": ".cyber-scan::before {"
+        },
+        {
+          "value": "neon-flicker",
+          "file": "styles\\matrix-theme.css",
+          "line": 1190,
+          "context": ".neon-flicker {"
+        },
+        {
+          "value": "data-stream",
+          "file": "styles\\matrix-theme.css",
+          "line": 1194,
+          "context": ".data-stream {"
+        },
+        {
+          "value": "article-title",
+          "file": "styles\\matrix-theme.css",
+          "line": 1230,
+          "context": ".article-title {"
+        },
+        {
+          "value": "article-byline",
+          "file": "styles\\matrix-theme.css",
+          "line": 1242,
+          "context": ".article-byline {"
+        },
+        {
+          "value": "article-meta",
+          "file": "styles\\matrix-theme.css",
+          "line": 1251,
+          "context": ".article-meta {"
+        },
+        {
+          "value": "meta-item",
+          "file": "styles\\matrix-theme.css",
+          "line": 1259,
+          "context": ".meta-item {"
+        },
+        {
+          "value": "retrofuture-heading",
+          "file": "styles\\matrix-theme.css",
+          "line": 1270,
+          "context": ".retrofuture-heading {"
+        },
+        {
+          "value": "cyber-link",
+          "file": "styles\\matrix-theme.css",
+          "line": 1281,
+          "context": ".cyber-link {"
+        },
+        {
+          "value": "cyber-code",
+          "file": "styles\\matrix-theme.css",
+          "line": 1295,
+          "context": ".cyber-code {"
+        },
+        {
+          "value": "cyber-table",
+          "file": "styles\\matrix-theme.css",
+          "line": 1305,
+          "context": ".cyber-table {"
+        },
+        {
+          "value": "media-wrapper",
+          "file": "styles\\matrix-theme.css",
+          "line": 1324,
+          "context": ".media-wrapper {"
+        },
+        {
+          "value": "media-normal-display",
+          "file": "styles\\matrix-theme.css",
+          "line": 1356,
+          "context": ".media-normal-display img,"
+        },
+        {
+          "value": "media-transition",
+          "file": "styles\\matrix-theme.css",
+          "line": 1390,
+          "context": ".media-transition {"
+        },
+        {
+          "value": "media-emoji-display",
+          "file": "styles\\matrix-theme.css",
+          "line": 1422,
+          "context": ".media-emoji-display {"
+        },
+        {
+          "value": "emoji-icon",
+          "file": "styles\\matrix-theme.css",
+          "line": 1427,
+          "context": ".emoji-icon {"
+        },
+        {
+          "value": "cyber-glow",
+          "file": "styles\\matrix-theme.css",
+          "line": 1434,
+          "context": ".cyber-glow {"
+        },
+        {
+          "value": "media-label",
+          "file": "styles\\matrix-theme.css",
+          "line": 1450,
+          "context": ".media-label {"
+        },
+        {
+          "value": "mode-hint",
+          "file": "styles\\matrix-theme.css",
+          "line": 1459,
+          "context": ".mode-hint {"
+        },
+        {
+          "value": "media-ascii-display",
+          "file": "styles\\matrix-theme.css",
+          "line": 1467,
+          "context": ".media-ascii-display {"
+        },
+        {
+          "value": "ascii-content",
+          "file": "styles\\matrix-theme.css",
+          "line": 1472,
+          "context": ".ascii-content {"
+        },
+        {
+          "value": "ascii-art",
+          "file": "styles\\matrix-theme.css",
+          "line": 1481,
+          "context": ".ascii-art {"
+        },
+        {
+          "value": "loading",
+          "file": "styles\\matrix-theme.css",
+          "line": 1491,
+          "context": ".ascii-art.loading {"
+        },
+        {
+          "value": "cyber-frame",
+          "file": "styles\\matrix-theme.css",
+          "line": 1511,
+          "context": ".cyber-frame {"
+        },
+        {
+          "value": "cyber-media",
+          "file": "styles\\matrix-theme.css",
+          "line": 1522,
+          "context": ".cyber-media {"
+        },
+        {
+          "value": "loaded",
+          "file": "styles\\matrix-theme.css",
+          "line": 1529,
+          "context": ".cyber-media.loaded {"
+        },
+        {
+          "value": "extraction-progress",
+          "file": "styles\\matrix-theme.css",
+          "line": 1551,
+          "context": ".extraction-progress {"
+        },
+        {
+          "value": "cyber-loader",
+          "file": "styles\\matrix-theme.css",
+          "line": 1556,
+          "context": ".cyber-loader {"
+        },
+        {
+          "value": "cyber-loader-bar",
+          "file": "styles\\matrix-theme.css",
+          "line": 1568,
+          "context": ".cyber-loader-bar {"
+        },
+        {
+          "value": "extraction-status",
+          "file": "styles\\matrix-theme.css",
+          "line": 1593,
+          "context": ".extraction-status {"
+        },
+        {
+          "value": "extraction-details",
+          "file": "styles\\matrix-theme.css",
+          "line": 1602,
+          "context": ".extraction-details {"
+        },
+        {
+          "value": "progress-percent",
+          "file": "styles\\matrix-theme.css",
+          "line": 1609,
+          "context": ".progress-percent {"
+        },
+        {
+          "value": "progress-stage",
+          "file": "styles\\matrix-theme.css",
+          "line": 1618,
+          "context": ".progress-stage {"
+        },
+        {
+          "value": "terminal-window",
+          "file": "styles\\matrix-theme.css",
+          "line": 1629,
+          "context": ".terminal-window {"
+        },
+        {
+          "value": "terminal-header",
+          "file": "styles\\matrix-theme.css",
+          "line": 1642,
+          "context": ".terminal-header {"
+        },
+        {
+          "value": "terminal-title",
+          "file": "styles\\matrix-theme.css",
+          "line": 1655,
+          "context": ".terminal-title {"
+        },
+        {
+          "value": "terminal-controls",
+          "file": "styles\\matrix-theme.css",
+          "line": 1665,
+          "context": ".terminal-controls {"
+        },
+        {
+          "value": "led-indicator",
+          "file": "styles\\matrix-theme.css",
+          "line": 1670,
+          "context": ".led-indicator {"
+        },
+        {
+          "value": "active",
+          "file": "styles\\matrix-theme.css",
+          "line": 1679,
+          "context": ".led-indicator.active {"
+        },
+        {
+          "value": "matrix-drop",
+          "file": "styles\\matrix-theme.css",
+          "line": 1730,
+          "context": ".matrix-drop {"
+        },
+        {
+          "value": "error-details",
+          "file": "styles\\matrix-theme.css",
+          "line": 1763,
+          "context": ".error-details {"
+        },
+        {
+          "value": "article-footer",
+          "file": "styles\\matrix-theme.css",
+          "line": 1790,
+          "context": ".article-footer {"
+        },
+        {
+          "value": "footer-info",
+          "file": "styles\\matrix-theme.css",
+          "line": 1798,
+          "context": ".footer-info {"
+        },
+        {
+          "value": "close-btn",
+          "file": "styles\\matrix-theme.css",
+          "line": 1826,
+          "context": ".terminal-controls .close-btn {"
+        },
+        {
+          "value": "minimize-btn",
+          "file": "styles\\matrix-theme.css",
+          "line": 1830,
+          "context": ".terminal-controls .minimize-btn {"
+        },
+        {
+          "value": "maximize-btn",
+          "file": "styles\\matrix-theme.css",
+          "line": 1834,
+          "context": ".terminal-controls .maximize-btn {"
+        }
+      ],
+      "ids": [
+        {
+          "value": "f92672",
+          "file": "styles\\matrix-theme.css",
+          "line": 12,
+          "context": "--primary: #f92672;"
+        },
+        {
+          "value": "ffbf80",
+          "file": "styles\\matrix-theme.css",
+          "line": 14,
+          "context": "--accent: #ffbf80;"
+        },
+        {
+          "value": "f7f7f7",
+          "file": "styles\\matrix-theme.css",
+          "line": 18,
+          "context": "--text-primary: #f7f7f7;"
+        },
+        {
+          "value": "e0b0ff",
+          "file": "styles\\matrix-theme.css",
+          "line": 19,
+          "context": "--text-secondary: #e0b0ff;"
+        },
+        {
+          "value": "ff1493",
+          "file": "styles\\matrix-theme.css",
+          "line": 27,
+          "context": "--primary: #ff1493;"
+        },
+        {
+          "value": "ffcc00",
+          "file": "styles\\matrix-theme.css",
+          "line": 29,
+          "context": "--accent: #ffcc00;"
+        },
+        {
+          "value": "ffffff",
+          "file": "styles\\matrix-theme.css",
+          "line": 33,
+          "context": "--text-primary: #ffffff;"
+        },
+        {
+          "value": "ff6f20",
+          "file": "styles\\matrix-theme.css",
+          "line": 43,
+          "context": "--secondary: #ff6f20;"
+        },
+        {
+          "value": "da70d6",
+          "file": "styles\\matrix-theme.css",
+          "line": 49,
+          "context": "--text-secondary: #da70d6;"
+        },
+        {
+          "value": "ff46b8",
+          "file": "styles\\matrix-theme.css",
+          "line": 57,
+          "context": "--primary: #ff46b8;"
+        },
+        {
+          "value": "ff0080",
+          "file": "styles\\matrix-theme.css",
+          "line": 1219,
+          "context": "--primary: #ff0080;"
+        },
+        {
+          "value": "ff5f56",
+          "file": "styles\\matrix-theme.css",
+          "line": 1827,
+          "context": "background: #ff5f56;"
+        },
+        {
+          "value": "ffbd2e",
+          "file": "styles\\matrix-theme.css",
+          "line": 1831,
+          "context": "background: #ffbd2e;"
+        }
+      ],
+      "variables": [
+        {
+          "value": "--primary",
+          "file": "styles\\matrix-theme.css",
+          "line": 12,
+          "context": "--primary: #f92672;"
+        },
+        {
+          "value": "--secondary",
+          "file": "styles\\matrix-theme.css",
+          "line": 13,
+          "context": "--secondary: #66d9ef;"
+        },
+        {
+          "value": "--accent",
+          "file": "styles\\matrix-theme.css",
+          "line": 14,
+          "context": "--accent: #ffbf80;"
+        },
+        {
+          "value": "--bg-primary",
+          "file": "styles\\matrix-theme.css",
+          "line": 15,
+          "context": "--bg-primary: #0d0d0d;"
+        },
+        {
+          "value": "--bg-secondary",
+          "file": "styles\\matrix-theme.css",
+          "line": 16,
+          "context": "--bg-secondary: #1a1a1a;"
+        },
+        {
+          "value": "--bg-tertiary",
+          "file": "styles\\matrix-theme.css",
+          "line": 17,
+          "context": "--bg-tertiary: #2c1a29;"
+        },
+        {
+          "value": "--text-primary",
+          "file": "styles\\matrix-theme.css",
+          "line": 18,
+          "context": "--text-primary: #f7f7f7;"
+        },
+        {
+          "value": "--text-secondary",
+          "file": "styles\\matrix-theme.css",
+          "line": 19,
+          "context": "--text-secondary: #e0b0ff;"
+        },
+        {
+          "value": "--text-accent",
+          "file": "styles\\matrix-theme.css",
+          "line": 20,
+          "context": "--text-accent: #66d9ef;"
+        },
+        {
+          "value": "--border-color",
+          "file": "styles\\matrix-theme.css",
+          "line": 21,
+          "context": "--border-color: #f92672;"
+        },
+        {
+          "value": "--glow-primary",
+          "file": "styles\\matrix-theme.css",
+          "line": 22,
+          "context": "--glow-primary: rgba(249, 38, 114, 0.8);"
+        },
+        {
+          "value": "--glow-secondary",
+          "file": "styles\\matrix-theme.css",
+          "line": 23,
+          "context": "--glow-secondary: rgba(102, 217, 239, 0.6);"
+        },
+        {
+          "value": "--error-rgb",
+          "file": "styles\\matrix-theme.css",
+          "line": 1766,
+          "context": "background: rgba(var(--error-rgb, 249, 38, 114), 0.1);"
+        },
+        {
+          "value": "--error",
+          "file": "styles\\matrix-theme.css",
+          "line": 1767,
+          "context": "border: 1px solid var(--error);"
+        },
+        {
+          "value": "--border-primary",
+          "file": "styles\\matrix-theme.css",
+          "line": 1783,
+          "context": "border: 2px solid var(--border-primary);"
+        },
+        {
+          "value": "--border-subtle",
+          "file": "styles\\matrix-theme.css",
+          "line": 1793,
+          "context": "border-top: 1px solid var(--border-subtle);"
+        }
+      ],
+      "animations": [
+        {
+          "value": "matrix-fall",
+          "file": "styles\\matrix-theme.css",
+          "line": 131,
+          "context": "@keyframes matrix-fall {"
+        },
+        {
+          "value": "slide-in-left",
+          "file": "styles\\matrix-theme.css",
+          "line": 334,
+          "context": "@keyframes slide-in-left {"
+        },
+        {
+          "value": "slide-in-right",
+          "file": "styles\\matrix-theme.css",
+          "line": 346,
+          "context": "@keyframes slide-in-right {"
+        },
+        {
+          "value": "pulse-glow",
+          "file": "styles\\matrix-theme.css",
+          "line": 358,
+          "context": "@keyframes pulse-glow {"
+        },
+        {
+          "value": "header-scan",
+          "file": "styles\\matrix-theme.css",
+          "line": 507,
+          "context": "@keyframes header-scan {"
+        },
+        {
+          "value": "meta-pulse",
+          "file": "styles\\matrix-theme.css",
+          "line": 559,
+          "context": "@keyframes meta-pulse {"
+        },
+        {
+          "value": "heading-pulse",
+          "file": "styles\\matrix-theme.css",
+          "line": 619,
+          "context": "@keyframes heading-pulse {"
+        },
+        {
+          "value": "converting-pulse",
+          "file": "styles\\matrix-theme.css",
+          "line": 746,
+          "context": "@keyframes converting-pulse {"
+        },
+        {
+          "value": "loading-progress",
+          "file": "styles\\matrix-theme.css",
+          "line": 775,
+          "context": "@keyframes loading-progress {"
+        },
+        {
+          "value": "signature-glow",
+          "file": "styles\\matrix-theme.css",
+          "line": 869,
+          "context": "@keyframes signature-glow {"
+        },
+        {
+          "value": "glitch-1",
+          "file": "styles\\matrix-theme.css",
+          "line": 1002,
+          "context": "@keyframes glitch-1 {"
+        },
+        {
+          "value": "glitch-2",
+          "file": "styles\\matrix-theme.css",
+          "line": 1029,
+          "context": "@keyframes glitch-2 {"
+        },
+        {
+          "value": "cyber-scan",
+          "file": "styles\\matrix-theme.css",
+          "line": 1122,
+          "context": "@keyframes cyber-scan {"
+        },
+        {
+          "value": "neon-flicker",
+          "file": "styles\\matrix-theme.css",
+          "line": 1138,
+          "context": "@keyframes neon-flicker {"
+        },
+        {
+          "value": "data-stream",
+          "file": "styles\\matrix-theme.css",
+          "line": 1156,
+          "context": "@keyframes data-stream {"
+        },
+        {
+          "value": "cyber-glitch",
+          "file": "styles\\matrix-theme.css",
+          "line": 1394,
+          "context": "@keyframes cyber-glitch {"
+        },
+        {
+          "value": "emoji-pulse",
+          "file": "styles\\matrix-theme.css",
+          "line": 1438,
+          "context": "@keyframes emoji-pulse {"
+        },
+        {
+          "value": "ascii-loading",
+          "file": "styles\\matrix-theme.css",
+          "line": 1495,
+          "context": "@keyframes ascii-loading {"
+        },
+        {
+          "value": "media-materialize",
+          "file": "styles\\matrix-theme.css",
+          "line": 1533,
+          "context": "@keyframes media-materialize {"
+        },
+        {
+          "value": "cyber-pulse",
+          "file": "styles\\matrix-theme.css",
+          "line": 1582,
+          "context": "@keyframes cyber-pulse {"
+        },
+        {
+          "value": "led-pulse",
+          "file": "styles\\matrix-theme.css",
+          "line": 1684,
+          "context": "@keyframes led-pulse {"
+        },
+        {
+          "value": "matrix-fall",
+          "file": "styles\\matrix-theme.css",
+          "line": 1746,
+          "context": "@keyframes matrix-fall {"
+        }
+      ],
+      "media_queries": [
+        {
+          "value": "@media (max-width: 1200px) {",
+          "file": "styles\\matrix-theme.css",
+          "line": 201,
+          "context": "@media (max-width: 1200px) {"
+        },
+        {
+          "value": "@media (max-width: 900px) {",
+          "file": "styles\\matrix-theme.css",
+          "line": 207,
+          "context": "@media (max-width: 900px) {"
+        },
+        {
+          "value": "@media (max-width: 768px) {",
+          "file": "styles\\matrix-theme.css",
+          "line": 1060,
+          "context": "@media (max-width: 768px) {"
+        },
+        {
+          "value": "@media (max-width: 600px) {",
+          "file": "styles\\matrix-theme.css",
+          "line": 1096,
+          "context": "@media (max-width: 600px) {"
+        },
+        {
+          "value": "@media (prefers-reduced-motion: reduce) {",
+          "file": "styles\\matrix-theme.css",
+          "line": 1202,
+          "context": "@media (prefers-reduced-motion: reduce) {"
+        },
+        {
+          "value": "@media (prefers-contrast: high) {",
+          "file": "styles\\matrix-theme.css",
+          "line": 1217,
+          "context": "@media (prefers-contrast: high) {"
+        }
+      ]
+    },
+    "styles\\retrofuture-theme.css": {
+      "classes": [
+        {
+          "value": "vibe-reader-container",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 288,
+          "context": ".vibe-reader-container {"
+        },
+        {
+          "value": "retrofuture-bg-effects",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 328,
+          "context": ".retrofuture-bg-effects {"
+        },
+        {
+          "value": "matrix-drop",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 347,
+          "context": ".matrix-drop {"
+        },
+        {
+          "value": "vibe-header",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 375,
+          "context": ".vibe-header {"
+        },
+        {
+          "value": "vibe-header-bar",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 389,
+          "context": ".vibe-header-bar {"
+        },
+        {
+          "value": "vibe-header-left",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 400,
+          "context": ".vibe-header-left {"
+        },
+        {
+          "value": "vibe-brand",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 406,
+          "context": ".vibe-brand {"
+        },
+        {
+          "value": "vibe-separator",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 414,
+          "context": ".vibe-separator {"
+        },
+        {
+          "value": "protocol",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 419,
+          "context": ".protocol {"
+        },
+        {
+          "value": "vibe-header-right",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 424,
+          "context": ".vibe-header-right {"
+        },
+        {
+          "value": "timestamp",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 430,
+          "context": ".timestamp {"
+        },
+        {
+          "value": "vibe-status",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 438,
+          "context": ".vibe-status {"
+        },
+        {
+          "value": "article-header",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 459,
+          "context": ".article-header {"
+        },
+        {
+          "value": "article-title",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 465,
+          "context": ".article-title {"
+        },
+        {
+          "value": "title-underline",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 479,
+          "context": ".title-underline {"
+        },
+        {
+          "value": "article-meta",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 509,
+          "context": ".article-meta {"
+        },
+        {
+          "value": "meta-item",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 523,
+          "context": ".meta-item.domain {"
+        },
+        {
+          "value": "domain",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 523,
+          "context": ".meta-item.domain {"
+        },
+        {
+          "value": "reading-stats",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 529,
+          "context": ".meta-item.reading-stats {"
+        },
+        {
+          "value": "date",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 535,
+          "context": ".meta-item.date {"
+        },
+        {
+          "value": "vibe-layout",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 544,
+          "context": ".vibe-layout {"
+        },
+        {
+          "value": "vibe-sidebar",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 566,
+          "context": ".vibe-sidebar {"
+        },
+        {
+          "value": "terminal-content",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 570,
+          "context": ".terminal-content {"
+        },
+        {
+          "value": "left-panel",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 592,
+          "context": ".left-panel {"
+        },
+        {
+          "value": "right-panel",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 597,
+          "context": ".right-panel {"
+        },
+        {
+          "value": "terminal-header",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 602,
+          "context": ".terminal-header {"
+        },
+        {
+          "value": "terminal-title",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 612,
+          "context": ".terminal-title {"
+        },
+        {
+          "value": "terminal-controls",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 621,
+          "context": ".terminal-controls {"
+        },
+        {
+          "value": "led",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 626,
+          "context": ".led {"
+        },
+        {
+          "value": "green",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 633,
+          "context": ".led.green {"
+        },
+        {
+          "value": "yellow",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 639,
+          "context": ".led.yellow {"
+        },
+        {
+          "value": "red",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 644,
+          "context": ".led.red {"
+        },
+        {
+          "value": "terminal-output",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 681,
+          "context": ".terminal-output {"
+        },
+        {
+          "value": "vibe-content",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 717,
+          "context": ".vibe-content {"
+        },
+        {
+          "value": "vibe-article",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 749,
+          "context": ".vibe-article {"
+        },
+        {
+          "value": "cyber-heading",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 762,
+          "context": ".cyber-heading {"
+        },
+        {
+          "value": "heading-decorator",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 778,
+          "context": ".heading-decorator {"
+        },
+        {
+          "value": "article-content",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 815,
+          "context": ".article-content p {"
+        },
+        {
+          "value": "cyber-link",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 831,
+          "context": ".cyber-link {"
+        },
+        {
+          "value": "link-bracket",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 849,
+          "context": ".link-bracket {"
+        },
+        {
+          "value": "cyber-code",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 873,
+          "context": ".cyber-code {"
+        },
+        {
+          "value": "media-wrapper",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 903,
+          "context": ".media-wrapper {"
+        },
+        {
+          "value": "media-emoji-display",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 930,
+          "context": ".media-emoji-display {"
+        },
+        {
+          "value": "emoji-icon",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 935,
+          "context": ".emoji-icon {"
+        },
+        {
+          "value": "media-label",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 942,
+          "context": ".media-label {"
+        },
+        {
+          "value": "mode-hint",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 950,
+          "context": ".mode-hint {"
+        },
+        {
+          "value": "media-ascii-display",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 958,
+          "context": ".media-ascii-display {"
+        },
+        {
+          "value": "ascii-art",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 974,
+          "context": ".ascii-art {"
+        },
+        {
+          "value": "media-normal-display",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 985,
+          "context": ".media-normal-display {"
+        },
+        {
+          "value": "vibe-btn",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1001,
+          "context": ".vibe-btn,"
+        },
+        {
+          "value": "control-btn",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1002,
+          "context": ".control-btn {"
+        },
+        {
+          "value": "exit-btn",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1101,
+          "context": ".exit-btn,"
+        },
+        {
+          "value": "disconnect-btn",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1102,
+          "context": ".disconnect-btn {"
+        },
+        {
+          "value": "media-btn",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1122,
+          "context": ".media-btn,"
+        },
+        {
+          "value": "theme-btn",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1123,
+          "context": ".theme-btn {"
+        },
+        {
+          "value": "btn-icon",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1141,
+          "context": ".btn-icon {"
+        },
+        {
+          "value": "btn-text",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1146,
+          "context": ".btn-text {"
+        },
+        {
+          "value": "retrofuture-main",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1155,
+          "context": ".retrofuture-main {"
+        },
+        {
+          "value": "retrofuture-controls",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1174,
+          "context": ".retrofuture-controls {"
+        },
+        {
+          "value": "header-bar",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1195,
+          "context": ".header-bar {"
+        },
+        {
+          "value": "retro-glow",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1241,
+          "context": ".retro-glow {"
+        },
+        {
+          "value": "retrofuture-reader-container",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1264,
+          "context": ".retrofuture-reader-container {"
+        },
+        {
+          "value": "cyber-table-placeholder",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1275,
+          "context": ".cyber-table-placeholder {"
+        },
+        {
+          "value": "cyber-table-icon",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1300,
+          "context": ".cyber-table-icon {"
+        },
+        {
+          "value": "cyber-table-info",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1305,
+          "context": ".cyber-table-info {"
+        },
+        {
+          "value": "cyber-table-title",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1309,
+          "context": ".cyber-table-title {"
+        },
+        {
+          "value": "cyber-table-stats",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1319,
+          "context": ".cyber-table-stats {"
+        },
+        {
+          "value": "cyber-table-hint",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1329,
+          "context": ".cyber-table-hint {"
+        },
+        {
+          "value": "cyber-table-expanded-container",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1340,
+          "context": ".cyber-table-expanded-container {"
+        },
+        {
+          "value": "cyber-table-header",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1349,
+          "context": ".cyber-table-header {"
+        },
+        {
+          "value": "cyber-table-header-title",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1358,
+          "context": ".cyber-table-header-title {"
+        },
+        {
+          "value": "cyber-table-close-btn",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1367,
+          "context": ".cyber-table-close-btn {"
+        },
+        {
+          "value": "cyber-table-content",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1386,
+          "context": ".cyber-table-content {"
+        },
+        {
+          "value": "cyber-table",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1392,
+          "context": ".cyber-table {"
+        },
+        {
+          "value": "expanded-table",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1401,
+          "context": ".cyber-table.expanded-table {"
+        },
+        {
+          "value": "simple-table",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1433,
+          "context": ".cyber-table.simple-table {"
+        },
+        {
+          "value": "neon-pulse",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1496,
+          "context": ".neon-pulse {"
+        },
+        {
+          "value": "nightdrive-pulse",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1500,
+          "context": ".nightdrive-pulse {"
+        },
+        {
+          "value": "glass-shimmer",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1504,
+          "context": ".glass-shimmer::before {"
+        },
+        {
+          "value": "retrofuture-link",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1529,
+          "context": ".retrofuture-link:focus,"
+        },
+        {
+          "value": "image-placeholder",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1530,
+          "context": ".image-placeholder:focus,"
+        },
+        {
+          "value": "table-placeholder",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1531,
+          "context": ".table-placeholder:focus,"
+        },
+        {
+          "value": "terminal-window",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1551,
+          "context": ":root .terminal-window {"
+        },
+        {
+          "value": "vibe-reader-overlay",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2159,
+          "context": ".vibe-reader-overlay {"
+        },
+        {
+          "value": "vibe-reader-proxy",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2171,
+          "context": ".vibe-reader-proxy {"
+        },
+        {
+          "value": "vibe-sidebar-spacer",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2201,
+          "context": ".vibe-sidebar-spacer {"
+        },
+        {
+          "value": "article-byline",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2270,
+          "context": ".article-byline {"
+        },
+        {
+          "value": "article-footer",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2296,
+          "context": ".article-footer {"
+        },
+        {
+          "value": "footer-info",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2302,
+          "context": ".footer-info {"
+        },
+        {
+          "value": "cyber-media",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2382,
+          "context": ".cyber-media {"
+        },
+        {
+          "value": "cyber-frame",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2389,
+          "context": ".cyber-frame {"
+        },
+        {
+          "value": "terminal-line",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2432,
+          "context": ".terminal-line {"
+        },
+        {
+          "value": "diagnostic-category",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2438,
+          "context": ".diagnostic-category {"
+        },
+        {
+          "value": "category-header",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2442,
+          "context": ".category-header {"
+        },
+        {
+          "value": "category-content",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2461,
+          "context": ".category-content {"
+        },
+        {
+          "value": "led-indicator",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2486,
+          "context": ".led-indicator {"
+        },
+        {
+          "value": "error-display",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2507,
+          "context": ".error-display {"
+        },
+        {
+          "value": "error-icon",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2519,
+          "context": ".error-icon {"
+        },
+        {
+          "value": "error-title",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2526,
+          "context": ".error-title {"
+        },
+        {
+          "value": "error-message",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2535,
+          "context": ".error-message {"
+        },
+        {
+          "value": "retry-btn",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2541,
+          "context": ".retry-btn {"
+        },
+        {
+          "value": "extraction-progress",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2571,
+          "context": ".extraction-progress {"
+        },
+        {
+          "value": "progress-bar",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2579,
+          "context": ".progress-bar {"
+        },
+        {
+          "value": "progress-fill",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2589,
+          "context": ".progress-fill {"
+        },
+        {
+          "value": "extraction-status",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2622,
+          "context": ".extraction-status {"
+        },
+        {
+          "value": "vibe-rain-container",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2695,
+          "context": ".vibe-rain-container {"
+        },
+        {
+          "value": "loading",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2727,
+          "context": ".loading {"
+        },
+        {
+          "value": "glitching",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2758,
+          "context": ".glitching {"
+        },
+        {
+          "value": "ascii-canvas",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2872,
+          "context": ".ascii-canvas {"
+        },
+        {
+          "value": "glitch",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2923,
+          "context": ".glitch {"
+        },
+        {
+          "value": "active",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2955,
+          "context": ".active {"
+        }
+      ],
+      "ids": [
+        {
+          "value": "ffff00",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 640,
+          "context": "background: #ffff00;"
+        },
+        {
+          "value": "ff0000",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 645,
+          "context": "background: #ff0000;"
+        },
+        {
+          "value": "ff0080",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1265,
+          "context": "--primary: #ff0080;"
+        },
+        {
+          "value": "ffffff",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1267,
+          "context": "--text-primary: #ffffff;"
+        }
+      ],
+      "variables": [
+        {
+          "value": "--primary-50",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 15,
+          "context": "--primary-50: 255 192 203;"
+        },
+        {
+          "value": "--primary-100",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 16,
+          "context": "--primary-100: 255 182 193;"
+        },
+        {
+          "value": "--primary-200",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 17,
+          "context": "--primary-200: 255 148 198;"
+        },
+        {
+          "value": "--primary-300",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 18,
+          "context": "--primary-300: 255 105 180;"
+        },
+        {
+          "value": "--primary-400",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 19,
+          "context": "--primary-400: 255 75 156;"
+        },
+        {
+          "value": "--primary-500",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 20,
+          "context": "--primary-500: 249 38 114;"
+        },
+        {
+          "value": "--primary-600",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 21,
+          "context": "--primary-600: 224 110 146;"
+        },
+        {
+          "value": "--primary-700",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 22,
+          "context": "--primary-700: 215 61 133;"
+        },
+        {
+          "value": "--primary-800",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 23,
+          "context": "--primary-800: 192 58 105;"
+        },
+        {
+          "value": "--primary-900",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 24,
+          "context": "--primary-900: 164 0 85;"
+        },
+        {
+          "value": "--secondary-50",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 27,
+          "context": "--secondary-50: 224 255 255;"
+        },
+        {
+          "value": "--secondary-100",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 28,
+          "context": "--secondary-100: 179 255 255;"
+        },
+        {
+          "value": "--secondary-200",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 29,
+          "context": "--secondary-200: 136 255 255;"
+        },
+        {
+          "value": "--secondary-300",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 30,
+          "context": "--secondary-300: 0 255 255;"
+        },
+        {
+          "value": "--secondary-400",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 31,
+          "context": "--secondary-400: 0 191 255;"
+        },
+        {
+          "value": "--secondary-500",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 32,
+          "context": "--secondary-500: 102 217 239;"
+        },
+        {
+          "value": "--secondary-600",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 33,
+          "context": "--secondary-600: 126 200 227;"
+        },
+        {
+          "value": "--secondary-700",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 34,
+          "context": "--secondary-700: 90 79 207;"
+        },
+        {
+          "value": "--secondary-800",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 35,
+          "context": "--secondary-800: 74 150 255;"
+        },
+        {
+          "value": "--secondary-900",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 36,
+          "context": "--secondary-900: 0 120 168;"
+        },
+        {
+          "value": "--accent-50",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 39,
+          "context": "--accent-50: 255 243 160;"
+        },
+        {
+          "value": "--accent-100",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 40,
+          "context": "--accent-100: 255 234 0;"
+        },
+        {
+          "value": "--accent-200",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 41,
+          "context": "--accent-200: 255 221 68;"
+        },
+        {
+          "value": "--accent-300",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 42,
+          "context": "--accent-300: 255 195 0;"
+        },
+        {
+          "value": "--accent-400",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 43,
+          "context": "--accent-400: 230 219 116;"
+        },
+        {
+          "value": "--accent-500",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 44,
+          "context": "--accent-500: 255 191 128;"
+        },
+        {
+          "value": "--accent-600",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 45,
+          "context": "--accent-600: 255 154 96;"
+        },
+        {
+          "value": "--accent-700",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 46,
+          "context": "--accent-700: 255 140 60;"
+        },
+        {
+          "value": "--accent-800",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 47,
+          "context": "--accent-800: 255 111 48;"
+        },
+        {
+          "value": "--accent-900",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 48,
+          "context": "--accent-900: 204 77 0;"
+        },
+        {
+          "value": "--success-500",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 51,
+          "context": "--success-500: 166 226 46;"
+        },
+        {
+          "value": "--warning-500",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 52,
+          "context": "--warning-500: 253 151 31;"
+        },
+        {
+          "value": "--error-500",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 53,
+          "context": "--error-500: 249 38 114;"
+        },
+        {
+          "value": "--info-500",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 54,
+          "context": "--info-500: 174 129 255;"
+        },
+        {
+          "value": "--bg-primary",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 57,
+          "context": "--bg-primary: 28 28 28;"
+        },
+        {
+          "value": "--bg-secondary",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 58,
+          "context": "--bg-secondary: 44 26 41;"
+        },
+        {
+          "value": "--bg-tertiary",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 59,
+          "context": "--bg-tertiary: 40 27 76;"
+        },
+        {
+          "value": "--bg-surface",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 60,
+          "context": "--bg-surface: 30 30 63;"
+        },
+        {
+          "value": "--bg-overlay",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 61,
+          "context": "--bg-overlay: 55 46 99;"
+        },
+        {
+          "value": "--bg-terminal",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 62,
+          "context": "--bg-terminal: 13 13 13;"
+        },
+        {
+          "value": "--text-primary",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 65,
+          "context": "--text-primary: 247 247 247;"
+        },
+        {
+          "value": "--text-secondary",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 66,
+          "context": "--text-secondary: 224 176 255;"
+        },
+        {
+          "value": "--text-accent",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 67,
+          "context": "--text-accent: 102 217 239;"
+        },
+        {
+          "value": "--text-muted",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 68,
+          "context": "--text-muted: 234 184 228;"
+        },
+        {
+          "value": "--text-bright",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 69,
+          "context": "--text-bright: 255 255 255;"
+        },
+        {
+          "value": "--text-disabled",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 70,
+          "context": "--text-disabled: 185 134 193;"
+        },
+        {
+          "value": "--border-primary",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 73,
+          "context": "--border-primary: 249 38 114;"
+        },
+        {
+          "value": "--border-secondary",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 74,
+          "context": "--border-secondary: 102 217 239;"
+        },
+        {
+          "value": "--border-subtle",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 75,
+          "context": "--border-subtle: 62 62 62;"
+        },
+        {
+          "value": "--border-accent",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 76,
+          "context": "--border-accent: 255 191 128;"
+        },
+        {
+          "value": "--border-strong",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 77,
+          "context": "--border-strong: 215 61 133;"
+        },
+        {
+          "value": "--glow-primary",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 80,
+          "context": "--glow-primary: 249 38 114;"
+        },
+        {
+          "value": "--glow-secondary",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 81,
+          "context": "--glow-secondary: 102 217 239;"
+        },
+        {
+          "value": "--glow-accent",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 82,
+          "context": "--glow-accent: 255 191 128;"
+        },
+        {
+          "value": "--primary",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 383,
+          "context": "border-bottom: 3px solid var(--primary);"
+        },
+        {
+          "value": "--secondary",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 384,
+          "context": "box-shadow: 0 0 20px var(--glow-primary), inset 0 -2px 0 var(--secondary);"
+        },
+        {
+          "value": "--accent",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 431,
+          "context": "color: var(--accent);"
+        },
+        {
+          "value": "--success",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 875,
+          "context": "color: var(--success) !important;"
+        }
+      ],
+      "animations": [
+        {
+          "value": "scanlines",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 361,
+          "context": "@keyframes scanlines {"
+        },
+        {
+          "value": "status-blink",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 448,
+          "context": "@keyframes status-blink {"
+        },
+        {
+          "value": "title-pulse",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 496,
+          "context": "@keyframes title-pulse {"
+        },
+        {
+          "value": "led-pulse-green",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 649,
+          "context": "@keyframes led-pulse-green {"
+        },
+        {
+          "value": "cursor-blink",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 701,
+          "context": "@keyframes cursor-blink {"
+        },
+        {
+          "value": "decorator-pulse",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 785,
+          "context": "@keyframes decorator-pulse {"
+        },
+        {
+          "value": "component-scan",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1084,
+          "context": "@keyframes component-scan {"
+        },
+        {
+          "value": "retro-glow",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1228,
+          "context": "@keyframes retro-glow {"
+        },
+        {
+          "value": "enhanced-glow-pulse",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1444,
+          "context": "@keyframes enhanced-glow-pulse {"
+        },
+        {
+          "value": "nightdrive-pulse",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1465,
+          "context": "@keyframes nightdrive-pulse {"
+        },
+        {
+          "value": "glass-shimmer",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1485,
+          "context": "@keyframes glass-shimmer {"
+        },
+        {
+          "value": "electric-scan",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1577,
+          "context": "@keyframes electric-scan {"
+        },
+        {
+          "value": "electric-pulse",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1593,
+          "context": "@keyframes electric-pulse {"
+        },
+        {
+          "value": "storm-lightning",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1703,
+          "context": "@keyframes storm-lightning {"
+        },
+        {
+          "value": "storm-pulse",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1735,
+          "context": "@keyframes storm-pulse {"
+        },
+        {
+          "value": "storm-scan",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1755,
+          "context": "@keyframes storm-scan {"
+        },
+        {
+          "value": "phantom-flicker",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1886,
+          "context": "@keyframes phantom-flicker {"
+        },
+        {
+          "value": "underground-pulse",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1910,
+          "context": "@keyframes underground-pulse {"
+        },
+        {
+          "value": "underground-scan",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1926,
+          "context": "@keyframes underground-scan {"
+        },
+        {
+          "value": "data-corruption",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1942,
+          "context": "@keyframes data-corruption {"
+        },
+        {
+          "value": "underground-drift",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2005,
+          "context": "@keyframes underground-drift {"
+        },
+        {
+          "value": "categoryExpand",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2468,
+          "context": "@keyframes categoryExpand {"
+        },
+        {
+          "value": "led-pulse",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2495,
+          "context": "@keyframes led-pulse {"
+        },
+        {
+          "value": "progress-shine",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2612,
+          "context": "@keyframes progress-shine {"
+        },
+        {
+          "value": "matrix-fall",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2714,
+          "context": "@keyframes matrix-fall {"
+        },
+        {
+          "value": "loading-sweep",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2748,
+          "context": "@keyframes loading-sweep {"
+        },
+        {
+          "value": "glitch-1",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2785,
+          "context": "@keyframes glitch-1 {"
+        },
+        {
+          "value": "glitch-2",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2812,
+          "context": "@keyframes glitch-2 {"
+        },
+        {
+          "value": "ascii-fade-in",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 2890,
+          "context": "@keyframes ascii-fade-in {"
+        }
+      ],
+      "media_queries": [
+        {
+          "value": "@media (max-width: 1200px) {",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 553,
+          "context": "@media (max-width: 1200px) {"
+        },
+        {
+          "value": "@media (max-width: 900px) {",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 559,
+          "context": "@media (max-width: 900px) {"
+        },
+        {
+          "value": "@media (max-width: 768px) {",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1154,
+          "context": "@media (max-width: 768px) {"
+        },
+        {
+          "value": "@media (max-width: 600px) {",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1194,
+          "context": "@media (max-width: 600px) {"
+        },
+        {
+          "value": "@media (prefers-reduced-motion: reduce) {",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1249,
+          "context": "@media (prefers-reduced-motion: reduce) {"
+        },
+        {
+          "value": "@media (prefers-contrast: high) {",
+          "file": "styles\\retrofuture-theme.css",
+          "line": 1263,
+          "context": "@media (prefers-contrast: high) {"
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total_js_classes": 182,
+    "total_js_ids": 4,
+    "total_js_variables": 0,
+    "total_css_classes": 211,
+    "total_css_ids": 17,
+    "total_css_variables": 74,
+    "files_analyzed": {
+      "js": 3,
+      "css": 2
+    }
+  }
+}

@@ -1,0 +1,263 @@
+/* ============================================================================ */
+/* MISSING LEGACY CSS - MATRIX RAIN & CRT EFFECTS */
+/* ============================================================================ */
+
+/* Matrix Rain Container - MISSING FROM CURRENT CSS */
+.vibe-rain-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.matrix-drop {
+    position: absolute;
+    top: -100px;
+    width: 20px;
+    font-family: "Fira Code", "SF Mono", Monaco, Inconsolata, "Roboto Mono", Consolas, "Courier New", monospace;
+    font-size: 14px;
+    color: var(--secondary);
+    animation: matrix-fall linear infinite;
+    filter: blur(0.5px);
+    text-shadow: 0 0 8px currentColor;
+}
+
+.matrix-drop span {
+    display: block;
+    line-height: 1.2;
+    text-shadow: 0 0 8px currentColor;
+}
+
+/* CRT/TV Effects - MISSING */
+.vibe-reader-container::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: 
+        linear-gradient(transparent 50%, rgba(0, 255, 0, 0.03) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 999999;
+    animation: scanlines 0.1s linear infinite;
+}
+
+/* CRT Curvature Effect */
+.vibe-reader-container {
+    border-radius: 0 0 10px 10px;
+    box-shadow: 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 0 50px rgba(0, 0, 0, 0.5),
+        0 0 100px rgba(var(--glow-primary), 0.3);
+}
+
+/* Missing Button Styles */
+.media-btn,
+.theme-btn {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 20px rgba(var(--glow-primary), 0.3);
+}
+
+.media-btn:hover,
+.theme-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 0 30px var(--glow-primary),
+        0 0 50px var(--glow-secondary),
+        0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.exit-btn,
+.disconnect-btn {
+    background: linear-gradient(135deg, var(--error) 0%, var(--primary) 100%);
+    color: var(--text-primary);
+    border: 2px solid var(--error);
+    padding: 0.75rem 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.exit-btn:hover,
+.disconnect-btn:hover {
+    background: var(--error);
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px var(--error);
+}
+
+/* Missing Glitch Effects */
+.glitch::before,
+.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.glitch.glitching::before,
+.glitch.glitching::after {
+    animation-duration: 0.3s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+.glitch.glitching::before {
+    color: var(--primary);
+    animation-name: glitch-1;
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+}
+
+.glitch.glitching::after {
+    color: var(--secondary);
+    animation-name: glitch-2;
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+}
+
+.glitching::before,
+.glitching::after {
+    animation-duration: 0.5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+.glitching::before {
+    color: var(--primary);
+    animation-name: glitch-1;
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    z-index: -1;
+}
+
+.glitching::after {
+    color: var(--secondary);
+    animation-name: glitch-2;
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    z-index: -1;
+}
+
+/* Missing Heading Effects */
+.vibe-heading::before,
+.vibe-heading::after {
+    content: ">>>";
+    position: absolute;
+    color: var(--accent);
+    font-size: 0.8em;
+    animation: heading-pulse 2s ease-in-out infinite alternate;
+}
+
+.vibe-heading::before {
+    left: -50px;
+}
+
+.vibe-heading::after {
+    content: "<<<";
+    right: -50px;
+    animation: heading-pulse 2s ease-in-out infinite alternate-reverse;
+}
+
+/* Missing Media Styles */
+.media-normal-display img,
+.media-normal-display video,
+.media-normal-display iframe,
+.media-normal-display object,
+.media-normal-display embed {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(var(--glow-primary), 0.3);
+}
+
+.media-wrapper img,
+.media-wrapper video,
+.media-wrapper iframe,
+.media-wrapper object,
+.media-wrapper embed {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+/* Missing Table Styles */
+.cyber-table th,
+.cyber-table td {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    background: rgba(var(--bg-surface), 0.5);
+    color: var(--text-primary);
+}
+
+.cyber-table th {
+    background: var(--primary);
+    color: var(--text-bright);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Missing List Styles */
+.article-content ul,
+.article-content ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+    color: var(--text-primary);
+}
+
+.article-content ul li {
+    list-style: none;
+    position: relative;
+}
+
+.article-content ul li::before {
+    content: "▸";
+    color: var(--accent);
+    position: absolute;
+    left: -1.5rem;
+}
+
+.article-content ol li {
+    list-style: decimal;
+    color: var(--accent);
+}
+
+/* ASCII Image Placeholder - MISSING */
+.ascii-image-placeholder,
+.ascii-image {
+    background: rgba(var(--bg-terminal), 0.9);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    font-family: "Fira Code", monospace;
+    color: var(--text-accent);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ascii-image-placeholder:hover,
+.ascii-image:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(var(--glow-primary), 0.5);
+}
+
+/* Header Layout - MISSING */
+.vibe-header-left,
+.vibe-header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}

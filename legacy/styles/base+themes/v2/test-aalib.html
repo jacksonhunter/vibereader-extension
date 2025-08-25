@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AALib.js Test Script</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+            line-height: 1.2;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            border: 1px solid #333;
+            padding: 15px;
+        }
+        
+        .ascii-output {
+            white-space: pre;
+            font-size: 8px;
+            background: #111;
+            padding: 10px;
+            border: 1px solid #444;
+            max-height: 400px;
+            overflow: auto;
+        }
+        
+        img {
+            max-width: 200px;
+            margin: 10px;
+        }
+        
+        .status {
+            color: #ff0;
+            font-weight: bold;
+        }
+        
+        .error { color: #f00; }
+        .success { color: #0f0; }
+    </style>
+</head>
+<body>
+    <h1>AALib.js Standalone Test</h1>
+    
+    <div class="test-section">
+        <h2>Library Loading Test</h2>
+        <div id="library-status" class="status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Image to ASCII Conversion Test</h2>
+        <div>
+            <input type="file" id="image-input" accept="image/*">
+            <button onclick="testImageUpload()">Test Upload</button>
+            <button onclick="testRemoteImage()">Test Remote Image</button>
+        </div>
+        <div id="conversion-status" class="status">Ready</div>
+        <canvas id="test-canvas" style="display: none;"></canvas>
+        <div>
+            <h3>Original Image:</h3>
+            <img id="original-image" alt="Original will appear here">
+        </div>
+        <div>
+            <h3>ASCII Output:</h3>
+            <div id="ascii-result" class="ascii-output">ASCII will appear here...</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Information</h2>
+        <div id="debug-info" class="ascii-output">Debug info will appear here...</div>
+    </div>
+
+    <!-- Load AALib.js from the extension's lib directory -->
+    <script src="lib/aalib.js"></script>
+    <script>
+        
+        function log(message, type = 'info') {
+            const debugDiv = document.getElementById('debug-info');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            debugDiv.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+        }
+
+        function updateStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status ${type}`;
+        }
+
+        // Test 1: Library Loading
+        function testLibraryLoading() {
+            log('Starting AALib.js library test...');
+            
+            try {
+                // Check if aalib is available in global scope
+                if (typeof aalib !== 'undefined') {
+                    log('✅ aalib found in global scope', 'success');
+                } else if (typeof window.aalib !== 'undefined') {
+                    log('✅ aalib found in window scope', 'success');
+                    aalib = window.aalib;
+                } else {
+                    log('❌ aalib not found in global or window scope', 'error');
+                    return false;
+                }
+
+                // Test AALib initialization
+                log('Testing AALib initialization...');
+                const testOptions = {
+                    width: 80,
+                    height: 24
+                };
+                
+                // Check AALib structure and methods
+                if (typeof aalib === 'object') {
+                    log(`✅ aalib is an object with keys: ${Object.keys(aalib).join(', ')}`, 'success');
+                    
+                    // Test for expected methods
+                    if (aalib.read && aalib.aa && aalib.render) {
+                        log('✅ aalib has expected methods (read, aa, render)', 'success');
+                        return true;
+                    } else {
+                        log('❌ aalib missing expected methods', 'error');
+                        return false;
+                    }
+                } else {
+                    log(`❌ aalib is not an object. Type: ${typeof aalib}`, 'error');
+                    return false;
+                }
+                
+            } catch (error) {
+                log(`❌ Error testing AALib: ${error.message}`, 'error');
+                log(`Stack trace: ${error.stack}`, 'error');
+                return false;
+            }
+        }
+
+        // Test 2: Image Conversion
+        function convertImageToAscii(imageElement, width = 80, height = 24) {
+            log(`Starting image conversion (${width}x${height})...`);
+            
+            try {
+                if (!aalib) {
+                    log('❌ AALib not initialized', 'error');
+                    return null;
+                }
+
+                // Create canvas to get image data
+                const canvas = document.getElementById('test-canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                // Draw image to canvas
+                ctx.drawImage(imageElement, 0, 0, width, height);
+                
+                // Get image data
+                const imageData = ctx.getImageData(0, 0, width, height);
+                log(`✅ Image data extracted: ${imageData.data.length} bytes`, 'success');
+                
+                // Use the aalib Observable chain pattern from the demo
+                log('Starting aalib Observable chain...', 'info');
+                
+                // Create a promise to handle the async conversion
+                return new Promise((resolve, reject) => {
+                    try {
+                        aalib.read.imageData.fromImageData(imageData)
+                            .map(aalib.aa({
+                                width: width,
+                                height: height,
+                                colored: true  // Enable colored ASCII for neon effects
+                            }))
+                            .map(aalib.render.html({
+                                background: "transparent",
+                                fontFamily: "monospace",
+                                fontSize: "8px"
+                            }))
+                            .subscribe(
+                                (result) => {
+                                    log(`✅ ASCII conversion successful via Observable`, 'success');
+                                    if (result && result.innerHTML) {
+                                        resolve(result.innerHTML);
+                                    } else {
+                                        resolve(result.textContent || result.toString());
+                                    }
+                                },
+                                (error) => {
+                                    log(`❌ ASCII conversion error: ${error.message}`, 'error');
+                                    reject(error);
+                                }
+                            );
+                    } catch (error) {
+                        log(`❌ Error in aalib chain: ${error.message}`, 'error');
+                        reject(error);
+                    }
+                });
+                
+            } catch (error) {
+                log(`❌ Error during image conversion: ${error.message}`, 'error');
+                log(`Stack trace: ${error.stack}`, 'error');
+                return null;
+            }
+        }
+
+        // Test with file upload
+        function testImageUpload() {
+            const fileInput = document.getElementById('image-input');
+            if (!fileInput.files.length) {
+                updateStatus('conversion-status', 'Please select a file first', 'error');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            log(`Testing uploaded file: ${file.name} (${file.size} bytes)`, 'info');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    document.getElementById('original-image').src = e.target.result;
+                    updateStatus('conversion-status', 'Converting...', 'info');
+                    
+                    setTimeout(async () => {
+                        try {
+                            const ascii = await convertImageToAscii(img);
+                            if (ascii) {
+                                document.getElementById('ascii-result').innerHTML = ascii;
+                                updateStatus('conversion-status', 'Conversion successful!', 'success');
+                            } else {
+                                updateStatus('conversion-status', 'Conversion failed!', 'error');
+                            }
+                        } catch (error) {
+                            log(`❌ Upload conversion error: ${error.message}`, 'error');
+                            updateStatus('conversion-status', 'Conversion failed!', 'error');
+                        }
+                    }, 100);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Test with remote image
+        function testRemoteImage() {
+            const testUrl = 'https://via.placeholder.com/150x100/ff0000/ffffff?text=TEST';
+            log(`Testing remote image: ${testUrl}`, 'info');
+            
+            const img = new Image();
+            img.crossOrigin = 'anonymous';  // Enable CORS
+            
+            img.onload = function() {
+                document.getElementById('original-image').src = testUrl;
+                updateStatus('conversion-status', 'Converting remote image...', 'info');
+                
+                setTimeout(async () => {
+                    try {
+                        const ascii = await convertImageToAscii(img);
+                        if (ascii) {
+                            document.getElementById('ascii-result').innerHTML = ascii;
+                            updateStatus('conversion-status', 'Remote conversion successful!', 'success');
+                        } else {
+                            updateStatus('conversion-status', 'Remote conversion failed!', 'error');
+                        }
+                    } catch (error) {
+                        log(`❌ Remote conversion error: ${error.message}`, 'error');
+                        updateStatus('conversion-status', 'Remote conversion failed!', 'error');
+                    }
+                }, 100);
+            };
+            
+            img.onerror = function() {
+                log('❌ Failed to load remote image (CORS or network error)', 'error');
+                updateStatus('conversion-status', 'Remote image load failed', 'error');
+            };
+            
+            img.src = testUrl;
+        }
+
+        // Initialize tests when page loads
+        window.onload = function() {
+            log('=== AALib.js Standalone Test Starting ===');
+            log(`User Agent: ${navigator.userAgent}`);
+            log(`Page loaded at: ${new Date().toISOString()}`);
+            
+            // Test library loading
+            const libraryOk = testLibraryLoading();
+            if (libraryOk) {
+                updateStatus('library-status', '✅ AALib loaded successfully', 'success');
+                log('🚀 Ready for image conversion tests!', 'success');
+            } else {
+                updateStatus('library-status', '❌ AALib failed to load', 'error');
+                log('❌ Cannot proceed with image tests', 'error');
+            }
+        };
+        
+        // Add file input change handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('image-input');
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    if (this.files.length > 0) {
+                        log(`File selected: ${this.files[0].name}`, 'info');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

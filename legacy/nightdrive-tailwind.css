@@ -1,0 +1,340 @@
+/* Nightdrive Enhanced - Tailwind CSS Custom Properties */
+/* Classic synthwave with improved readability and expanded color palette */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors - Neon Pink Spectrum */
+    --primary-50: 255 192 203; /* #FFC0CB */
+    --primary-100: 255 182 193; /* #FFB6C1 */ 
+    --primary-200: 255 148 198; /* #FF94C6 */
+    --primary-300: 255 105 180; /* #FF69B4 */
+    --primary-400: 255 75 156; /* #FF4B9C */
+    --primary-500: 249 38 114; /* #F92672 */
+    --primary-600: 224 110 146; /* #E06E92 */
+    --primary-700: 215 61 133; /* #D73D85 */
+    --primary-800: 192 58 105; /* #C03A69 */
+    --primary-900: 164 0 85; /* #A40055 */
+
+    /* Secondary Colors - Electric Cyan Spectrum */
+    --secondary-50: 224 255 255; /* #E0FFFF */
+    --secondary-100: 179 255 255; /* #B3FFFF */
+    --secondary-200: 136 255 255; /* #88FFFF */
+    --secondary-300: 0 255 255; /* #00FFFF */
+    --secondary-400: 0 191 255; /* #00BFFF */
+    --secondary-500: 102 217 239; /* #66D9EF */
+    --secondary-600: 126 200 227; /* #7EC8E3 */
+    --secondary-700: 90 79 207; /* #5A4FCF */
+    --secondary-800: 74 150 255; /* #4A96FF */
+    --secondary-900: 0 120 168; /* #0078A8 */
+
+    /* Accent Colors - Golden/Orange Spectrum */
+    --accent-50: 255 243 160; /* #FFF3A0 */
+    --accent-100: 255 234 0; /* #FFEA00 */
+    --accent-200: 255 221 68; /* #FFDD44 */
+    --accent-300: 255 195 0; /* #FFC300 */
+    --accent-400: 230 219 116; /* #E6DB74 */
+    --accent-500: 255 191 128; /* #FFBF80 */
+    --accent-600: 255 154 96; /* #FF9A60 */
+    --accent-700: 255 140 60; /* #FF8C3C */
+    --accent-800: 255 111 48; /* #FF6F30 */
+    --accent-900: 204 77 0; /* #CC4D00 */
+
+    /* Success Colors - Green Spectrum */
+    --success-50: 204 255 204; /* #CCFFCC */
+    --success-100: 152 255 152; /* #98FF98 */
+    --success-200: 168 230 207; /* #A8E6CF */
+    --success-300: 0 255 127; /* #00FF7F */
+    --success-400: 50 205 50; /* #32CD32 */
+    --success-500: 166 226 46; /* #A6E22E */
+    --success-600: 32 178 170; /* #20B2AA */
+    --success-700: 0 255 0; /* #00FF00 */
+    --success-800: 0 92 0; /* #005C00 */
+    --success-900: 0 50 0; /* #003200 */
+
+    /* Warning Colors - Orange Spectrum */
+    --warning-50: 255 224 176; /* #FFE0B0 */
+    --warning-100: 255 191 128; /* #FFBF80 */
+    --warning-200: 255 154 96; /* #FF9A60 */
+    --warning-300: 255 140 60; /* #FF8C3C */
+    --warning-400: 255 111 48; /* #FF6F30 */
+    --warning-500: 253 151 31; /* #FD971F */
+    --warning-600: 255 111 32; /* #FF6F20 */
+    --warning-700: 204 77 0; /* #CC4D00 */
+    --warning-800: 168 43 43; /* #A82B2B */
+    --warning-900: 139 33 33; /* #8B2121 */
+
+    /* Error Colors - Pink/Red Spectrum */
+    --error-50: 255 148 198; /* #FF94C6 */
+    --error-100: 255 111 156; /* #FF6F9C */
+    --error-200: 255 75 156; /* #FF4B9C */
+    --error-300: 255 20 147; /* #FF1493 */
+    --error-400: 224 110 146; /* #E06E92 */
+    --error-500: 253 151 31; /* #FD971F */
+    --error-600: 215 61 133; /* #D73D85 */
+    --error-700: 192 58 105; /* #C03A69 */
+    --error-800: 191 0 72; /* #BF0048 */
+    --error-900: 155 0 67; /* #9B0043 */
+
+    /* Info Colors - Purple Spectrum */
+    --info-50: 224 176 255; /* #E0B0FF */
+    --info-100: 218 112 214; /* #DA70D6 */
+    --info-200: 210 124 187; /* #D27CBB */
+    --info-300: 199 93 225; /* #C75DE1 */
+    --info-400: 185 134 193; /* #B986C1 */
+    --info-500: 174 129 255; /* #AE81FF */
+    --info-600: 155 89 182; /* #9B59B6 */
+    --info-700: 138 43 226; /* #8A2BE2 */
+    --info-800: 123 80 178; /* #7B50B2 */
+    --info-900: 106 32 181; /* #6A20B5 */
+
+    /* Neutral Colors - Gray Spectrum */
+    --neutral-50: 247 247 247; /* #F7F7F7 */
+    --neutral-100: 240 240 240; /* #F0F0F0 */
+    --neutral-200: 225 225 225; /* #E1E1E1 */
+    --neutral-300: 192 192 192; /* #C0C0C0 */
+    --neutral-400: 176 176 176; /* #B0B0B0 */
+    --neutral-500: 169 169 169; /* #A9A9A9 */
+    --neutral-600: 128 128 128; /* #808080 */
+    --neutral-700: 105 105 105; /* #696969 */
+    --neutral-800: 79 79 79; /* #4F4F4F */
+    --neutral-900: 51 51 51; /* #333333 */
+
+    /* Background Colors - Dark Theme */
+    --bg-primary: 28 28 28; /* #1C1C1C */
+    --bg-secondary: 44 26 41; /* #2C1A29 */
+    --bg-tertiary: 40 27 76; /* #281B4C */
+    --bg-elevated: 43 28 84; /* #2B1C54 */
+    --bg-surface: 30 30 63; /* #1E1E3F */
+    --bg-overlay: 55 46 99; /* #372E63 */
+
+    /* Text Colors - Dark Theme */
+    --text-primary: 247 247 247; /* #F7F7F7 */
+    --text-secondary: 224 176 255; /* #E0B0FF */
+    --text-muted: 234 184 228; /* #EAB8E4 */
+    --text-disabled: 185 134 193; /* #B986C1 */
+    --text-inverse: 28 28 28; /* #1C1C1C */
+
+    /* Border Colors - Dark Theme */
+    --border-subtle: 74 44 120; /* #4A2C78 */
+    --border-default: 95 75 140; /* #5F4B8C */
+    --border-strong: 123 80 178; /* #7B50B2 */
+    --border-accent: 249 38 114; /* #F92672 */
+  }
+
+  /* Light Mode Overrides */
+  .light {
+    --bg-primary: 247 247 247; /* #F7F7F7 */
+    --bg-secondary: 230 230 250; /* #E6E6FA */
+    --bg-tertiary: 241 212 237; /* #F1D4ED */
+    --bg-elevated: 224 255 255; /* #E0FFFF */
+    --bg-surface: 240 183 231; /* #F0B7E7 */
+    --bg-overlay: 234 184 228; /* #EAB8E4 */
+
+    --text-primary: 44 26 41; /* #2C1A29 */
+    --text-secondary: 55 46 99; /* #372E63 */
+    --text-muted: 95 75 140; /* #5F4B8C */
+    --text-disabled: 155 89 182; /* #9B59B6 */
+    --text-inverse: 247 247 247; /* #F7F7F7 */
+
+    --border-subtle: 224 176 255; /* #E0B0FF */
+    --border-default: 210 124 187; /* #D27CBB */
+    --border-strong: 185 134 193; /* #B986C1 */
+    --border-accent: 106 32 181; /* #6A20B5 */
+  }
+}
+
+@layer components {
+  /* Button Components */
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white;
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary-500 hover:bg-secondary-600 active:bg-secondary-700 text-neutral-900;
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2;
+    @apply shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+  }
+
+  .btn-accent {
+    @apply bg-accent-500 hover:bg-accent-600 active:bg-accent-700 text-neutral-900;
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2;
+    @apply shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-primary-500/10 text-primary-500;
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
+    @apply border border-primary-500 hover:border-primary-400;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  }
+
+  /* Card Components */
+  .card {
+    @apply bg-white/5 backdrop-blur-md rounded-lg border border-white/10;
+    @apply shadow-lg hover:shadow-xl transition-all duration-300;
+    @apply p-6 space-y-4;
+  }
+
+  .card-elevated {
+    @apply bg-white/10 backdrop-blur-lg rounded-xl border border-white/20;
+    @apply shadow-xl hover:shadow-2xl transition-all duration-300;
+    @apply p-8 space-y-6 transform hover:-translate-y-1;
+  }
+
+  /* Form Components */
+  .input {
+    @apply bg-white/5 border border-white/20 rounded-md px-3 py-2;
+    @apply text-neutral-100 placeholder-neutral-400;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply transition-all duration-200;
+  }
+
+  .input:focus {
+    @apply bg-white/10 shadow-lg;
+  }
+
+  /* Navigation Components */
+  .nav-link {
+    @apply text-neutral-300 hover:text-primary-400 px-3 py-2 rounded-md;
+    @apply transition-all duration-200 font-medium;
+    @apply hover:bg-primary-500/10;
+  }
+
+  .nav-link.active {
+    @apply text-primary-400 bg-primary-500/20;
+  }
+
+  /* Badge Components */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply bg-primary-500/20 text-primary-300 border border-primary-500/30;
+  }
+
+  .badge-secondary {
+    @apply bg-secondary-500/20 text-secondary-300 border border-secondary-500/30;
+  }
+
+  .badge-success {
+    @apply bg-success-500/20 text-success-300 border border-success-500/30;
+  }
+
+  .badge-warning {
+    @apply bg-warning-500/20 text-warning-300 border border-warning-500/30;
+  }
+
+  .badge-error {
+    @apply bg-error-500/20 text-error-300 border border-error-500/30;
+  }
+
+  /* Special Effects */
+  .neon-glow {
+    animation: neon-pulse 2s ease-in-out infinite alternate;
+  }
+
+  .synthwave-gradient {
+    background: linear-gradient(135deg, rgb(var(--primary-500)), rgb(var(--secondary-500)), rgb(var(--accent-500)));
+  }
+
+  .glass-morphism {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+    @apply shadow-lg;
+  }
+}
+
+@layer utilities {
+  /* Custom Background Utilities */
+  .bg-nightdrive {
+    background: linear-gradient(135deg, rgb(var(--bg-primary)), rgb(var(--bg-tertiary)), rgb(var(--bg-surface)));
+  }
+
+  .bg-glass {
+    @apply bg-white/5 backdrop-blur-md;
+  }
+
+  .bg-glass-strong {
+    @apply bg-white/10 backdrop-blur-lg;
+  }
+
+  /* Text Utilities */
+  .text-glow {
+    text-shadow: 0 0 10px currentColor;
+  }
+
+  .text-glow-strong {
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+  }
+
+  /* Animation Utilities */
+  .animate-neon-pulse {
+    animation: neon-pulse 2s ease-in-out infinite alternate;
+  }
+
+  .animate-synthwave-scan {
+    animation: synthwave-scan 3s linear infinite;
+  }
+
+  /* Border Utilities */
+  .border-neon {
+    @apply border border-primary-500;
+    box-shadow: 0 0 10px rgb(var(--primary-500) / 0.5);
+  }
+
+  .border-cyber {
+    @apply border border-secondary-500;
+    box-shadow: 0 0 10px rgb(var(--secondary-500) / 0.5);
+  }
+}
+
+/* Keyframe Animations */
+@keyframes neon-pulse {
+  0% {
+    box-shadow: 0 0 5px rgb(var(--primary-500)), 0 0 10px rgb(var(--primary-500));
+  }
+  100% {
+    box-shadow: 0 0 10px rgb(var(--primary-500)), 0 0 20px rgb(var(--primary-500)), 0 0 30px rgb(var(--secondary-500));
+  }
+}
+
+@keyframes synthwave-scan {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--bg-secondary));
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, rgb(var(--primary-500)), rgb(var(--secondary-500)));
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, rgb(var(--primary-400)), rgb(var(--secondary-400)));
+}

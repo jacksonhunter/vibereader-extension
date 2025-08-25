@@ -1,0 +1,614 @@
+/* VibeReader Themes CSS - Theme Variables and Overrides */
+/* Extracted theme-specific definitions from matrix-theme.css and retrofuture-theme.css */
+
+/* ============================================================================ */
+/* NIGHTDRIVE THEME (DEFAULT) */
+/* ============================================================================ */
+
+:root {
+  /* Core color variables - RGB format for modern CSS */
+  --primary: 249 38 114;
+  --secondary: 102 217 239;
+  --accent: 255 191 128;
+  --success: 80 250 123;
+  --error: 249 38 114;
+  --border-color: 249 38 114;
+
+  /* Nightdrive Enhanced RGB Spectrum */
+  --primary-50: 255 204 217;
+  --primary-100: 255 179 198;
+  --primary-200: 255 128 162;
+  --primary-300: 255 102 144;
+  --primary-400: 249 77 125;
+  --primary-500: 249 38 114;
+  --primary-600: 218 34 101;
+  --primary-700: 187 29 87;
+  --primary-800: 155 24 73;
+  --primary-900: 124 19 58;
+
+  --secondary-50: 204 243 255;
+  --secondary-100: 179 237 255;
+  --secondary-200: 128 224 255;
+  --secondary-300: 102 217 255;
+  --secondary-400: 77 211 255;
+  --secondary-500: 102 217 239;
+  --secondary-600: 61 195 223;
+  --secondary-700: 51 163 186;
+  --secondary-800: 31 98 112;
+  --secondary-900: 20 66 75;
+
+  --accent-50: 255 230 204;
+  --accent-100: 255 217 179;
+  --accent-200: 255 204 153;
+  --accent-300: 255 191 128;
+  --accent-400: 255 179 102;
+  --accent-500: 255 191 128;
+  --accent-600: 230 172 115;
+  --accent-700: 204 153 102;
+  --accent-800: 153 115 77;
+  --accent-900: 102 77 51;
+
+  --bg-primary: 13 13 13;
+  --bg-secondary: 26 26 26;
+  --bg-tertiary: 44 26 41;
+  --bg-surface: 30 30 46;
+  --bg-overlay: 0 0 0;
+  --bg-terminal: 13 13 13;
+
+  --text-primary: 247 247 247;
+  --text-secondary: 224 176 255;
+  --text-accent: 102 217 239;
+  --text-muted: 153 153 153;
+  --text-bright: 255 255 255;
+  --text-disabled: 102 102 102;
+
+  --border-primary: 249 38 114;
+  --border-secondary: 102 217 239;
+  --border-subtle: 64 32 48;
+  --border-accent: 255 191 128;
+  --border-strong: 255 77 144;
+
+  --glow-primary: 249 38 114;
+  --glow-secondary: 102 217 239;
+  --glow-accent: 255 191 128;
+
+  --error-rgb: 249 38 114;
+  --error-500: 249 38 114;
+  --primary-600: 218 34 101;
+}
+
+/* Nightdrive-specific container background */
+:root .vibe-reader-container {
+  background: radial-gradient(
+    ellipse at center,
+    rgb(var(--bg-primary)),
+    rgb(var(--bg-secondary))
+  ) !important;
+}
+
+/* Nightdrive theme-specific overrides */
+:root .vibe-header,
+:root .terminal-window {
+  animation: nightdrive-pulse 4s ease-in-out infinite;
+}
+
+:root {
+  font-family: "Orbitron", "Fira Code", "SF Mono", "Monaco", "Inconsolata",
+    "Roboto Mono", "Consolas", "Courier New", monospace;
+}
+
+:root .vibe-brand,
+:root .vibe-status,
+:root .terminal-title,
+:root .article-title,
+:root .cyber-heading,
+:root .vibe-btn,
+:root .control-btn {
+  font-family: "Orbitron", "Fira Code", "SF Mono", "Monaco", "Inconsolata",
+    "Roboto Mono", "Consolas", "Courier New", monospace;
+}
+
+/* ============================================================================ */
+/* NEON SURGE THEME */
+/* ============================================================================ */
+
+[data-theme="neon-surge"] {
+  --primary: 255 20 147;
+  --secondary: 13 92 255;
+  --accent: 255 204 0;
+  --success: 0 255 0;
+  --error: 255 20 147;
+  --border-color: 255 20 147;
+
+  /* Neon Surge RGB Spectrum */
+  --primary-50: 255 204 235;
+  --primary-100: 255 179 225;
+  --primary-200: 255 128 204;
+  --primary-300: 255 102 189;
+  --primary-400: 255 51 166;
+  --primary-500: 255 20 147;
+  --primary-600: 230 18 132;
+  --primary-700: 204 16 118;
+  --primary-800: 153 12 88;
+  --primary-900: 102 8 59;
+
+  --secondary-50: 204 218 255;
+  --secondary-100: 179 201 255;
+  --secondary-200: 128 170 255;
+  --secondary-300: 102 151 255;
+  --secondary-400: 51 113 255;
+  --secondary-500: 13 92 255;
+  --secondary-600: 12 83 230;
+  --secondary-700: 10 69 191;
+  --secondary-800: 8 55 153;
+  --secondary-900: 5 37 102;
+
+  --accent-50: 255 255 204;
+  --accent-100: 255 255 179;
+  --accent-200: 255 242 128;
+  --accent-300: 255 230 102;
+  --accent-400: 255 217 51;
+  --accent-500: 255 204 0;
+  --accent-600: 230 184 0;
+  --accent-700: 191 153 0;
+  --accent-800: 128 102 0;
+  --accent-900: 77 61 0;
+
+  --bg-primary: 0 0 0;
+  --bg-secondary: 13 13 42;
+  --bg-tertiary: 15 11 30;
+  --bg-surface: 10 8 40;
+  --bg-overlay: 0 0 0;
+  --bg-terminal: 0 0 0;
+
+  --text-primary: 255 255 255;
+  --text-secondary: 0 255 255;
+  --text-accent: 255 20 147;
+  --text-muted: 204 204 204;
+  --text-bright: 255 255 255;
+  --text-disabled: 102 102 102;
+
+  --border-primary: 255 20 147;
+  --border-secondary: 13 92 255;
+  --border-subtle: 51 20 51;
+  --border-accent: 255 204 0;
+  --border-strong: 255 51 166;
+
+  --glow-primary: 255 20 147;
+  --glow-secondary: 13 92 255;
+  --glow-accent: 255 204 0;
+
+  --error-rgb: 255 20 147;
+  --error-500: 255 20 147;
+  --primary-600: 230 18 132;
+}
+
+/* Neon Surge container background */
+[data-theme="neon-surge"] .vibe-reader-container {
+  background: radial-gradient(
+      ellipse at 20% 80%,
+      rgba(var(--primary-500), 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 20%,
+      rgba(var(--secondary-500), 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 40% 40%,
+      rgba(var(--accent-500), 0.08) 0%,
+      transparent 50%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(var(--bg-primary), 1) 0%,
+      rgba(var(--bg-secondary), 1) 50%,
+      rgba(var(--bg-tertiary), 1) 100%
+    ) !important;
+}
+
+/* Electric scanning lines with pure black contrast */
+@keyframes neon-surge-scan {
+  0% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0.5;
+  }
+}
+
+[data-theme="neon-surge"] .retrofuture-bg-effects::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--primary-500), 1),
+    rgba(var(--secondary-500), 1),
+    transparent
+  );
+  animation: neon-surge-scan 4s linear infinite;
+}
+
+/* ============================================================================ */
+/* OUTRUN STORM THEME */
+/* ============================================================================ */
+
+[data-theme="outrun-storm"] {
+  --primary: 138 43 226;
+  --secondary: 255 111 32;
+  --accent: 90 79 207;
+  --success: 147 112 219;
+  --error: 138 43 226;
+  --border-color: 138 43 226;
+
+  /* Outrun Storm RGB Spectrum */
+  --primary-50: 229 204 255;
+  --primary-100: 214 179 255;
+  --primary-200: 189 128 255;
+  --primary-300: 168 102 255;
+  --primary-400: 147 77 255;
+  --primary-500: 138 43 226;
+  --primary-600: 124 39 203;
+  --primary-700: 110 34 181;
+  --primary-800: 83 26 136;
+  --primary-900: 55 17 90;
+
+  --secondary-50: 255 224 204;
+  --secondary-100: 255 207 179;
+  --secondary-200: 255 183 128;
+  --secondary-300: 255 159 102;
+  --secondary-400: 255 135 51;
+  --secondary-500: 255 111 32;
+  --secondary-600: 230 100 29;
+  --secondary-700: 191 83 24;
+  --secondary-800: 128 56 16;
+  --secondary-900: 77 33 10;
+
+  --accent-50: 204 202 255;
+  --accent-100: 179 176 255;
+  --accent-200: 128 124 255;
+  --accent-300: 102 97 255;
+  --accent-400: 77 71 230;
+  --accent-500: 90 79 207;
+  --accent-600: 81 71 186;
+  --accent-700: 68 59 155;
+  --accent-800: 51 44 116;
+  --accent-900: 34 30 77;
+
+  --bg-primary: 15 11 30;
+  --bg-secondary: 30 26 120;
+  --bg-tertiary: 40 27 76;
+  --bg-surface: 28 21 70;
+  --bg-overlay: 0 0 0;
+  --bg-terminal: 15 11 30;
+
+  --text-primary: 224 176 255;
+  --text-secondary: 218 112 214;
+  --text-accent: 255 111 32;
+  --text-muted: 199 93 225;
+  --text-bright: 255 255 255;
+  --text-disabled: 155 89 182;
+
+  --border-primary: 138 43 226;
+  --border-secondary: 255 111 32;
+  --border-subtle: 92 46 145;
+  --border-accent: 90 79 207;
+  --border-strong: 106 32 181;
+
+  --glow-primary: 138 43 226;
+  --glow-secondary: 255 111 32;
+  --glow-accent: 90 79 207;
+
+  --error-rgb: 138 43 226;
+  --error-500: 138 43 226;
+  --primary-600: 124 39 203;
+}
+
+/* Outrun Storm container background */
+[data-theme="outrun-storm"] .vibe-reader-container {
+  background: radial-gradient(
+      ellipse at 20% 80%,
+      rgba(var(--primary-500), 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 20%,
+      rgba(var(--secondary-500), 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 40% 40%,
+      rgba(var(--accent-500), 0.08) 0%,
+      transparent 50%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(var(--bg-primary), 1) 0%,
+      rgba(var(--bg-secondary), 1) 50%,
+      rgba(var(--bg-tertiary), 1) 100%
+    ) !important;
+}
+[data-theme="outrun-storm"] .vibe-container::before {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(138, 43, 226, 0.1) 45%,
+    rgba(255, 111, 32, 0.2) 50%,
+    rgba(138, 43, 226, 0.1) 55%,
+    transparent 100%);
+    animation: storm-sweep 10s linear infinite;
+}
+
+@keyframes storm-sweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* ADD: Glitch pulses on headers */
+.cyber-heading {
+    position: relative;
+    animation: heading-glow 4s ease-in-out infinite;
+}
+
+@keyframes heading-glow {
+    0%, 100% {
+        text-shadow: 0 0 10px rgb(var(--primary));
+        transform: translateX(0);
+    }
+    25% { transform: translateX(-1px); }
+    50% {
+        text-shadow: 0 0 20px rgb(var(--primary)), 0 0 30px rgb(var(--secondary));
+    }
+    75% { transform: translateX(1px); }
+}
+/* ============================================================================ */
+/* STRANGE DAYS THEME */
+/* ============================================================================ */
+
+[data-theme="strange-days"] {
+  --primary: 255 70 184;
+  --secondary: 32 178 170;
+  --accent: 147 27 133;
+  --success: 152 255 152;
+  --error: 255 70 184;
+  --border-color: 255 70 184;
+
+  /* Strange Days RGB Spectrum */
+  --primary-50: 255 192 203;
+  --primary-100: 255 182 193;
+  --primary-200: 255 128 193;
+  --primary-300: 255 104 163;
+  --primary-400: 255 76 143;
+  --primary-500: 255 70 184;
+  --primary-600: 224 110 146;
+  --primary-700: 218 59 106;
+  --primary-800: 192 58 105;
+  --primary-900: 155 0 67;
+
+  --secondary-50: 204 255 204;
+  --secondary-100: 152 255 152;
+  --secondary-200: 0 255 127;
+  --secondary-300: 50 205 50;
+  --secondary-400: 166 226 46;
+  --secondary-500: 32 178 170;
+  --secondary-600: 0 178 169;
+  --secondary-700: 0 133 122;
+  --secondary-800: 0 92 0;
+  --secondary-900: 0 50 0;
+
+  --accent-50: 224 176 255;
+  --accent-100: 218 112 214;
+  --accent-200: 199 93 225;
+  --accent-300: 185 134 193;
+  --accent-400: 165 76 147;
+  --accent-500: 147 27 133;
+  --accent-600: 138 63 150;
+  --accent-700: 110 64 130;
+  --accent-800: 95 75 140;
+  --accent-900: 75 0 63;
+
+  --bg-primary: 26 26 26;
+  --bg-secondary: 44 26 41;
+  --bg-tertiary: 46 46 52;
+  --bg-surface: 40 27 76;
+  --bg-overlay: 55 46 99;
+  --bg-terminal: 26 26 26;
+
+  --text-primary: 224 176 255;
+  --text-secondary: 152 255 152;
+  --text-accent: 255 70 184;
+  --text-muted: 218 112 214;
+  --text-bright: 255 255 255;
+  --text-disabled: 185 134 193;
+
+  --border-primary: 255 70 184;
+  --border-secondary: 32 178 170;
+  --border-subtle: 95 75 140;
+  --border-accent: 147 27 133;
+  --border-strong: 218 59 106;
+
+  --glow-primary: 255 70 184;
+  --glow-secondary: 32 178 170;
+  --glow-accent: 147 27 133;
+
+  --error-rgb: 255 70 184;
+  --error-500: 255 70 184;
+  --primary-600: 224 110 146;
+}
+
+/* Strange Days container background */
+[data-theme="strange-days"] .vibe-reader-container {
+  background: radial-gradient(
+      ellipse at 20% 80%,
+      rgba(var(--primary-500), 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 20%,
+      rgba(var(--secondary-500), 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 40% 40%,
+      rgba(var(--accent-500), 0.08) 0%,
+      transparent 50%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(var(--bg-primary), 1) 0%,
+      rgba(var(--bg-secondary), 1) 50%,
+      rgba(var(--bg-tertiary), 1) 100%
+    ) !important;
+}
+
+/* Strange Days theme-specific effects */
+[data-theme="strange-days"] .vibe-btn::after,
+[data-theme="strange-days"] .control-btn::after {
+  content: '▒▒   ▓▒█░░▒▓███▀▒░ ░▒ ▒  ░ ▒▒▓  ▒';
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  color: rgba(var(--accent-500), 1);
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+
+[data-theme="strange-days"] .vibe-header,
+[data-theme="strange-days"] .terminal-window {
+  animation: phantom-flicker 4s ease-in-out infinite;
+  border: 3px solid rgba(var(--secondary-500), 0.6);
+}
+
+@keyframes phantom-flicker {
+  0%,
+  100% {
+    opacity: 0.95;
+    filter: brightness(1);
+  }
+  25% {
+    opacity: 0.98;
+    filter: brightness(1.1);
+  }
+  50% {
+    opacity: 0.92;
+    filter: brightness(0.9);
+  }
+  75% {
+    opacity: 1;
+    filter: brightness(1.05);
+  }
+}
+
+/* Strange Days font override */
+[data-theme="strange-days"] {
+  font-family: "Orbitron", "Fira Code", "SF Mono", "Monaco", "Inconsolata",
+    "Roboto Mono", "Consolas", "Courier New", monospace;
+}
+
+[data-theme="strange-days"] .vibe-brand,
+[data-theme="strange-days"] .vibe-status,
+[data-theme="strange-days"] .terminal-title,
+[data-theme="strange-days"] .article-title,
+[data-theme="strange-days"] .cyber-heading,
+[data-theme="strange-days"] .vibe-btn,
+[data-theme="strange-days"] .control-btn {
+  font-family: "Orbitron", "Fira Code", "SF Mono", "Monaco", "Inconsolata",
+    "Roboto Mono", "Consolas", "Courier New", monospace;
+}
+
+/* Underground data corruption effects */
+[data-theme="strange-days"] .vibe-article,
+[data-theme="strange-days"] .terminal-window {
+  background: linear-gradient(
+    135deg,
+    rgba(var(--bg-primary), 0.95),
+    rgba(var(--bg-overlay), 0.4)
+  );
+  border: 3px solid rgba(var(--secondary-500), 0.6);
+  clip-path: polygon(25px 0%, 100% 0%, calc(100% - 25px) 100%, 0% 100%);
+  box-shadow: 0 0 50px rgba(var(--glow-primary), 0.25),
+    0 0 100px rgba(var(--glow-accent), 0.15), 0 20px 40px rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(25px);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="strange-days"] .vibe-article::before,
+[data-theme="strange-days"] .terminal-window::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--secondary-500), 1),
+    rgba(var(--primary-500), 1),
+    rgba(var(--accent-500), 1),
+    rgba(var(--secondary-500), 1)
+  );
+  animation: underground-scan 5s linear infinite;
+}
+
+@keyframes underground-scan {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+[data-theme="strange-days"] .vibe-article::after,
+[data-theme="strange-days"] .terminal-window::after {
+  content: "◢ PHANTOM DATA ◣";
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 10px;
+  color: rgba(var(--accent-500), 1);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0.7;
+  font-family: "Fira Code", monospace;
+}
+
+[data-theme="strange-days"] .vibe-article:hover,
+[data-theme="strange-days"] .terminal-window:hover {
+  border-color: rgba(var(--primary-500), 1);
+  box-shadow: 0 0 60px rgba(var(--glow-primary), 0.5),
+    0 0 120px rgba(var(--glow-secondary), 0.3), 0 25px 50px rgba(0, 0, 0, 0.4);
+  transform: translateY(-10px);
+  animation: data-corruption 0.2s linear infinite;
+}
+
+@keyframes data-corruption {
+  0%,
+  100% {
+    clip-path: polygon(25px 0%, 100% 0%, calc(100% - 25px) 100%, 0% 100%);
+  }
+  25% {
+    clip-path: polygon(28px 0%, 100% 0%, calc(100% - 22px) 100%, 0% 100%);
+  }
+  50% {
+    clip-path: polygon(22px 0%, 100% 0%, calc(100% - 28px) 100%, 0% 100%);
+  }
+  75% {
+    clip-path: polygon(26px 0%, 100% 0%, calc(100% - 24px) 100%, 0% 100%);
+  }
+}
