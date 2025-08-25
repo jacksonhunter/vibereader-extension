@@ -499,10 +499,13 @@ class HiddenTabManager {
 
         // Inject CSS
         await browser.tabs.insertCSS(tabId, {
-            file: 'styles/base.css'
+            file: 'styles/matrix-theme.css'
         });
         await browser.tabs.insertCSS(tabId, {
-            file: 'styles/themes.css'
+            file: 'styles/retrofuture-theme.css'
+        });
+        await browser.tabs.insertCSS(tabId, {
+            file: 'styles/missing_effects.css'
         });
     }
 

@@ -6,7 +6,9 @@
       "WebFetch(domain:www.npmjs.com)",
       "Bash(web-ext run:*)",
       "WebFetch(domain:unpkg.com)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm init:*)",
+      "Bash(npx tailwindcss init:*)"
     ],
     "deny": [],
     "ask": []

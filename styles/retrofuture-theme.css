@@ -434,11 +434,15 @@
   font-size: 12px;
 }
 
+
 .vibe-status {
-  color: var(--success);
-  font-weight: bold;
-  text-shadow: 0 0 8px var(--success);
-  animation: status-blink 2s ease-in-out infinite;
+    font-family: "VT323", monospace;
+    font-size: 14px;
+    color: rgb(var(--secondary));
+    text-shadow: 0 0 10px rgb(var(--glow-secondary));
+    opacity: 0.8;
+    font-weight: bold;
+    animation: status-blink 2s ease-in-out infinite;
 }
 
 @keyframes status-blink {
