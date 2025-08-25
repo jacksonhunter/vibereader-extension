@@ -500,8 +500,7 @@
   }
 
   .card-elevated {
-    @apply bg-glass-strong rounded-xl border border-white/20;
-    @apply shadow-xl hover:shadow-2xl transition-all duration-300;
+    @apply glass-morphism rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300;
     @apply p-8 space-y-6 transform hover:-translate-y-1;
   }
 
@@ -510,14 +509,14 @@
      ========================================================================== */
   
   .input {
-    @apply bg-glass border border-white/20 rounded-md px-3 py-2;
+    @apply glass-morphism rounded-md px-3 py-2;
     @apply text-text-primary placeholder-text-muted;
     @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
     @apply transition-all duration-200;
   }
 
   .input:focus {
-    @apply bg-glass-strong shadow-lg border-primary-500/50;
+    @apply bg-bg-surface/30 shadow-lg border-primary-500/50 backdrop-blur-lg;
   }
 
   /* ==========================================================================
@@ -568,22 +567,65 @@
   
   .media-wrapper {
     @apply relative bg-bg-surface border border-border-default rounded-lg overflow-hidden z-media;
-  }
-  
-  .media-placeholder {
-    @apply flex items-center justify-center p-8 text-text-muted bg-bg-elevated;
-    @apply hover:bg-bg-surface hover:text-text-primary transition-all duration-200;
-    @apply cursor-pointer border-2 border-dashed border-border-subtle hover:border-primary-500;
-  }
-  
-  .ascii-art {
-    @apply font-mono text-xs leading-none text-text-secondary bg-bg-primary;
-  }
-  
-  .hover-preview {
-    @apply z-tooltip fixed pointer-events-none max-w-sm;
+    @apply transition-all duration-300 ease-cyber;
+    /* Base hover/focus states with themed borders */
+    @apply hover:border-primary-400/60 hover:shadow-neon-primary;
+    @apply focus-within:border-primary-500 focus-within:shadow-neon-primary;
+    /* Subtle glassmorphism base */
+    @apply backdrop-blur-sm;
   }
 
+  /* Media wrapper variants - data attributes for different modes/states */
+  .media-wrapper[data-mode="placeholder"] {
+    @apply cursor-pointer border-2 border-dashed border-border-subtle;
+    @apply bg-bg-elevated/80 backdrop-blur-md;
+    /* Enhanced hover with glassmorphism */
+    @apply hover:border-primary-500/70 hover:bg-primary-500/5;
+    @apply hover:shadow-neon-hover hover:scale-[1.02];
+    @apply transition-all duration-200 ease-cyber;
+  }
+
+  .media-wrapper[data-mode="ascii"] {
+    /* Enhanced glassmorphism for ASCII mode */
+    @apply bg-bg-surface/60 backdrop-blur-lg border-2 border-border-default/40;
+    @apply p-4 shadow-neon-secondary;
+    /* Pixelation effect for retro ASCII aesthetic */
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    /* Themed accent border */
+    @apply border-l-4 border-l-accent-400/60;
+    /* Enhanced hover states */
+    @apply hover:bg-bg-surface/80 hover:border-accent-400/80;
+    @apply hover:shadow-neon-accent;
+  }
+
+  .media-wrapper[data-mode="image"] {
+    @apply p-0;
+    /* Subtle glassmorphism for image containers */
+    @apply bg-bg-surface/40 backdrop-blur-sm;
+    /* Enhanced hover with themed border */
+    @apply hover:shadow-neon-primary hover:border-primary-400/50;
+  }
+
+  /* Size variants - preset dimensions */
+  .media-wrapper[data-size="sm"] {
+    @apply max-w-sm max-h-48;
+  }
+
+  .media-wrapper[data-size="md"] {
+    @apply max-w-lg max-h-64;
+  }
+
+  .media-wrapper[data-size="lg"] {
+    @apply max-w-2xl max-h-96;
+  }
+
+  .media-wrapper[data-size="xl"] {
+    @apply max-w-4xl max-h-[500px];
+  }
+  
+  
   /* ==========================================================================
      SPECIAL EFFECTS
      ========================================================================== */
@@ -597,7 +639,7 @@
   }
 
   .glass-morphism {
-    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-lg;
+    @apply bg-bg-surface/20 backdrop-blur-md border border-border-default/30 shadow-lg;
   }
   
   .cyber-heading {
@@ -639,14 +681,6 @@
   /* Custom Background Utilities */
   .bg-nightdrive {
     background: linear-gradient(135deg, rgb(var(--bg-primary)), rgb(var(--bg-tertiary)), rgb(var(--bg-surface)));
-  }
-
-  .bg-glass {
-    @apply bg-white/5 backdrop-blur-md;
-  }
-
-  .bg-glass-strong {
-    @apply bg-white/10 backdrop-blur-lg;
   }
 
   /* Text Utilities */
@@ -696,6 +730,19 @@
   .border-cyber {
     @apply border border-secondary-500;
     box-shadow: 0 0 10px rgb(var(--secondary-500) / 0.5);
+  }
+
+  /* CRT/Scanline Effects using SVG Filters */
+  .filter-crt {
+    filter: url(#crt-scanlines);
+  }
+
+  .filter-crt-text {
+    filter: url(#crt-text-effect);
+  }
+
+  .filter-pixelate {
+    filter: url(#pixelate-effect);
   }
 }
 
@@ -758,6 +805,11 @@
   0%, 90%, 100% { opacity: 1; }
   5%, 15% { opacity: 0.1; }
   10% { opacity: 1; }
+}
+
+@keyframes ascii-fade-in {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 /* Enhanced Scrollbar Styling */

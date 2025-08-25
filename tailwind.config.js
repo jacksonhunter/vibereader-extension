@@ -284,6 +284,10 @@ module.exports = {
                 'dropdown': '60',        // Dropdown menus
                 'tooltip': '70',         // Tooltips and hints
                 'notification': '80'     // Toast notifications
+            },
+
+            transitionTimingFunction: {
+                'cyber': 'cubic-bezier(0.25, 0.46, 0.45, 0.94)', // Smooth cyberpunk easing
             }
         },
     },

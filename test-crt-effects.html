@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRT Monitor Effect</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            font-family: 'VT323', monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .crt-container {
+            position: relative;
+            width: 90vw;
+            max-width: 900px;
+            height: 80vh;
+            background: #000;
+            border-radius: 20px;
+            box-shadow:
+                    0 0 100px rgba(0, 255, 0, 0.3),
+                    inset 0 0 120px rgba(0, 0, 0, 0.9),
+                    inset 0 0 60px rgba(0, 0, 0, 0.7),
+                    0 0 2px rgba(0, 255, 0, 0.5);
+            overflow: hidden;
+            padding: 2px;
+            box-sizing: border-box;
+            /* Thin frame outline */
+            outline: 2px solid #0a0a0a;
+            outline-offset: -2px;
+        }
+
+        .crt-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #001100 0%, #002200 100%);
+            position: relative;
+            filter: url(#crt-filter);
+            /* Geometric barrel distortion */
+            transform-style: preserve-3d;
+            transform: perspective(800px) rotateY(0deg) rotateX(0deg);
+        }
+
+        .crt-curvature {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 0% 0% 0% 0% / 0% 0% 0% 0%;
+            transform: scale(1);
+        }
+
+        .bezel-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(
+                    ellipse at center,
+                    transparent 0%,
+                    transparent 28%,
+                    rgba(0, 0, 0, 0.06) 42%,
+                    rgba(0, 0, 0, 0.16) 59%,
+                    rgba(0, 0, 0, 0.28) 80%,
+                    rgba(0, 0, 0, 0.38) 95%,
+                    rgba(0, 0, 0, 0.4) 100%
+            );
+            z-index: 10;
+        }
+
+        .screen-mesh {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image:
+                    repeating-linear-gradient(
+                            0deg,
+                            transparent,
+                            transparent 1px,
+                            rgba(0, 0, 0, 0.05) 1px,
+                            rgba(0, 0, 0, 0.05) 2px
+                    ),
+                    repeating-linear-gradient(
+                            90deg,
+                            transparent,
+                            transparent 1px,
+                            rgba(0, 0, 0, 0.05) 1px,
+                            rgba(0, 0, 0, 0.05) 2px
+                    );
+            z-index: 4;
+        }
+
+        .terminal-content {
+            padding: 30px;
+            color: #00ff00;
+            font-size: 20px;
+            line-height: 1.4;
+            text-shadow:
+                    0 0 5px #00ff00,
+                    0 0 10px #00ff00;
+            height: 100%;
+            overflow-y: auto;
+            animation: textFlicker 0.03s infinite;
+        }
+
+        /* Scanlines overlay */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 255, 0, 0.03) 2px,
+                    rgba(0, 255, 0, 0.03) 4px
+            );
+            animation: scanlineMove 8s linear infinite;
+            z-index: 2;
+        }
+
+        /* Phosphor glow lines */
+        .glow-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: linear-gradient(
+                    180deg,
+                    transparent 0%,
+                    rgba(0, 255, 0, 0.05) 50%,
+                    transparent 100%
+            );
+            background-size: 100% 10px;
+            animation: glowMove 3s linear infinite;
+            z-index: 1;
+        }
+
+        /* Screen flicker */
+        @keyframes textFlicker {
+            0%, 100% { opacity: 1; }
+            92% { opacity: 0.98; }
+        }
+
+        @keyframes scanlineMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(10px); }
+        }
+
+        @keyframes glowMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Vignette effect - subtle inner shadow */
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            box-shadow:
+                    inset 0 0 50px rgba(0, 0, 0, 0.5),
+                    inset 0 0 100px rgba(0, 0, 0, 0.3);
+            z-index: 9;
+        }
+
+        .prompt {
+            color: #00ff00;
+            margin: 10px 0;
+        }
+
+        .prompt::before {
+            content: "> ";
+            color: #00ffaa;
+        }
+
+        .blink {
+            animation: cursorBlink 1s infinite;
+        }
+
+        @keyframes cursorBlink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            color: #00ff00;
+            z-index: 1000;
+        }
+
+        .controls label {
+            display: block;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .controls input[type="range"] {
+            width: 150px;
+        }
+
+        .controls button {
+            background: #001100;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'VT323', monospace;
+        }
+
+        .controls button:hover {
+            background: #00ff00;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+<!-- SVG Filter Definitions -->
+<svg style="position: absolute; width: 0; height: 0;">
+    <defs>
+        <filter id="crt-filter" x="-50%" y="-50%" width="200%" height="200%">
+            <!-- Lens Distortion Map -->
+            <feImage xlink:href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cdefs%3E%3CradialGradient id='lens'%3E%3Cstop offset='0%25' stop-color='%23808080'/%3E%3Cstop offset='40%25' stop-color='%23808080'/%3E%3Cstop offset='70%25' stop-color='%23606060'/%3E%3Cstop offset='100%25' stop-color='%23000000'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect fill='url(%23lens)' width='256' height='256'/%3E%3C/svg%3E"
+                     result="lensMap"
+                     preserveAspectRatio="none"
+                     x="0" y="0" width="100%" height="100%"/>
+
+            <!-- Apply lens barrel distortion -->
+            <feDisplacementMap in="SourceGraphic" in2="lensMap"
+                               scale="8"
+                               xChannelSelector="R"
+                               yChannelSelector="R"
+                               result="lensDistorted"/>
+
+            <!-- Chromatic Aberration -->
+            <feColorMatrix in="lensDistorted" type="matrix" values="1 0 0 0 0
+                                                     0 0 0 0 0
+                                                     0 0 0 0 0
+                                                     0 0 0 1 0" result="red"/>
+            <feColorMatrix in="lensDistorted" type="matrix" values="0 0 0 0 0
+                                                     0 1 0 0 0
+                                                     0 0 0 0 0
+                                                     0 0 0 1 0" result="green"/>
+            <feColorMatrix in="lensDistorted" type="matrix" values="0 0 0 0 0
+                                                     0 0 0 0 0
+                                                     0 0 1 0 0
+                                                     0 0 0 1 0" result="blue"/>
+
+            <feOffset in="red" dx="-0.5" dy="0" result="red-shifted"/>
+            <feOffset in="blue" dx="0.5" dy="0" result="blue-shifted"/>
+
+            <feBlend mode="screen" in="red-shifted" in2="green" result="rg"/>
+            <feBlend mode="screen" in="rg" in2="blue-shifted" result="rgb"/>
+
+            <!-- Glow Effect -->
+            <feGaussianBlur in="rgb" stdDeviation="0.5" result="glow1"/>
+            <feGaussianBlur in="rgb" stdDeviation="1" result="glow2"/>
+            <feGaussianBlur in="rgb" stdDeviation="2" result="glow3"/>
+
+            <!-- Combine glows -->
+            <feMerge result="glows">
+                <feMergeNode in="glow3"/>
+                <feMergeNode in="glow2"/>
+                <feMergeNode in="glow1"/>
+                <feMergeNode in="rgb"/>
+            </feMerge>
+
+            <!-- Noise for slight distortion -->
+            <feTurbulence baseFrequency="0.02" numOctaves="1" seed="5" result="noise"/>
+            <feColorMatrix in="noise" type="saturate" values="0" result="graynoise"/>
+            <feComponentTransfer in="graynoise" result="lightnoise">
+                <feFuncA type="discrete" tableValues="0 0.02 0 0.04 0 0.02 0"/>
+            </feComponentTransfer>
+
+            <!-- Screen distortion -->
+            <feDisplacementMap in="glows" in2="lightnoise" scale="2" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+
+            <!-- Brightness and Contrast -->
+            <feComponentTransfer in="displaced">
+                <feFuncR type="gamma" amplitude="1.1" exponent="0.9"/>
+                <feFuncG type="gamma" amplitude="1.1" exponent="0.9"/>
+                <feFuncB type="gamma" amplitude="1.1" exponent="0.9"/>
+            </feComponentTransfer>
+        </filter>
+
+        <!-- Alternative filter for more intense effect -->
+        <filter id="crt-filter-intense" x="-50%" y="-50%" width="200%" height="200%">
+            <feTurbulence baseFrequency="0.015" numOctaves="2" result="turbulence"/>
+            <feColorMatrix in="turbulence" type="saturate" values="0"/>
+            <feComponentTransfer result="discrete">
+                <feFuncA type="discrete" tableValues="0 0.1 0 0.05 0 0.1 0 0.05"/>
+            </feComponentTransfer>
+            <feDisplacementMap in="SourceGraphic" in2="discrete" scale="3" xChannelSelector="R" yChannelSelector="G" result="distorted"/>
+
+            <feGaussianBlur in="distorted" stdDeviation="0.3" result="blur1"/>
+            <feGaussianBlur in="distorted" stdDeviation="0.8" result="blur2"/>
+
+            <feMerge>
+                <feMergeNode in="blur2"/>
+                <feMergeNode in="blur1"/>
+                <feMergeNode in="distorted"/>
+            </feMerge>
+        </filter>
+    </defs>
+</svg>
+
+<div class="controls">
+    <h3 style="margin-top: 0;">CRT Controls</h3>
+    <label>
+        Screen Curvature: <input type="range" id="curvature" min="0" max="50" step="1" value="10">
+    </label>
+    <label>
+        Bezel/Lens Distortion: <input type="range" id="bezel" min="0" max="1" step="0.05" value="0.4">
+    </label>
+    <label>
+        Blur: <input type="range" id="blur" min="0" max="3" step="0.1" value="0.5">
+    </label>
+    <label>
+        Chromatic Aberration: <input type="range" id="chromatic" min="0" max="5" step="0.5" value="1">
+    </label>
+    <label>
+        Distortion: <input type="range" id="distortion" min="0" max="10" step="1" value="2">
+    </label>
+    <label>
+        Scanline Opacity: <input type="range" id="scanlineOpacity" min="0" max="0.2" step="0.01" value="0.03">
+    </label>
+    <div>
+        <button onclick="toggleFilter()">Toggle Filter</button>
+        <button onclick="toggleAnimation()">Toggle Animation</button>
+        <button onclick="changeColor()">Change Color</button>
+    </div>
+</div>
+
+<div class="crt-container">
+    <div class="crt-curvature" id="crtCurvature">
+        <div class="crt-screen" id="crtScreen">
+            <div class="screen-mesh"></div>
+            <div class="scanlines" id="scanlines"></div>
+            <div class="glow-lines"></div>
+            <div class="terminal-content" id="terminal">
+                <div class="prompt">SYSTEM INITIALIZED</div>
+                <div class="prompt">CRT DISPLAY EMULATOR v2.0</div>
+                <div class="prompt">=====================================</div>
+                <br>
+                <div class="prompt">This is a demonstration of CRT monitor effects</div>
+                <div class="prompt">using SVG filters in HTML5.</div>
+                <br>
+                <div class="prompt">Features include:</div>
+                <div class="prompt">- Geometric barrel distortion with lens effect</div>
+                <div class="prompt">- Radial lens distortion at edges</div>
+                <div class="prompt">- Scanlines and phosphor glow</div>
+                <div class="prompt">- Chromatic aberration</div>
+                <div class="prompt">- Noise and interference</div>
+                <div class="prompt">- Authentic flicker effect</div>
+                <br>
+                <div class="prompt">Adjust the controls to customize the effect.</div>
+                <br>
+                <div class="prompt">Ready for input<span class="blink">_</span></div>
+            </div>
+            <div class="vignette"></div>
+            <div class="bezel-overlay" id="bezelOverlay"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Screen curvature control
+    function updateCurvature() {
+        const curvature = document.getElementById('curvature').value;
+        const curvatureElement = document.getElementById('crtCurvature');
+        const screen = document.getElementById('crtScreen');
+
+        // Map 0-50 slider to 3-15% border-radius
+        const radius = 3 + (curvature / 50) * 12; // 3% to 15%
+        curvatureElement.style.borderRadius = `${radius}% ${radius}% ${radius}% ${radius}% / ${radius}% ${radius}% ${radius}% ${radius}%`;
+
+        // Apply perspective distortion (subtle)
+        const perspective = 1200 - (curvature * 8);
+        screen.style.transform = `perspective(${perspective}px) rotateY(0deg) rotateX(0deg)`;
+
+        // Minimal scale compensation
+        const scale = 1 + (curvature * 0.002);
+        curvatureElement.style.transform = `scale(${scale})`;
+    }
+
+    // Bezel strength control
+    function updateBezel() {
+        const bezelStrength = document.getElementById('bezel').value;
+        const bezelOverlay = document.getElementById('bezelOverlay');
+
+        // Update visual darkening
+        const innerStop = Math.max(10, 40 - bezelStrength * 30);
+        const midStop1 = Math.max(20, 50 - bezelStrength * 20);
+        const midStop2 = Math.max(40, 65 - bezelStrength * 15);
+
+        bezelOverlay.style.background = `radial-gradient(
+                ellipse at center,
+                transparent 0%,
+                transparent ${innerStop}%,
+                rgba(0, 0, 0, ${bezelStrength * 0.15}) ${midStop1}%,
+                rgba(0, 0, 0, ${bezelStrength * 0.4}) ${midStop2}%,
+                rgba(0, 0, 0, ${bezelStrength * 0.7}) 80%,
+                rgba(0, 0, 0, ${bezelStrength * 0.95}) 95%,
+                rgba(0, 0, 0, ${bezelStrength}) 100%
+            )`;
+
+        // Update lens distortion in SVG filter
+        const filter = document.querySelector('#crt-filter');
+        const lensDisplacement = filter.querySelector('feDisplacementMap[result="lensDistorted"]');
+        if (lensDisplacement) {
+            // Scale from 0 to 20 based on bezel strength
+            const distortionScale = bezelStrength * 20;
+            lensDisplacement.setAttribute('scale', distortionScale);
+        }
+
+        // Adjust blend mode based on strength
+        bezelOverlay.style.mixBlendMode = bezelStrength > 0.5 ? 'multiply' : 'normal';
+    }
+
+    // Dynamic filter adjustment
+    function updateFilter() {
+        const blur = document.getElementById('blur').value;
+        const chromatic = document.getElementById('chromatic').value;
+        const distortion = document.getElementById('distortion').value;
+
+        // Update filter values dynamically
+        const filter = document.querySelector('#crt-filter');
+        const blurElements = filter.querySelectorAll('feGaussianBlur');
+        blurElements.forEach((el, i) => {
+            el.setAttribute('stdDeviation', blur * (i + 1) * 0.5);
+        });
+
+        const redOffset = filter.querySelector('feOffset[result="red-shifted"]');
+        const blueOffset = filter.querySelector('feOffset[result="blue-shifted"]');
+        if (redOffset && blueOffset) {
+            redOffset.setAttribute('dx', -chromatic * 0.5);
+            blueOffset.setAttribute('dx', chromatic * 0.5);
+        }
+
+        const displacements = filter.querySelectorAll('feDisplacementMap');
+        displacements.forEach(d => {
+            if (d.getAttribute('result') === 'displaced') {
+                d.setAttribute('scale', distortion);
+            }
+        });
+    }
+
+    // Update scanline opacity
+    document.getElementById('scanlineOpacity').addEventListener('input', (e) => {
+        const scanlines = document.getElementById('scanlines');
+        const opacity = e.target.value;
+        scanlines.style.backgroundImage = `repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 0, ${opacity}) 2px,
+                rgba(0, 255, 0, ${opacity}) 4px
+            )`;
+    });
+
+    // Toggle filter on/off
+    let filterEnabled = true;
+    function toggleFilter() {
+        const screen = document.getElementById('crtScreen');
+        filterEnabled = !filterEnabled;
+        screen.style.filter = filterEnabled ? 'url(#crt-filter)' : 'none';
+    }
+
+    // Toggle animations
+    let animationsEnabled = true;
+    function toggleAnimation() {
+        const elements = document.querySelectorAll('.scanlines, .glow-lines, .terminal-content');
+        animationsEnabled = !animationsEnabled;
+        elements.forEach(el => {
+            el.style.animationPlayState = animationsEnabled ? 'running' : 'paused';
+        });
+    }
+
+    // Change terminal color
+    const colors = ['#00ff00', '#00ffff', '#ff00ff', '#ffaa00', '#ffffff'];
+    let colorIndex = 0;
+    function changeColor() {
+        colorIndex = (colorIndex + 1) % colors.length;
+        const color = colors[colorIndex];
+        document.documentElement.style.setProperty('--terminal-color', color);
+
+        const terminal = document.getElementById('terminal');
+        terminal.style.color = color;
+        terminal.style.textShadow = `0 0 5px ${color}, 0 0 10px ${color}`;
+
+        // Update scanlines color
+        const scanlines = document.getElementById('scanlines');
+        const opacity = document.getElementById('scanlineOpacity').value;
+        scanlines.style.backgroundImage = `repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                ${color.replace('ff', opacity.toString().substr(2))} 2px,
+                ${color.replace('ff', opacity.toString().substr(2))} 4px
+            )`;
+    }
+
+    // Add input listeners
+    document.getElementById('curvature').addEventListener('input', updateCurvature);
+    document.getElementById('bezel').addEventListener('input', updateBezel);
+    document.getElementById('blur').addEventListener('input', updateFilter);
+    document.getElementById('chromatic').addEventListener('input', updateFilter);
+    document.getElementById('distortion').addEventListener('input', updateFilter);
+
+    // Initialize values
+    updateCurvature();
+    updateBezel();
+
+    // Simulate typing effect
+    function typeText(text, element) {
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                element.textContent += text[i];
+                i++;
+            } else {
+                clearInterval(interval);
+            }
+        }, 50);
+    }
+
+    // Add some dynamic content
+    setTimeout(() => {
+        const newPrompt = document.createElement('div');
+        newPrompt.className = 'prompt';
+        document.getElementById('terminal').appendChild(newPrompt);
+        typeText('Lens distortion calibrated...', newPrompt);
+    }, 3000);
+</script>
+</body>
+</html>

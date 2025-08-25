@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <defs>
+    <!-- CRT Scanlines Effect for General Elements -->
+    <filter id="crt-scanlines" x="0%" y="0%" width="100%" height="100%">
+      <!-- Horizontal scanlines -->
+      <pattern id="scanlines" patternUnits="userSpaceOnUse" width="100%" height="4">
+        <rect width="100%" height="2" fill="rgba(0,0,0,0.1)"/>
+        <rect width="100%" height="1" y="2" fill="rgba(255,255,255,0.03)"/>
+        <rect width="100%" height="1" y="3" fill="rgba(0,0,0,0.1)"/>
+      </pattern>
+      
+      <!-- Apply scanlines overlay -->
+      <feImage href="#scanlines" result="scanlines"/>
+      <feComposite in="SourceGraphic" in2="scanlines" operator="multiply" result="scanned"/>
+      
+      <!-- Slight blur for CRT effect -->
+      <feGaussianBlur in="scanned" stdDeviation="0.1" result="blurred"/>
+      
+      <!-- RGB separation for authentic CRT look -->
+      <feColorMatrix in="blurred" type="matrix" 
+        values="1.02 0 0 0 0
+                0 0.98 0 0 0
+                0 0 1.01 0 0
+                0 0 0 1 0" result="colorshift"/>
+      
+      <feComposite in="colorshift" in2="SourceGraphic" operator="screen"/>
+    </filter>
+
+    <!-- Enhanced CRT Effect for Text -->
+    <filter id="crt-text-effect" x="0%" y="0%" width="100%" height="100%">
+      <!-- Horizontal scanlines for text -->
+      <pattern id="text-scanlines" patternUnits="userSpaceOnUse" width="100%" height="3">
+        <rect width="100%" height="1" fill="rgba(0,0,0,0.15)"/>
+        <rect width="100%" height="1" y="1" fill="rgba(255,255,255,0.02)"/>
+        <rect width="100%" height="1" y="2" fill="rgba(0,0,0,0.05)"/>
+      </pattern>
+      
+      <feImage href="#text-scanlines" result="textlines"/>
+      
+      <!-- Slight glow effect -->
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.3" result="glow"/>
+      <feColorMatrix in="glow" type="matrix" 
+        values="0 0 0 0 0
+                0 0 0 0 1
+                0 0 0 0 1
+                0 0 0 0.3 0" result="cyan-glow"/>
+      
+      <!-- Combine with scanlines -->
+      <feComposite in="SourceGraphic" in2="textlines" operator="multiply" result="scanned-text"/>
+      <feComposite in="scanned-text" in2="cyan-glow" operator="screen"/>
+    </filter>
+
+    <!-- Pixelation Effect -->
+    <filter id="pixelate-effect" x="0%" y="0%" width="100%" height="100%">
+      <!-- Scale down then up to create pixel effect -->
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="pixelated"/>
+      
+      <!-- Create blocky pixel pattern -->
+      <pattern id="pixel-grid" patternUnits="userSpaceOnUse" width="2" height="2">
+        <rect width="2" height="2" fill="rgba(0,0,0,0.1)"/>
+        <rect width="1" height="1" fill="rgba(255,255,255,0.05)"/>
+      </pattern>
+      
+      <feImage href="#pixel-grid" result="pixels"/>
+      <feComposite in="pixelated" in2="pixels" operator="multiply"/>
+    </filter>
+
+    <!-- RGB Chromatic Aberration -->
+    <filter id="rgb-split" x="-2%" y="-2%" width="104%" height="104%">
+      <!-- Split into RGB channels -->
+      <feColorMatrix in="SourceGraphic" type="matrix" 
+        values="1 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 1 0" result="red-channel"/>
+      
+      <feColorMatrix in="SourceGraphic" type="matrix" 
+        values="0 0 0 0 0
+                0 1 0 0 0
+                0 0 0 0 0
+                0 0 0 1 0" result="green-channel"/>
+      
+      <feColorMatrix in="SourceGraphic" type="matrix" 
+        values="0 0 0 0 0
+                0 0 0 0 0
+                0 0 1 0 0
+                0 0 0 1 0" result="blue-channel"/>
+      
+      <!-- Offset channels slightly -->
+      <feOffset in="red-channel" dx="-0.5" dy="0" result="red-offset"/>
+      <feOffset in="green-channel" dx="0" dy="0" result="green-offset"/>
+      <feOffset in="blue-channel" dx="0.5" dy="0" result="blue-offset"/>
+      
+      <!-- Combine channels -->
+      <feComposite in="red-offset" in2="green-offset" operator="screen" result="rg"/>
+      <feComposite in="rg" in2="blue-offset" operator="screen"/>
+    </filter>
+  </defs>
+</svg>

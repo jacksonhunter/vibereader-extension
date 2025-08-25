@@ -832,9 +832,8 @@ if (window.__vibeReaderProxyController) {
                 const label = isVideo ? theme['video'] : theme['image'];
 
                 return `
-                <div class="media-ascii-display">
-                    <pre class="ascii-art">${label}</pre>
-                    <canvas class="ascii-canvas"></canvas>
+                <div class="flex items-center justify-center p-4 text-text-muted">
+                    <pre class="text-xs leading-tight font-mono">${label}</pre>
                 </div>
             `;
             }
@@ -881,17 +880,9 @@ if (window.__vibeReaderProxyController) {
                         return;
                     }
 
-                    const asciiContainer = wrapper.querySelector('.ascii-art');
-                    if (!asciiContainer) {
-                        console.warn('❌ ASCII FAIL: No .ascii-art container found');
-                        if (typeof dump !== 'undefined') {
-                            dump(`[ASCII] ❌ FAIL: No .ascii-art container found\n`);
-                        }
-                        return;
-                    }
-
-                    // Clear existing content and show loading
-                    asciiContainer.innerHTML = '<span style="opacity: 0.5;">Converting to ASCII...</span>';
+                    // Set wrapper to ASCII mode and show loading
+                    wrapper.setAttribute('data-mode', 'ascii');
+                    wrapper.innerHTML = '<div class="flex items-center justify-center p-4 text-text-muted"><span>Converting to ASCII...</span></div>';
 
                     // Get current theme for styling
                     const theme = this.currentTheme || 'nightdrive';
@@ -946,13 +937,22 @@ if (window.__vibeReaderProxyController) {
                         dump(`[ASCII] 📐 Canvas calc: ${imgWidth}x${imgHeight} -> ${Math.round(displayWidth)}x${Math.round(displayHeight)}px (${charsWide}x${charsTall} chars)\n`);
                     }
 
+                    // Determine appropriate data-size based on display dimensions
+                    let sizeClass;
+                    if (displayWidth <= 300) sizeClass = 'sm';
+                    else if (displayWidth <= 500) sizeClass = 'md';
+                    else if (displayWidth <= 800) sizeClass = 'lg';
+                    else sizeClass = 'xl';
+                    
+                    wrapper.setAttribute('data-size', sizeClass);
+
                     // Create canvas element
                     const canvas = document.createElement('canvas');
                     canvas.width = renderWidth;
                     canvas.height = renderHeight;
-                    canvas.className = 'ascii-canvas';
-
-                    // CSS will handle the display size
+                    
+                    // Apply utility classes for canvas styling
+                    canvas.className = 'block max-w-full h-auto';
                     canvas.style.width = `${displayWidth}px`;
                     canvas.style.height = `${displayHeight}px`;
 
@@ -976,63 +976,57 @@ if (window.__vibeReaderProxyController) {
                             next: () => {
                                 console.log('✅ Canvas ASCII conversion successful');
 
-                                // Clear container and add canvas
-                                asciiContainer.innerHTML = '';
-                                asciiContainer.appendChild(canvas);
+                                // Clear wrapper and add canvas directly
+                                wrapper.innerHTML = '';
+                                wrapper.appendChild(canvas);
 
                                 console.log('✅ ASCII conversion successful for:', src);
                                 if (typeof dump !== 'undefined') {
                                     dump(`[ASCII] ✅ SUCCESS: Conversion complete for ${src}\n`);
                                 }
-
-                                // Wait for next frame to ensure element is rendered, then measure
-                                requestAnimationFrame(() => {
-                                    this.sizeWrapperToCanvas(wrapper, displayWidth, displayHeight);
-                                });
                             }, error: (err) => {
                                 console.error('❌ ASCII conversion failed:', err, 'for src:', src);
                                 if (typeof dump !== 'undefined') {
                                     dump(`[ASCII] ❌ ERROR: ${err.message || err} for ${src}\n`);
                                 }
                                 // Fallback to themed placeholder
-                                asciiContainer.innerHTML = '';
+                                wrapper.innerHTML = '';
                                 const themeData = this.getThemedAsciiPlaceholder(theme);
-                                asciiContainer.textContent = themeData['image'] || '⚠️ CONVERSION FAILED';
+                                const placeholder = document.createElement('div');
+                                placeholder.className = 'flex items-center justify-center p-4 text-error-400';
+                                placeholder.textContent = themeData['image'] || '⚠️ CONVERSION FAILED';
+                                wrapper.appendChild(placeholder);
                             }
                         });
 
                 } catch (error) {
                     console.error('ASCII conversion error:', error);
                     // Fallback to placeholder
-                    const asciiEl = wrapper.querySelector('.ascii-art');
-                    if (asciiEl) {
-                        const themeData = this.getThemedAsciiPlaceholder(this.currentTheme || 'nightdrive');
-                        asciiEl.textContent = themeData['image'] || '⚠️ CONVERSION FAILED';
-                    }
+                    wrapper.setAttribute('data-mode', 'ascii');
+                    const themeData = this.getThemedAsciiPlaceholder(this.currentTheme || 'nightdrive');
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'flex items-center justify-center p-4 text-error-400';
+                    placeholder.textContent = themeData['image'] || '⚠️ CONVERSION FAILED';
+                    wrapper.innerHTML = '';
+                    wrapper.appendChild(placeholder);
                 }
             }
 
-            // Simplified wrapper sizing with CSS constraints
+            // Simplified wrapper sizing with data attributes and CSS constraints
             sizeWrapperToCanvas(wrapper, displayWidth, displayHeight) {
                 try {
-                    const asciiDisplayWrapper = wrapper.querySelector('.media-ascii-display');
-                    if (asciiDisplayWrapper) {
-                        // Respect CSS max constraints (800px width, 400px height)
-                        const constrainedWidth = Math.min(displayWidth, 800);
-                        const constrainedHeight = Math.min(displayHeight, 400);
-                        
-                        // Let CSS handle most of the styling, just set constrained dimensions
-                        asciiDisplayWrapper.style.width = `${constrainedWidth}px`;
-                        asciiDisplayWrapper.style.height = `${constrainedHeight}px`;
-
-                        console.log('📏 Canvas ASCII wrapper sized with constraints:', {
-                            original: `${Math.round(displayWidth)}x${Math.round(displayHeight)}px`,
-                            constrained: `${constrainedWidth}x${constrainedHeight}px`
-                        });
-                    }
+                    // CSS handles sizing through data-size attributes and utility classes
+                    // No manual sizing needed as our Tailwind utilities handle constraints
+                    console.log('📏 ASCII wrapper using data-size attribute:', {
+                        dataSize: wrapper.getAttribute('data-size'),
+                        dataMode: wrapper.getAttribute('data-mode'),
+                        dimensions: `${Math.round(displayWidth)}x${Math.round(displayHeight)}px`
+                    });
                 } catch (error) {
-                    console.warn('Failed to size ASCII wrapper:', error);
-                    dump('Failed to size ASCII wrapper:', error);
+                    console.warn('Failed to log ASCII wrapper info:', error);
+                    if (typeof dump !== 'undefined') {
+                        dump('Failed to log ASCII wrapper info:', error);
+                    }
                 }
             }
 
