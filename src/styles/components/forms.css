@@ -2,8 +2,9 @@
    FORM COMPONENTS - Modern Peer Patterns & Floating Labels
    ========================================================================== */
 
-/* Floating Label Input System */
-.input-group {
+
+  /* Floating Label Input System */
+  .input-group {
   @apply relative;
 }
 

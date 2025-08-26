@@ -2,8 +2,8 @@
    CORE LAYOUT SYSTEM
    ========================================================================== */
 
-/* Main Container - Modern data attribute states with theme-aware backgrounds */
-.vibe-container {
+  /* Main Container - Modern data attribute states with theme-aware backgrounds */
+  .vibe-container {
   @apply fixed inset-0 bg-bg-primary z-extension font-mono text-text-primary
     transition-all duration-500 ease-cyber;
 }
@@ -31,9 +31,10 @@
   @apply vibe-container;
 }
 
-/* Header System */
+/* Header System with geometric clip-path */
 .vibe-header {
   @apply flex justify-between items-center p-4 bg-bg-secondary border-b border-border-accent z-header relative;
+  @apply clip-corner hover:clip-corner-xl transition-all duration-300;
 }
 
 .vibe-header-left,

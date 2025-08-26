@@ -11,6 +11,14 @@ module.exports = {
         if (selector.match(/^@|:root|\.vibe-container/)) {
           return selector;
         }
+        // Handle universal selector for Tailwind base layer
+        if (selector === '*' || selector === '*, ::before, ::after') {
+          return `${prefix} ${selector}`;
+        }
+        // Handle pseudo-elements
+        if (selector === '::before' || selector === '::after') {
+          return `${prefix} *${selector}`;
+        }
         // For extension safety, scope everything under our container
         return `${prefix} ${selector}`;
       }

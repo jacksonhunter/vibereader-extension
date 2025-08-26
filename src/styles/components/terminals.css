@@ -2,9 +2,10 @@
    TERMINAL SYSTEM - Enhanced with Group Patterns & Scan Effects
    ========================================================================== */
 
-/* Base Terminal with Group Interactivity & Scan Line Effect */
-/* Note: Add 'group' class directly to HTML element */
-.terminal-window {
+
+  /* Base Terminal with Group Interactivity & Scan Line Effect */
+  /* Note: Add 'group' class directly to HTML element */
+  .terminal-window {
   @apply relative bg-bg-surface border border-border-accent rounded-lg 
     shadow-lg z-sidebar overflow-hidden
     transition-all duration-300 ease-cyber

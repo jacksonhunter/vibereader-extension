@@ -2,6 +2,9 @@
 /* EXTENSION-SPECIFIC RESETS & ISOLATION */
 /* ============================================================================ */
 
+/* Import normalize.css for better cross-browser consistency */
+@import 'normalize.css';
+
 /* Create bulletproof isolation from host page */
 .vibe-container {
   /* CSS Containment - prevents layout/style bleeding */
@@ -13,8 +16,14 @@
   /* Force new formatting context */
   overflow: hidden;
   
-  /* Reset any inherited styles from host page */
-  all: initial;
+  /* Targeted reset instead of all: initial to preserve Tailwind utilities */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+  box-sizing: border-box;
   
   /* Restore our essential extension styles */
   position: fixed !important;

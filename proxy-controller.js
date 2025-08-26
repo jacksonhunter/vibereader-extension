@@ -513,7 +513,7 @@ if (window.__vibeReaderProxyController) {
                 }
 
                 this.container = document.createElement('div');
-                this.container.className = 'vibe-reader-container vibe-reader-proxy';
+                this.container.className = 'vibe-container vibe-reader-container vibe-reader-proxy';
                 this.container.setAttribute('data-theme', this.currentTheme);
 
                 this.container.innerHTML = this.getInitialHTML();
@@ -534,9 +534,9 @@ if (window.__vibeReaderProxyController) {
                             <span class="vibe-status">[ EXTRACTING ]</span>
                         </div>
                         <div class="vibe-header-right">
-                            <button class="vibe-btn media-btn" title="Toggle Media Mode">🌌</button>
-                            <button class="vibe-btn theme-btn" title="Cycle Theme">🌆</button>
-                            <button class="vibe-btn disconnect-btn" title="Disconnect">🌑</button>
+                            <button class="btn-base" data-variant="accent" title="Toggle Media Mode">🌌</button>
+                            <button class="btn-base" data-variant="secondary" title="Cycle Theme">🌆</button>
+                            <button class="btn-base" data-variant="ghost" title="Disconnect">🌑</button>
                         </div>
                     </div>
                     
@@ -611,11 +611,12 @@ if (window.__vibeReaderProxyController) {
                 this.container.addEventListener('click', (e) => {
                     const target = e.target;
 
-                    if (target.classList.contains('media-btn')) {
+                    // Check button data attributes for functionality
+                    if (target.matches('[title="Toggle Media Mode"]')) {
                         this.cycleMediaMode();
-                    } else if (target.classList.contains('theme-btn')) {
+                    } else if (target.matches('[title="Cycle Theme"]')) {
                         this.cycleTheme();
-                    } else if (target.classList.contains('disconnect-btn')) {
+                    } else if (target.matches('[title="Disconnect"]')) {
                         this.requestDeactivation();
                     } else if (target.closest('.media-wrapper')) {
                         this.cycleMediaItem(target.closest('.media-wrapper'));
@@ -1232,9 +1233,9 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
             }
 
             updateButtonTexts() {
-                const themeBtn = this.container?.querySelector('.theme-btn');
-                const mediaBtn = this.container?.querySelector('.media-btn');
-                const disconnectBtn = this.container?.querySelector('.disconnect-btn');
+                const themeBtn = this.container?.querySelector('[title="Cycle Theme"]');
+                const mediaBtn = this.container?.querySelector('[title="Toggle Media Mode"]');
+                const disconnectBtn = this.container?.querySelector('[title="Disconnect"]');
 
                 // Theme-specific button configurations
                 const THEME_CONFIGS = {
@@ -1344,11 +1345,11 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
                             <p>Check SYSADMIN terminal for details</p>
                             <p>Error: ${this.escapeHtml(message)}</p>
                         </div>
-                        <button class="vibe-btn retry-btn">RETRY EXTRACTION</button>
+                        <button class="btn-base" data-variant="primary">RETRY EXTRACTION</button>
                     </div>
                 `;
 
-                    const retryBtn = content.querySelector('.retry-btn');
+                    const retryBtn = content.querySelector('.btn-base');
                     if (retryBtn) {
                         retryBtn.addEventListener('click', () => {
                             window.location.reload();
@@ -1439,10 +1440,10 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
 
                 for (let i = 0; i < columns; i++) {
                     const drop = document.createElement('div');
-                    drop.className = 'matrix-drop';
-                    drop.style.left = `${i * 20}px`;  // Fixed: added * operator
-                    drop.style.animationDuration = `${Math.random() * 3 + 1}s`;  // Fixed
-                    drop.style.animationDelay = `${Math.random() * 2}s`;  // Fixed
+                    drop.className = 'matrix-drop animate-matrix-fall';
+                    drop.style.left = `${i * 20}px`;
+                    drop.style.animationDuration = `${Math.random() * 3 + 1}s`;
+                    drop.style.animationDelay = `${Math.random() * 2}s`;
 
                     let text = '';
                     for (let j = 0; j < Math.floor(Math.random() * 10 + 5); j++) {

@@ -2,7 +2,8 @@
    MEDIA COMPONENTS
    ========================================================================== */
 
-.media-wrapper {
+
+  .media-wrapper {
   @apply relative bg-bg-surface border border-border-default rounded-lg overflow-hidden z-media;
   @apply transition-all duration-300 ease-cyber;
   /* Base hover/focus states with themed borders */

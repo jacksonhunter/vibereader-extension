@@ -25,3 +25,23 @@
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(45deg, rgb(var(--primary-400)), rgb(var(--secondary-400)));
 }
+
+/* Article Headers with geometric clip-path */
+.article-header {
+  @apply mb-8 pb-6 border-b border-border-accent;
+  @apply clip-corner-sm hover:clip-corner transition-all duration-300;
+  @apply bg-gradient-to-r from-bg-surface/20 to-transparent p-4 rounded-lg;
+}
+
+.article-title {
+  @apply text-3xl font-bold text-primary-400 mb-4;
+  text-shadow: 0 0 15px rgb(var(--primary-500));
+}
+
+.article-meta {
+  @apply flex flex-wrap gap-4 text-sm text-text-muted;
+}
+
+.meta-item {
+  @apply flex items-center gap-2;
+}
