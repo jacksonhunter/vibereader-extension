@@ -494,3 +494,4 @@ cd "C:\Users\jacks\PycharmProjects\NightDrive theme\theme_exports\synthwave-them
     - Interactive Excellence - Group/peer patterns throughout
     - Geometric Aesthetics - Clip-paths creating cyberpunk shapes
     - Performance Optimized - Efficient CSS with minimal redundancy
+- DO NOT use emoji, unicode or other extended characters in console or dump logs.

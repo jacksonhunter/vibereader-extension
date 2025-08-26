@@ -7,8 +7,7 @@
     <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-    <div class="vibe-container">
-        <div class="vibe-popup">
+    <div class="vibe-popup">
         <!-- Header -->
         <div class="popup-header">
             <h1 class="popup-title glitch" data-text="VIBEREADER">VIBEREADER</h1>
@@ -25,17 +24,17 @@
         
         <!-- Quick Actions -->
         <div class="actions-section">
-            <button class="btn-base" data-variant="primary" id="toggle-btn">
+            <button class="action-btn primary" id="toggle-btn">
                 <span class="btn-icon">🔥</span>
                 <span class="btn-text">ACTIVATE VIBE</span>
             </button>
             
             <div class="quick-actions">
-                <button class="btn-base" data-variant="secondary" id="theme-btn" title="Cycle Theme">
+                <button class="action-btn secondary" id="theme-btn" title="Cycle Theme">
                     <span class="btn-icon">🎨</span>
                     <span class="btn-text">THEME</span>
                 </button>
-                <button class="btn-base" data-variant="secondary" id="settings-btn" title="Settings">
+                <button class="action-btn secondary" id="settings-btn" title="Settings">
                     <span class="btn-icon">⚙️</span>
                     <span class="btn-text">CONFIG</span>
                 </button>
@@ -74,11 +73,9 @@
             <div class="setting-group">
                 <label class="setting-label">
                     <span class="label-text">📜 Side Scrolls</span>
-                    <div class="toggle-group">
-                        <input type="checkbox" id="side-scrolls" class="toggle-input peer">
-                        <span class="toggle-track">
-                            <span class="toggle-thumb"></span>
-                        </span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="side-scrolls" class="toggle-input">
+                        <span class="toggle-slider"></span>
                     </div>
                 </label>
             </div>
@@ -86,11 +83,9 @@
             <div class="setting-group">
                 <label class="setting-label">
                     <span class="label-text">🌧️ Vibe Rain</span>
-                    <div class="toggle-group">
-                        <input type="checkbox" id="vibe-rain" class="toggle-input peer">
-                        <span class="toggle-track">
-                            <span class="toggle-thumb"></span>
-                        </span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="vibe-rain" class="toggle-input">
+                        <span class="toggle-slider"></span>
                     </div>
                 </label>
             </div>
@@ -98,17 +93,15 @@
             <div class="setting-group">
                 <label class="setting-label">
                     <span class="label-text">🚀 Auto-Activate</span>
-                    <div class="toggle-group">
-                        <input type="checkbox" id="auto-activate" class="toggle-input peer">
-                        <span class="toggle-track">
-                            <span class="toggle-thumb"></span>
-                        </span>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="auto-activate" class="toggle-input">
+                        <span class="toggle-slider"></span>
                     </div>
                 </label>
             </div>
             
             <div class="settings-footer">
-                <button class="btn-base" data-variant="ghost" id="reset-settings">
+                <button class="action-btn secondary" id="reset-settings">
                     <span class="btn-icon">🔄</span>
                     <span class="btn-text">RESET</span>
                 </button>
@@ -127,7 +120,6 @@
                 <a href="#" class="footer-link" id="about-link">ℹ️ About</a>
             </div>
         </div>
-    </div>
     </div>
     
     <script src="popup.js"></script>

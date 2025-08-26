@@ -29,7 +29,8 @@ if (window.__vibeReaderProxyController) {
                     MEDIA: {logs: [], expanded: true, icon: '🎬', color: '#3742fa'},
                     SYSTEM: {logs: [], expanded: false, icon: '⚙️', color: '#2ed573'},
                     NETWORK: {logs: [], expanded: false, icon: '🌐', color: '#ff6348'},
-                    ASCII: {logs: [], expanded: true, icon: '🎨', color: '#ff9ff3'}
+                    ASCII: {logs: [], expanded: true, icon: '🎨', color: '#ff9ff3'},
+                    CSS: {logs: [], expanded: true, icon: '🖌️', color: '#3742fa'}
                 };
 
                 // Legacy log buffers (keep for compatibility)
@@ -133,6 +134,164 @@ if (window.__vibeReaderProxyController) {
                 });
             }
 
+            initCSSDebugging() {
+                // CSS debugging following terminal-log-API patterns
+                try {
+                    console.log('CSS: 🎨 CSS debugging initialized');
+
+                    // Check CSS load status with retry mechanism
+                    this.waitForCSSLoad();
+
+                } catch (error) {
+                    console.error('ERR: CSS debugging initialization failed:', error);
+                }
+            }
+
+            async waitForCSSLoad(maxAttempts = 10, delay = 200) {
+                for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                    const styleSheets = Array.from(document.styleSheets);
+                    let generatedCSSFound = false;
+                    
+                    styleSheets.forEach(sheet => {
+                        try {
+                            const href = sheet.href || 'inline';
+                            if (href.includes('generated.css') || href.includes('styles/generated')) {
+                                generatedCSSFound = true;
+                            }
+                        } catch(e) {
+                            // Access denied to external stylesheets
+                        }
+                    });
+
+                    if (generatedCSSFound) {
+                        console.log(`CSS: ✅ Generated CSS detected on attempt ${attempt}`);
+                        setTimeout(() => {
+                            this.debugCSSLoadStatus();
+                            this.debugCSSVariables();
+                            this.debugCSSPerformance();
+                            this.setupCSSErrorCapture();
+                        }, 100);
+                        return;
+                    }
+
+                    if (attempt < maxAttempts) {
+                        console.log(`CSS: ⏳ CSS not yet loaded, attempt ${attempt}/${maxAttempts}, retrying in ${delay}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    } else {
+                        console.error('ERR: CSS failed to load after all attempts');
+                        this.debugCSSLoadStatus();
+                        this.debugCSSVariables();
+                    }
+                }
+            }
+
+            debugCSSLoadStatus() {
+                try {
+                    const styleSheets = Array.from(document.styleSheets);
+                    console.log(`CSS: 📊 Loaded ${styleSheets.length} stylesheets`);
+                    
+                    let generatedCSSFound = false;
+                    let generatedCSSRules = 0;
+                    
+                    styleSheets.forEach((sheet, i) => {
+                        try {
+                            const href = sheet.href || 'inline';
+                            const ruleCount = sheet.cssRules?.length || 0;
+                            
+                            if (href.includes('generated.css') || href.includes('styles/generated')) {
+                                generatedCSSFound = true;
+                                generatedCSSRules = ruleCount;
+                                console.log(`CSS: ✅ generated.css loaded with ${ruleCount} rules`);
+                            }
+                            
+                            if (ruleCount === 0) {
+                                console.log(`CSS: ⚠️ Sheet ${i} (${href}) has 0 rules`);
+                            }
+                        } catch(e) {
+                            console.log(`CSS: 🔒 Sheet ${i}: Access denied - ${e.message}`);
+                        }
+                    });
+                    
+                    if (!generatedCSSFound) {
+                        console.error('ERR: generated.css not found in loaded stylesheets');
+                    }
+                    
+                } catch (error) {
+                    console.error('ERR: CSS load status check failed:', error);
+                }
+            }
+
+            debugCSSVariables() {
+                try {
+                    const rootStyles = getComputedStyle(document.documentElement);
+                    
+                    // Check critical Tailwind variables
+                    const twShadowColor = rootStyles.getPropertyValue('--tw-shadow-color').trim();
+                    const twShadowColored = rootStyles.getPropertyValue('--tw-shadow-colored').trim();
+                    
+                    console.log(`CSS: 🎯 --tw-shadow-color: "${twShadowColor}"`);
+                    console.log(`CSS: 🎯 --tw-shadow-colored: "${twShadowColored}"`);
+                    
+                    // Check theme variables
+                    const primary500 = rootStyles.getPropertyValue('--primary-500').trim();
+                    const glowPrimary = rootStyles.getPropertyValue('--glow-primary').trim();
+                    
+                    console.log(`CSS: 🎨 --primary-500: "${primary500}"`);
+                    console.log(`CSS: 🎨 --glow-primary: "${glowPrimary}"`);
+                    
+                    if (!twShadowColor) {
+                        console.error('ERR: --tw-shadow-color is undefined');
+                    }
+                    if (!primary500) {
+                        console.error('ERR: --primary-500 theme variable is undefined');
+                    }
+                    
+                } catch (error) {
+                    console.error('ERR: CSS variable check failed:', error);
+                }
+            }
+
+            debugCSSPerformance() {
+                try {
+                    const animationCount = document.getAnimations ? document.getAnimations().length : 0;
+                    const transformElements = document.querySelectorAll('[style*="transform"]').length;
+                    const containerElements = document.querySelectorAll('.vibe-container').length;
+                    
+                    console.log(`CSS: ⚡ Performance - ${animationCount} animations, ${transformElements} transforms, ${containerElements} vibe containers`);
+                    
+                    if (animationCount > 50) {
+                        console.log(`CSS: ⚠️ High animation count: ${animationCount}`);
+                    }
+                    
+                } catch (error) {
+                    console.error('ERR: CSS performance check failed:', error);
+                }
+            }
+
+            setupCSSErrorCapture() {
+                // Capture CSS-related errors
+                const originalError = window.addEventListener;
+                window.addEventListener('error', (event) => {
+                    if (event.message && (event.message.includes('CSS') || event.message.includes('style'))) {
+                        console.error(`ERR: CSS error - ${event.message} at ${event.filename}:${event.lineno}`);
+                    }
+                });
+                
+                // Monitor for CSS parse failures (simplified detection)
+                setTimeout(() => {
+                    const testElement = document.querySelector('.vibe-container');
+                    if (testElement) {
+                        const computedStyles = getComputedStyle(testElement);
+                        if (computedStyles.position !== 'fixed') {
+                            console.error('ERR: vibe-container positioning styles not applied correctly');
+                        }
+                        if (!computedStyles.zIndex || computedStyles.zIndex !== '1000') {
+                            console.error('ERR: vibe-container z-index not applied correctly');
+                        }
+                    }
+                }, 500);
+            }
+
             shouldLogMessage(message) {
                 // Filter out noisy/irrelevant messages
                 const ignorePatterns = ['Content-Security-Policy', 'Partitioned cookie', 'Navigation API not supported', 'GSI_LOGGER', 'GRECAPTCHA', 'Ignoring unsupported entryTypes', 'downloadable font: failed', '📨 Received message: ping', // Too noisy
@@ -147,10 +306,13 @@ if (window.__vibeReaderProxyController) {
                 if (message.includes('ERR:') || message.includes('❌') || message.includes('failed') || message.includes('error') || level === 'ERR') {
                     return 'ERRORS';
                 }
+                if (message.includes('CSS:') || message.includes('🎨') || message.includes('stylesheet') || message.includes('shadow-color') || message.includes('--tw-') || message.includes('generated.css')) {
+                    return 'CSS';
+                }
                 if (message.includes('MEDIA') || message.includes('🔍') || message.includes('images') || message.includes('videos') || message.includes('📦') || message.includes('Found')) {
                     return 'MEDIA';
                 }
-                if (message.includes('ASCII') || message.includes('🎯') || message.includes('conversion') || message.includes('aalib') || message.includes('🎨')) {
+                if (message.includes('ASCII') || message.includes('🎯') || message.includes('conversion') || message.includes('aalib')) {
                     return 'ASCII';
                 }
                 if (message.includes('BG:') || message.includes('extraction') || message.includes('proxy') || message.includes('NETMON') || message.includes('framework')) {
@@ -163,6 +325,16 @@ if (window.__vibeReaderProxyController) {
                 const category = this.categorizeLog(level, message);
                 const cleanMessage = message.substring(0, 50); // Slightly longer for better context
                 const timestamp = Date.now();
+
+                // Defensive check - create category if it doesn't exist
+                if (!this.diagnosticCategories[category]) {
+                    this.diagnosticCategories[category] = {
+                        logs: [],
+                        expanded: true,
+                        icon: '❓',
+                        color: '#95a5a6'
+                    };
+                }
 
                 // Find existing log entry to consolidate
                 const existing = this.diagnosticCategories[category].logs.find(log => log.message.includes(cleanMessage.substring(0, 25)));
@@ -300,6 +472,9 @@ if (window.__vibeReaderProxyController) {
 
                     // Initialize console logging capture
                     this.initConsoleCapture();
+
+                    // Initialize CSS debugging
+                    this.initCSSDebugging();
 
                     // Setup enhanced error capture
                     this.setupEnhancedErrorCapture();
@@ -1549,7 +1724,7 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
                 if (leftTerminal) {
                     // SYSADMIN: Enhanced dropdown categories
                     let html = '';
-                    const sysadminCategories = ['ERRORS', 'MEDIA', 'ASCII', 'SYSTEM'];
+                    const sysadminCategories = ['ERRORS', 'CSS', 'MEDIA', 'ASCII', 'SYSTEM'];
 
                     sysadminCategories.forEach(cat => {
                         if (this.diagnosticCategories[cat]) {

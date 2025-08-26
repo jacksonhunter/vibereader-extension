@@ -498,9 +498,61 @@ class HiddenTabManager {
         });
 
         // Inject Tailwind CSS - Complete theme system
-        await browser.tabs.insertCSS(tabId, {
-            file: 'styles/generated.css'
-        });
+        await this.logToVisible(tabId, 'INFO', '🎨 Injecting generated.css - Complete theme system', 'CSS');
+        try {
+            await browser.tabs.insertCSS(tabId, {
+                file: 'styles/generated.css'
+            });
+            await this.logToVisible(tabId, 'INFO', '✅ CSS injection successful', 'CSS');
+        } catch (error) {
+            await this.logToVisible(tabId, 'ERR', `❌ CSS injection failed: ${error.message}`, 'CSS');
+            throw error;
+        }
+
+        // Verify CSS loading with immediate check
+        await this.logToVisible(tabId, 'INFO', '🔍 Verifying CSS loading...', 'CSS');
+        try {
+            const cssVerifyResult = await browser.tabs.executeScript(tabId, {
+                code: `
+                    const rootStyles = getComputedStyle(document.documentElement);
+                    const primary500 = rootStyles.getPropertyValue('--primary-500').trim();
+                    const twShadowColor = rootStyles.getPropertyValue('--tw-shadow-color').trim();
+                    const styleSheets = Array.from(document.styleSheets);
+                    let generatedCSSFound = false;
+                    let generatedCSSRules = 0;
+                    
+                    styleSheets.forEach(sheet => {
+                        try {
+                            const href = sheet.href || 'inline';
+                            if (href.includes('generated.css') || href.includes('styles/generated')) {
+                                generatedCSSFound = true;
+                                generatedCSSRules = sheet.cssRules?.length || 0;
+                            }
+                        } catch(e) {
+                            // Access denied to external stylesheets
+                        }
+                    });
+                    
+                    ({
+                        cssLoaded: generatedCSSFound,
+                        cssRules: generatedCSSRules,
+                        primary500Available: !!primary500,
+                        twShadowColorAvailable: !!twShadowColor,
+                        primary500Value: primary500,
+                        totalStyleSheets: styleSheets.length
+                    });
+                `
+            });
+            
+            const cssResult = cssVerifyResult[0];
+            if (cssResult.cssLoaded && cssResult.primary500Available) {
+                await this.logToVisible(tabId, 'INFO', `✅ CSS loaded successfully - ${cssResult.cssRules} rules, theme vars available`, 'CSS');
+            } else {
+                await this.logToVisible(tabId, 'ERR', `❌ CSS verification failed - loaded:${cssResult.cssLoaded}, theme vars:${cssResult.primary500Available}`, 'CSS');
+            }
+        } catch (error) {
+            await this.logToVisible(tabId, 'ERR', `❌ CSS verification failed: ${error.message}`, 'CSS');
+        }
     }
 
     // Wait for script to be ready and responsive

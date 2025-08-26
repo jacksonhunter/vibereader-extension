@@ -373,6 +373,10 @@ module.exports = {
       // Add base CSS variables that change per theme
             addBase({
                 ':root': {
+                    // Tailwind shadow variables
+                    '--tw-shadow-color': '0, 0, 0',
+                    '--tw-shadow-colored': '0 0 #0000',
+                    
                     // Default theme (nightdrive) variables
                     '--clip-size': '15px',
                     '--bevel-size': '15px',
