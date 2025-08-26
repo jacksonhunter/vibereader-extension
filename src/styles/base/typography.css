@@ -1,0 +1,27 @@
+/* ============================================================================ */
+/* TYPOGRAPHY SYSTEM - Font imports and base text styles */
+/* ============================================================================ */
+
+/* Font imports - cyberpunk aesthetic */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Fira+Code:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+/* Base font family definitions are handled in Tailwind config */
+/* This file is for any typography-specific base styles */
+
+/* Enhanced scrollbar styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--bg-secondary));
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, rgb(var(--primary-500)), rgb(var(--secondary-500)));
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, rgb(var(--primary-400)), rgb(var(--secondary-400)));
+}

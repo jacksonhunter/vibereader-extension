@@ -1,0 +1,102 @@
+/* ==========================================================================
+   BUTTON SYSTEM - Cyber Effects, Scan Lines & Group Patterns
+   ========================================================================== */
+
+/* Cyber Button with Scan Line Effect */
+.btn-cyber {
+  @apply relative overflow-hidden px-6 py-3 rounded-md font-bold uppercase tracking-wider
+    bg-gradient-to-r from-primary-500 to-secondary-500
+    text-white shadow-neon-primary
+    transition-all duration-300 ease-cyber
+    hover:shadow-neon-hover hover:scale-[1.02] hover:-translate-y-0.5
+    active:scale-[0.98] active:translate-y-0
+    before:content-[''] before:absolute before:inset-0 
+    before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent
+    before:-translate-x-full hover:before:translate-x-full 
+    before:transition-transform before:duration-700 before:ease-out;
+}
+
+/* Glitch Button Effect */
+.btn-glitch {
+  @apply relative px-6 py-3 rounded-md font-bold uppercase
+    bg-gradient-to-r from-error-500 to-primary-600
+    text-white overflow-hidden
+    hover:animate-data-corruption
+    active:animate-phantom-flicker;
+}
+
+.btn-glitch::before,
+.btn-glitch::after {
+  @apply content-[attr(data-text)] absolute inset-0 
+    flex items-center justify-center
+    opacity-0 hover:opacity-100;
+}
+
+.btn-glitch::before {
+  @apply text-secondary-500 translate-x-[2px] animate-glitch;
+  animation-delay: 0.2s;
+}
+
+.btn-glitch::after {
+  @apply text-accent-500 -translate-x-[2px] animate-glitch;
+  animation-delay: 0.4s;
+}
+
+/* Unified Button Base with Data Attribute Variants */
+.btn-base {
+  @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+}
+
+.btn-base[data-variant="primary"] {
+  @apply bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white;
+  @apply focus:ring-primary-500 border-neon;
+}
+
+.btn-base[data-variant="secondary"] {
+  @apply bg-secondary-500 hover:bg-secondary-600 active:bg-secondary-700 text-neutral-900;
+  @apply focus:ring-secondary-500 border-cyber;
+}
+
+.btn-base[data-variant="accent"] {
+  @apply bg-accent-500 hover:bg-accent-600 active:bg-accent-700 text-neutral-900;
+  @apply focus:ring-accent-500;
+}
+
+.btn-base[data-variant="ghost"] {
+  @apply bg-transparent hover:bg-primary-500/10 text-primary-500;
+  @apply border border-primary-500 hover:border-primary-400;
+  @apply focus:ring-primary-500;
+}
+
+/* Group-based button interactions */
+.group:hover .btn-base[data-group-hover="glow"] {
+  @apply animate-neon-pulse;
+}
+
+.peer-checked + .btn-base[data-peer="toggle"] {
+  @apply bg-success-500 text-white;
+}
+
+/* Legacy Support - Individual Button Classes */
+.btn-primary {
+  @apply btn-base bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white;
+  @apply focus:ring-primary-500 border-neon;
+}
+
+.btn-secondary {
+  @apply btn-base bg-secondary-500 hover:bg-secondary-600 active:bg-secondary-700 text-neutral-900;
+  @apply focus:ring-secondary-500 border-cyber;
+}
+
+.btn-accent {
+  @apply btn-base bg-accent-500 hover:bg-accent-600 active:bg-accent-700 text-neutral-900;
+  @apply focus:ring-accent-500;
+}
+
+.btn-ghost {
+  @apply btn-base bg-transparent hover:bg-primary-500/10 text-primary-500;
+  @apply border border-primary-500 hover:border-primary-400;
+  @apply focus:ring-primary-500;
+}

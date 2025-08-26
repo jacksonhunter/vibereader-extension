@@ -1,0 +1,94 @@
+/* ==========================================================================
+   OUTRUN STORM THEME - Dramatic Weather & Lightning Effects
+   ========================================================================== */
+
+/* Storm gradient with atmospheric depth */
+[data-theme="outrun-storm"] .vibe-container {
+  @apply bg-outrun-storm relative overflow-hidden;
+  --pulse-speed: 3s;
+}
+
+/* Storm clouds overlay */
+[data-theme="outrun-storm"] .vibe-container::before {
+  @apply content-[''] absolute inset-0 pointer-events-none
+    bg-gradient-to-t from-primary-900/20 via-transparent to-secondary-900/20
+    animate-underground-drift opacity-30;
+}
+
+/* Lightning flash overlay for header */
+[data-theme="outrun-storm"] .vibe-header {
+  @apply relative overflow-hidden;
+}
+
+[data-theme="outrun-storm"] .vibe-header::before {
+  @apply content-[''] absolute inset-0 
+    bg-white/10 opacity-0
+    animate-storm-lightning pointer-events-none;
+}
+
+/* Storm-affected buttons with dramatic shadows */
+[data-theme="outrun-storm"] .btn-base,
+[data-theme="outrun-storm"] .btn-cyber {
+  @apply shadow-button-storm animate-storm-pulse
+    hover:animate-storm-scan hover:shadow-neon-accent;
+}
+
+[data-theme="outrun-storm"] .btn-base:active,
+[data-theme="outrun-storm"] .btn-cyber:active {
+  @apply animate-storm-lightning;
+}
+
+/* Terminals with storm effects */
+[data-theme="outrun-storm"] .terminal-window {
+  @apply shadow-button-storm relative
+    hover:shadow-neon-accent
+    hover:animate-storm-pulse;
+}
+
+/* Rain-like scan effect */
+[data-theme="outrun-storm"] .terminal-window::after {
+  @apply via-accent-500/60;
+  animation: storm-scan 3s linear infinite;
+}
+
+/* Dramatic heading effects */
+[data-theme="outrun-storm"] h1,
+[data-theme="outrun-storm"] h2 {
+  @apply text-primary-400 relative animate-storm-pulse;
+  text-shadow: 0 0 20px rgb(var(--primary-500) / 0.5),
+               0 0 40px rgb(var(--secondary-500) / 0.3);
+}
+
+/* Lightning flash on hover */
+[data-theme="outrun-storm"] h1:hover::after,
+[data-theme="outrun-storm"] h2:hover::after {
+  @apply content-[''] absolute inset-0
+    bg-white/20 animate-lightning
+    pointer-events-none mix-blend-screen;
+}
+
+/* Large dramatic cards */
+[data-theme="outrun-storm"] .card {
+  @apply clip-corner-lg hover:clip-corner-xl
+    transition-all duration-500
+    hover:shadow-neon-accent hover:scale-[1.03]
+    hover:animate-storm-pulse;
+}
+
+/* Weather-affected hover states */
+[data-theme="outrun-storm"] .hover\:theme-glow:hover {
+  @apply shadow-neon-accent animate-storm-lightning
+    scale-[1.03] transition-all duration-300;
+}
+
+/* LED with storm flicker */
+[data-theme="outrun-storm"] .group:hover .terminal-led {
+  @apply animate-storm-lightning;
+}
+
+/* Media with storm borders */
+[data-theme="outrun-storm"] .media-wrapper {
+  @apply hover:shadow-neon-accent
+    hover:border-accent-500
+    hover:animate-storm-pulse;
+}

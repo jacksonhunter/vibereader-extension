@@ -1,0 +1,95 @@
+/* ==========================================================================
+   SPECIAL EFFECTS & UTILITIES
+   ========================================================================== */
+
+.neon-glow {
+  @apply animate-neon-pulse;
+}
+
+.synthwave-gradient {
+  background: linear-gradient(135deg, rgb(var(--primary-500)), rgb(var(--secondary-500)), rgb(var(--accent-500)));
+}
+
+.glass-morphism {
+  @apply bg-bg-surface/20 backdrop-blur-md border border-border-default/30 shadow-lg;
+}
+
+.cyber-heading {
+  @apply text-primary-500 font-bold text-glow tracking-wider;
+}
+
+.cyber-link {
+  @apply text-secondary-500 hover:text-secondary-400 transition-colors duration-200;
+}
+
+.cyber-link:before {
+  content: "[";
+  @apply text-accent-500;
+}
+
+.cyber-link:after {
+  content: "]";
+  @apply text-accent-500;
+}
+
+.scan-line {
+  position: relative;
+}
+
+.scan-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgb(var(--secondary-500)), transparent);
+  animation: synthwave-scan 4s linear infinite;
+}
+
+/* Custom Background Utilities */
+.bg-nightdrive {
+  background: linear-gradient(135deg, rgb(var(--bg-primary)), rgb(var(--bg-tertiary)), rgb(var(--bg-surface)));
+}
+
+/* Text Utilities */
+.text-glow {
+  text-shadow: 0 0 10px currentColor;
+}
+
+.text-glow-strong {
+  text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+}
+
+/* Border Utilities */
+.border-neon {
+  @apply border border-primary-500;
+  box-shadow: 0 0 10px rgb(var(--primary-500) / 0.5);
+}
+
+.border-cyber {
+  @apply border border-secondary-500;
+  box-shadow: 0 0 10px rgb(var(--secondary-500) / 0.5);
+}
+
+/* Enhanced Shadow System for Media & Components */
+.shadow-neon-primary {
+  box-shadow: 0 0 15px rgb(var(--primary-500) / 0.4), 0 0 30px rgb(var(--primary-500) / 0.2);
+}
+
+.shadow-neon-secondary {
+  box-shadow: 0 0 15px rgb(var(--secondary-500) / 0.4), 0 0 30px rgb(var(--secondary-500) / 0.2);
+}
+
+.shadow-neon-accent {
+  box-shadow: 0 0 15px rgb(var(--accent-500) / 0.4), 0 0 30px rgb(var(--accent-500) / 0.2);
+}
+
+.shadow-neon-hover {
+  box-shadow: 0 0 20px rgb(var(--primary-500) / 0.6), 0 0 40px rgb(var(--primary-500) / 0.3);
+}
+
+/* Transition easing for cyber effects */
+.ease-cyber {
+  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}

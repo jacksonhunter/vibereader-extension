@@ -1,0 +1,63 @@
+/* ==========================================================================
+   MEDIA COMPONENTS
+   ========================================================================== */
+
+.media-wrapper {
+  @apply relative bg-bg-surface border border-border-default rounded-lg overflow-hidden z-media;
+  @apply transition-all duration-300 ease-cyber;
+  /* Base hover/focus states with themed borders */
+  @apply hover:border-primary-400/60 hover:shadow-neon-primary;
+  @apply focus-within:border-primary-500 focus-within:shadow-neon-primary;
+  /* Subtle glassmorphism base */
+  @apply backdrop-blur-sm;
+}
+
+/* Media wrapper variants - data attributes for different modes/states */
+.media-wrapper[data-mode="placeholder"] {
+  @apply cursor-pointer border-2 border-dashed border-border-subtle;
+  @apply bg-bg-elevated/80 backdrop-blur-md;
+  /* Enhanced hover with glassmorphism */
+  @apply hover:border-primary-500/70 hover:bg-primary-500/5;
+  @apply hover:shadow-neon-hover hover:scale-[1.02];
+  @apply transition-all duration-200 ease-cyber;
+}
+
+.media-wrapper[data-mode="ascii"] {
+  /* Enhanced glassmorphism for ASCII mode */
+  @apply bg-bg-surface/60 backdrop-blur-lg border-2 border-border-default/40;
+  @apply p-4 shadow-neon-secondary;
+  /* Pixelation effect for retro ASCII aesthetic */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  /* Themed accent border */
+  @apply border-l-4 border-l-accent-400/60;
+  /* Enhanced hover states */
+  @apply hover:bg-bg-surface/80 hover:border-accent-400/80;
+  @apply hover:shadow-neon-accent;
+}
+
+.media-wrapper[data-mode="image"] {
+  @apply p-0;
+  /* Subtle glassmorphism for image containers */
+  @apply bg-bg-surface/40 backdrop-blur-sm;
+  /* Enhanced hover with themed border */
+  @apply hover:shadow-neon-primary hover:border-primary-400/50;
+}
+
+/* Size variants - preset dimensions */
+.media-wrapper[data-size="sm"] {
+  @apply max-w-sm max-h-48;
+}
+
+.media-wrapper[data-size="md"] {
+  @apply max-w-lg max-h-64;
+}
+
+.media-wrapper[data-size="lg"] {
+  @apply max-w-2xl max-h-96;
+}
+
+.media-wrapper[data-size="xl"] {
+  @apply max-w-4xl max-h-[500px];
+}

@@ -1,0 +1,97 @@
+/* ==========================================================================
+   STRANGE DAYS THEME - Underground Flicker & Phantom Effects
+   ========================================================================== */
+
+/* Underground gradient with noise texture */
+[data-theme="strange-days"] .vibe-container {
+  @apply bg-strange-days relative overflow-hidden;
+  --pulse-speed: 5s;
+}
+
+/* Drifting noise overlay */
+[data-theme="strange-days"] .vibe-container::after {
+  @apply content-[''] fixed inset-0 pointer-events-none
+    animate-underground-drift opacity-20
+    bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%22%20height%3D%22100%22%3E%3Cfilter%20id%3D%22n%22%3E%3CfeTurbulence%20baseFrequency%3D%220.9%22%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20filter%3D%22url(%23n)%22%20opacity%3D%220.4%22%2F%3E%3C%2Fsvg%3E')]
+    mix-blend-multiply;
+}
+
+/* Flickering phantom overlay */
+[data-theme="strange-days"] .vibe-header::after {
+  @apply content-[''] absolute inset-0 pointer-events-none
+    bg-gradient-to-r from-primary-500/10 via-transparent to-accent-500/10
+    animate-phantom-flicker opacity-30;
+}
+
+/* Phantom buttons with underground glow */
+[data-theme="strange-days"] .btn-base,
+[data-theme="strange-days"] .btn-cyber {
+  @apply shadow-button-phantom animate-phantom-flicker
+    hover:shadow-neon-dual hover:animate-underground-scan;
+}
+
+[data-theme="strange-days"] .btn-base:active,
+[data-theme="strange-days"] .btn-cyber:active {
+  @apply animate-phantom-glow;
+}
+
+/* Underground terminals */
+[data-theme="strange-days"] .terminal-window {
+  @apply shadow-button-phantom relative
+    animate-flicker
+    hover:animate-phantom-flicker
+    hover:shadow-neon-dual;
+}
+
+/* Slow underground scan */
+[data-theme="strange-days"] .terminal-window::after {
+  @apply via-accent-500/40;
+  animation: underground-scan 5s linear infinite;
+}
+
+/* Flickering headings */
+[data-theme="strange-days"] h1,
+[data-theme="strange-days"] h2 {
+  @apply text-primary-400 animate-phantom-flicker;
+  text-shadow: 0 0 30px rgb(var(--primary-500) / 0.8),
+               0 0 60px rgb(var(--accent-500) / 0.4);
+}
+
+/* Glowing phantom text on hover */
+[data-theme="strange-days"] h1:hover,
+[data-theme="strange-days"] h2:hover {
+  @apply animate-phantom-glow text-secondary-400;
+}
+
+/* Terminal-cut geometric cards */
+[data-theme="strange-days"] .card {
+  @apply clip-terminal hover:clip-corner-xl
+    transition-all duration-700
+    hover:shadow-neon-dual hover:scale-[1.02]
+    hover:animate-phantom-flicker;
+}
+
+/* Mysterious hover states */
+[data-theme="strange-days"] .hover\:theme-glow:hover {
+  @apply shadow-neon-dual animate-phantom-flicker
+    scale-[1.01] transition-all duration-500;
+}
+
+/* Flickering LED indicators */
+[data-theme="strange-days"] .group:hover .terminal-led {
+  @apply animate-phantom-flicker;
+  animation-duration: 2.5s;
+}
+
+/* Media with phantom borders */
+[data-theme="strange-days"] .media-wrapper {
+  @apply hover:shadow-neon-dual
+    hover:border-accent-500
+    hover:animate-phantom-flicker;
+}
+
+/* Underground glitch on links */
+[data-theme="strange-days"] .cyber-link {
+  @apply hover:animate-phantom-flicker
+    hover:text-secondary-500;
+}

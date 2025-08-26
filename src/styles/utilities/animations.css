@@ -1,0 +1,98 @@
+/* ==========================================================================
+   ANIMATION UTILITIES
+   ========================================================================== */
+
+/* Animation Utilities */
+.animate-neon-pulse {
+  animation: neon-pulse 2s ease-in-out infinite alternate;
+}
+
+.animate-synthwave-scan {
+  animation: synthwave-scan 3s linear infinite;
+}
+
+.animate-synthwave-pulse {
+  animation: synthwave-pulse 2s ease-in-out infinite;
+}
+
+.animate-neon-flicker {
+  animation: neon-flicker 3s linear infinite;
+}
+
+.animate-data-stream {
+  animation: data-stream 5s linear infinite;
+}
+
+.animate-phantom-glow {
+  animation: phantom-glow 2.5s ease-in-out infinite alternate;
+}
+
+.animate-lightning {
+  animation: lightning 0.5s linear infinite;
+}
+
+/* Enhanced Keyframe Animations */
+@keyframes neon-pulse {
+  0% {
+    box-shadow: 0 0 5px rgb(var(--primary-500)), 0 0 10px rgb(var(--primary-500));
+  }
+  100% {
+    box-shadow: 0 0 10px rgb(var(--primary-500)), 0 0 20px rgb(var(--primary-500)), 0 0 30px rgb(var(--secondary-500));
+  }
+}
+
+@keyframes synthwave-scan {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Theme-Specific Advanced Animations */
+@keyframes synthwave-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(var(--primary-500), 0.5); 
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(var(--primary-500), 0.8), 0 0 30px rgba(var(--secondary-500), 0.6); 
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 100% { opacity: 1; }
+  2%, 6%, 10% { opacity: 0.1; }
+  4%, 8% { opacity: 1; }
+}
+
+@keyframes data-stream {
+  0% { transform: translateX(-100%); opacity: 0; }
+  10%, 90% { opacity: 1; }
+  100% { transform: translateX(100vw); opacity: 0; }
+}
+
+@keyframes phantom-glow {
+  0% { 
+    text-shadow: 0 0 5px rgba(var(--primary-500), 0.8); 
+  }
+  100% { 
+    text-shadow: 0 0 20px rgba(var(--primary-500), 1), 0 0 30px rgba(var(--secondary-500), 0.8); 
+  }
+}
+
+@keyframes lightning {
+  0%, 90%, 100% { opacity: 1; }
+  5%, 15% { opacity: 0.1; }
+  10% { opacity: 1; }
+}
+
+@keyframes ascii-fade-in {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}

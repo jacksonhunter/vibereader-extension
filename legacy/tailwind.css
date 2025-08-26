@@ -400,27 +400,34 @@
     @apply text-text-secondary leading-relaxed;
   }
   
-  /* Terminal Variants - Left/Right */
-  .terminal-left {
-    @apply terminal-window;
+  /* Terminal Data Attribute System - Responsive & Clean */
+  .terminal-window[data-side="left"] {
+    /* Left-specific positioning when needed */
   }
   
-  .terminal-right {
-    @apply terminal-window;
+  .terminal-window[data-side="right"] {
+    /* Right-specific positioning when needed */
   }
   
-  /* Terminal Modal Variants */
-  .modal-terminal {
-    @apply terminal-window z-modal fixed max-w-2xl;
+  /* Modal Terminal with Data Attributes */
+  .terminal-window[data-modal="true"] {
+    @apply z-modal fixed max-w-2xl;
   }
   
-  .modal-terminal-left {
-    @apply modal-terminal left-4 top-1/2 transform -translate-y-1/2;
+  .terminal-window[data-modal="true"][data-side="left"] {
+    @apply left-4 top-1/2 transform -translate-y-1/2;
   }
   
-  .modal-terminal-right {
-    @apply modal-terminal right-4 top-1/2 transform -translate-y-1/2;
+  .terminal-window[data-modal="true"][data-side="right"] {
+    @apply right-4 top-1/2 transform -translate-y-1/2;
   }
+  
+  /* Legacy class support for existing code */
+  .terminal-left { @apply terminal-window; }
+  .terminal-right { @apply terminal-window; }
+  .modal-terminal { @apply terminal-window z-modal fixed max-w-2xl; }
+  .modal-terminal-left { @apply terminal-window z-modal fixed max-w-2xl left-4 top-1/2 transform -translate-y-1/2; }
+  .modal-terminal-right { @apply terminal-window z-modal fixed max-w-2xl right-4 top-1/2 transform -translate-y-1/2; }
   
   /* Terminal LED Indicators */
   .led-indicator {
@@ -442,35 +449,66 @@
   }
 
   /* ==========================================================================
-     BUTTON SYSTEM
+     BUTTON SYSTEM - Data Attributes & Group Patterns
      ========================================================================== */
   
-  .btn-primary {
-    @apply bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white;
+  /* Unified Button Base with Data Attribute Variants */
+  .btn-base {
     @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
-    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
-    @apply shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 border-neon;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+  }
+  
+  .btn-base[data-variant="primary"] {
+    @apply bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white;
+    @apply focus:ring-primary-500 border-neon;
+  }
+  
+  .btn-base[data-variant="secondary"] {
+    @apply bg-secondary-500 hover:bg-secondary-600 active:bg-secondary-700 text-neutral-900;
+    @apply focus:ring-secondary-500 border-cyber;
+  }
+  
+  .btn-base[data-variant="accent"] {
+    @apply bg-accent-500 hover:bg-accent-600 active:bg-accent-700 text-neutral-900;
+    @apply focus:ring-accent-500;
+  }
+  
+  .btn-base[data-variant="ghost"] {
+    @apply bg-transparent hover:bg-primary-500/10 text-primary-500;
+    @apply border border-primary-500 hover:border-primary-400;
+    @apply focus:ring-primary-500;
+  }
+  
+  /* Group-based button interactions */
+  .group:hover .btn-base[data-group-hover="glow"] {
+    @apply animate-neon-pulse;
+  }
+  
+  .peer-checked + .btn-base[data-peer="toggle"] {
+    @apply bg-success-500 text-white;
+  }
+  
+  /* Legacy Support - Individual Button Classes */
+  .btn-primary {
+    @apply btn-base bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white;
+    @apply focus:ring-primary-500 border-neon;
   }
 
   .btn-secondary {
-    @apply bg-secondary-500 hover:bg-secondary-600 active:bg-secondary-700 text-neutral-900;
-    @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
-    @apply focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2;
-    @apply shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 border-cyber;
+    @apply btn-base bg-secondary-500 hover:bg-secondary-600 active:bg-secondary-700 text-neutral-900;
+    @apply focus:ring-secondary-500 border-cyber;
   }
 
   .btn-accent {
-    @apply bg-accent-500 hover:bg-accent-600 active:bg-accent-700 text-neutral-900;
-    @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
-    @apply focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2;
-    @apply shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+    @apply btn-base bg-accent-500 hover:bg-accent-600 active:bg-accent-700 text-neutral-900;
+    @apply focus:ring-accent-500;
   }
 
   .btn-ghost {
-    @apply bg-transparent hover:bg-primary-500/10 text-primary-500;
-    @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
+    @apply btn-base bg-transparent hover:bg-primary-500/10 text-primary-500;
     @apply border border-primary-500 hover:border-primary-400;
-    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply focus:ring-primary-500;
   }
   
   /* Legacy button mapping */
@@ -731,18 +769,27 @@
     @apply border border-secondary-500;
     box-shadow: 0 0 10px rgb(var(--secondary-500) / 0.5);
   }
-
-  /* CRT/Scanline Effects using SVG Filters */
-  .filter-crt {
-    filter: url(#crt-scanlines);
+  
+  /* Enhanced Shadow System for Media & Components */
+  .shadow-neon-primary {
+    box-shadow: 0 0 15px rgb(var(--primary-500) / 0.4), 0 0 30px rgb(var(--primary-500) / 0.2);
   }
-
-  .filter-crt-text {
-    filter: url(#crt-text-effect);
+  
+  .shadow-neon-secondary {
+    box-shadow: 0 0 15px rgb(var(--secondary-500) / 0.4), 0 0 30px rgb(var(--secondary-500) / 0.2);
   }
-
-  .filter-pixelate {
-    filter: url(#pixelate-effect);
+  
+  .shadow-neon-accent {
+    box-shadow: 0 0 15px rgb(var(--accent-500) / 0.4), 0 0 30px rgb(var(--accent-500) / 0.2);
+  }
+  
+  .shadow-neon-hover {
+    box-shadow: 0 0 20px rgb(var(--primary-500) / 0.6), 0 0 40px rgb(var(--primary-500) / 0.3);
+  }
+  
+  /* Transition easing for cyber effects */
+  .ease-cyber {
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 }
 

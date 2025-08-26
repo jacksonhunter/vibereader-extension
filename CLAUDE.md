@@ -349,3 +349,148 @@ cd "C:\Users\jacks\PycharmProjects\NightDrive theme\theme_exports\synthwave-them
 - SYSADMIN terminal status (extraction state, content metrics, error logs)  
 - NETMON terminal status (proxy connection, framework detection, background activity)
 - currently we are calling > dump.log 2>&1 to dump to log and then deduplicating with count before reading to limit context leaks
+- PHASE 1: Component Modernization with Data Attributes
+
+    1.1 Convert All Components to Modern Data Attribute Patterns
+
+    Files to modify: components/layout.css, components/terminals.css, components/buttons.css
+
+    - Replace verbose [data-status="value"] selectors with Tailwind's inline data-[status=value]: syntax
+    - Consolidate multiple selector blocks into single component definitions
+    - Example: .vibe-status will become one line with all data states inline
+
+    1.2 Implement Group/Peer Patterns for Interactivity
+
+    New components to add:
+    - Terminal windows with group-based LED indicators
+    - Buttons with scan line effects on hover
+    - Form fields with floating labels using peer
+    - Toggle switches with peer-checked states
+
+    PHASE 2: Theme Personality Enhancement
+
+    2.1 Create Theme-Specific Component Files
+
+    New files to create:
+    - components/theme-nightdrive.css - Smooth, cruising animations
+    - components/theme-neon-surge.css - Glitchy, electric chaos
+    - components/theme-outrun-storm.css - Weather effects, lightning
+    - components/theme-strange-days.css - Underground flicker, drift
+
+    2.2 Utilize Unused Animations & Gradients
+
+    Animations currently defined but unused:
+    - nightdrive-pulse, electric-pulse, storm-pulse, phantom-flicker
+    - electric-scan, storm-scan, underground-scan, storm-lightning
+    - underground-drift, data-corruption, matrix-fall
+    - Background gradients: bg-nightdrive, bg-neon-surge, bg-outrun-storm, bg-strange-days
+
+    PHASE 3: Advanced Interactive Components
+
+    3.1 Implement Clip-Path Effects
+
+    Apply theme-aware geometric shapes:
+    - Nightdrive: clip-corner → clip-corner-xl on hover
+    - Neon Surge: clip-corner-sm → clip-bevel on hover
+    - Outrun Storm: clip-corner-lg with dramatic transitions
+    - Strange Days: clip-terminal for underground aesthetic
+
+    3.2 Create Complex Interactive Patterns
+
+    New interactive components:
+    - Cyber buttons with before/after pseudo-elements for scan effects
+    - Terminal windows with animated scan lines
+    - Cards that morph shapes on hover
+    - Input fields with futuristic validation states
+
+    PHASE 4: Theme-Specific Effects
+
+    4.1 Nightdrive Theme (Smooth Cruising)
+
+    - Apply bg-nightdrive gradient to container
+    - Use animate-nightdrive-pulse on buttons
+    - Add shadow-button-nightdrive for neon glow
+    - Implement smooth --pulse-speed: 4s timing
+
+    4.2 Neon Surge Theme (Electric Chaos)
+
+    - Apply bg-neon-surge gradient
+    - Use animate-data-corruption on hover states
+    - Add animate-electric-scan to terminals
+    - Implement glitch effects on text
+
+    4.3 Outrun Storm Theme (Weather Drama)
+
+    - Apply bg-outrun-storm gradient
+    - Add animate-storm-lightning to header
+    - Use shadow-button-storm on interactive elements
+    - Create weather overlay effects
+
+    4.4 Strange Days Theme (Underground)
+
+    - Apply bg-strange-days gradient
+    - Use animate-phantom-flicker on headings
+    - Add animate-underground-drift overlay
+    - Implement noise texture backgrounds
+
+    PHASE 5: Form & Input Enhancement
+
+    5.1 Modern Form Components
+
+    Create new form patterns:
+    - Floating label inputs with peer states
+    - Toggle switches with gradient fills
+    - Radio groups with sibling selectors
+    - Validation states with peer-invalid
+
+    DETAILED TODO LIST:
+
+    1. Update Layout Components (components/layout.css)
+      - Convert .vibe-status to use inline data attributes
+      - Add theme-specific container backgrounds
+      - Implement animated overlays per theme
+    2. Enhance Terminal System (components/terminals.css)
+      - Add group-based LED indicators
+      - Implement scan line effects
+      - Add theme-specific terminal animations
+    3. Revolutionize Buttons (components/buttons.css)
+      - Create .btn-cyber with scan line effect
+      - Add theme-specific hover animations
+      - Implement clip-path transitions
+    4. Create Theme Files (4 new files)
+      - Define unique component styles per theme
+      - Apply specific animations to each theme
+      - Use theme gradients and shadows
+    5. Build Interactive Forms (components/forms.css)
+      - Create floating label system
+      - Build toggle switch component
+      - Add peer-based validation
+    6. Apply Clip-Path Utilities (all component files)
+      - Use geometric shapes on cards
+      - Add hover transitions
+      - Theme-specific clip variations
+    7. Implement Unused Animations
+      - Apply all 20+ defined animations
+      - Create animation compositions
+      - Theme-aware animation speeds
+    8. Add Pseudo-Element Effects
+      - Scan lines with ::before/::after
+      - Gradient overlays
+      - Animated backgrounds
+    9. Create Sibling Relationships
+      - Form field interactions
+      - Navigation states
+      - Toggle groups
+    10. Test & Optimize
+      - Build CSS and verify all effects
+      - Check theme switching
+      - Ensure smooth animations
+
+    Expected Outcome:
+
+    - 4 Dramatically Different Themes - Each with unique personality and feel
+    - 30+ Active Animations - All defined animations in use
+    - Modern Component Patterns - Using latest Tailwind features
+    - Interactive Excellence - Group/peer patterns throughout
+    - Geometric Aesthetics - Clip-paths creating cyberpunk shapes
+    - Performance Optimized - Efficient CSS with minimal redundancy

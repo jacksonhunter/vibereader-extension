@@ -1,0 +1,118 @@
+/* ==========================================================================
+   TERMINAL SYSTEM - Enhanced with Group Patterns & Scan Effects
+   ========================================================================== */
+
+/* Base Terminal with Group Interactivity & Scan Line Effect */
+/* Note: Add 'group' class directly to HTML element */
+.terminal-window {
+  @apply relative bg-bg-surface border border-border-accent rounded-lg 
+    shadow-lg z-sidebar overflow-hidden
+    transition-all duration-300 ease-cyber
+    hover:shadow-neon-dual hover:border-primary-400;
+}
+
+.terminal-window[data-active="true"] {
+  @apply shadow-neon-primary border-primary-500;
+}
+
+.terminal-window[data-error="true"] {
+  @apply shadow-neon-accent border-error-500;
+}
+
+.terminal-window[data-scanning="true"] {
+  @apply animate-pulse;
+}
+
+/* Animated scan line effect for terminals */
+.terminal-window::after {
+  @apply content-[''] absolute inset-x-0 top-0 h-[2px] 
+    bg-gradient-to-r from-transparent via-secondary-500 to-transparent
+    opacity-0 -translate-y-full
+    transition-all duration-1000 ease-linear;
+}
+
+.group:hover .terminal-window::after {
+  @apply opacity-100;
+  transform: translateY(400px);
+}
+
+.terminal-header {
+  @apply flex justify-between items-center p-3 bg-bg-elevated border-b border-border-default rounded-t-lg;
+}
+
+.terminal-title {
+  @apply text-primary-400 font-mono text-sm font-bold tracking-wider;
+}
+
+.terminal-controls {
+  @apply flex gap-1;
+}
+
+.terminal-content {
+  @apply p-4 bg-bg-primary rounded-b-lg overflow-y-auto max-h-96 font-mono text-xs;
+}
+
+.terminal-output {
+  @apply text-text-secondary leading-relaxed;
+}
+
+/* Terminal Data Attribute System - Responsive & Clean */
+.terminal-window[data-side="left"] {
+  /* Left-specific positioning when needed */
+}
+
+.terminal-window[data-side="right"] {
+  /* Right-specific positioning when needed */
+}
+
+/* Modal Terminal with Data Attributes */
+.terminal-window[data-modal="true"] {
+  @apply z-modal fixed max-w-2xl;
+}
+
+.terminal-window[data-modal="true"][data-side="left"] {
+  @apply left-4 top-1/2 transform -translate-y-1/2;
+}
+
+.terminal-window[data-modal="true"][data-side="right"] {
+  @apply right-4 top-1/2 transform -translate-y-1/2;
+}
+
+/* Terminal LED Indicators with Group Interactivity */
+.terminal-led {
+  @apply w-2 h-2 rounded-full bg-neutral-600 transition-all duration-300;
+}
+
+.group:hover .terminal-led {
+  @apply bg-success-500 animate-pulse;
+  box-shadow: 0 0 12px rgb(var(--success-500));
+}
+
+.group[data-active="true"] .terminal-led {
+  @apply bg-success-500 shadow-[0_0_8px_rgb(var(--success-500))];
+}
+
+.group[data-error="true"] .terminal-led {
+  @apply bg-error-500 shadow-[0_0_8px_rgb(var(--error-500))] animate-neon-flicker;
+}
+
+.group[data-scanning="true"] .terminal-led {
+  @apply bg-accent-500 animate-data-stream;
+}
+
+/* Multiple LED array for terminal status */
+.terminal-led-array {
+  @apply flex gap-1;
+}
+
+.group:hover .terminal-led-array .terminal-led:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.group:hover .terminal-led-array .terminal-led:nth-child(2) {
+  animation-delay: 100ms;
+}
+
+.group:hover .terminal-led-array .terminal-led:nth-child(3) {
+  animation-delay: 200ms;
+}

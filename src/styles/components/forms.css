@@ -1,0 +1,132 @@
+/* ==========================================================================
+   FORM COMPONENTS - Modern Peer Patterns & Floating Labels
+   ========================================================================== */
+
+/* Floating Label Input System */
+.input-group {
+  @apply relative;
+}
+
+.input-field {
+  @apply w-full px-4 py-3 rounded-md
+    bg-bg-surface/20 border border-border-default
+    text-text-primary placeholder-transparent
+    transition-all duration-200 ease-cyber
+    focus:outline-none focus:ring-2 focus:ring-primary-500 
+    focus:border-transparent focus:bg-bg-surface/30
+    hover:border-primary-400
+    valid:border-success-500
+    invalid:border-error-500
+    disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Note: Add 'peer' class directly to input element in HTML */
+
+.input-label {
+  @apply absolute left-3 -top-2.5 px-1 
+    bg-bg-primary text-xs text-text-muted
+    transition-all duration-200 ease-cyber pointer-events-none
+    peer-placeholder-shown:top-3 peer-placeholder-shown:text-base
+    peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-primary-500
+    peer-valid:text-success-500
+    peer-invalid:text-error-500;
+}
+
+/* Validation Messages */
+.input-error {
+  @apply hidden peer-invalid:block mt-1 text-xs text-error-500 animate-pulse;
+}
+
+.input-success {
+  @apply hidden peer-valid:block mt-1 text-xs text-success-500;
+}
+
+/* Cyberpunk Toggle Switch */
+.toggle-group {
+  @apply relative inline-flex items-center;
+}
+
+.toggle-input {
+  @apply sr-only;
+}
+
+/* Note: Add 'peer' class directly to input checkbox element in HTML */
+
+.toggle-track {
+  @apply relative w-14 h-7 bg-neutral-600 rounded-full cursor-pointer
+    transition-all duration-300 ease-cyber
+    peer-checked:bg-gradient-to-r peer-checked:from-primary-500 peer-checked:to-secondary-500
+    peer-checked:shadow-neon-primary
+    peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-2
+    peer-disabled:opacity-50 peer-disabled:cursor-not-allowed;
+}
+
+.toggle-thumb {
+  @apply absolute top-1 left-1 w-5 h-5 bg-white rounded-full 
+    transition-all duration-300 ease-cyber shadow-lg
+    peer-checked:translate-x-7 
+    peer-checked:shadow-[0_0_10px_rgb(var(--primary-500))]
+    peer-checked:bg-gradient-to-r peer-checked:from-white peer-checked:to-secondary-200;
+}
+
+/* Radio Group with Sibling Selectors */
+.radio-group {
+  @apply flex gap-4;
+}
+
+.radio-item {
+  @apply relative;
+}
+
+.radio-input {
+  @apply sr-only;
+}
+
+.radio-label {
+  @apply px-4 py-2 rounded-md cursor-pointer
+    bg-bg-surface/20 border border-border-default
+    transition-all duration-200 ease-cyber
+    hover:border-primary-400 hover:bg-bg-surface/30
+    peer-checked:bg-gradient-to-r peer-checked:from-primary-500/20 peer-checked:to-secondary-500/20
+    peer-checked:border-primary-500 peer-checked:shadow-neon-primary
+    peer-checked:text-primary-400;
+}
+
+/* Checkbox with Cyber Style */
+.checkbox-input {
+  @apply sr-only;
+}
+
+/* Note: Add 'peer' class directly to checkbox input element in HTML */
+
+.checkbox-label {
+  @apply relative pl-8 cursor-pointer
+    before:content-[''] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2
+    before:w-5 before:h-5 before:rounded before:border-2 before:border-border-default
+    before:transition-all before:duration-200
+    peer-checked:before:bg-gradient-to-r peer-checked:before:from-primary-500 peer-checked:before:to-secondary-500
+    peer-checked:before:border-primary-500 peer-checked:before:shadow-neon-primary
+    hover:before:border-primary-400;
+}
+
+/* Animated checkmark */
+.checkbox-label::after {
+  @apply content-['✓'] absolute left-[5px] top-1/2 -translate-y-1/2
+    text-white text-xs font-bold
+    opacity-0 peer-checked:opacity-100
+    transition-all duration-200 transform scale-0 peer-checked:scale-100;
+}
+
+/* ==========================================================================
+   NAVIGATION COMPONENTS
+   ========================================================================== */
+
+.nav-link {
+  @apply text-text-secondary hover:text-primary-400 px-3 py-2 rounded-md;
+  @apply transition-all duration-200 font-medium;
+  @apply hover:bg-primary-500/10;
+}
+
+.nav-link.active {
+  @apply text-primary-400 bg-primary-500/20 border-neon;
+}

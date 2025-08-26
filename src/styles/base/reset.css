@@ -1,0 +1,77 @@
+/* ============================================================================ */
+/* EXTENSION-SPECIFIC RESETS & ISOLATION */
+/* ============================================================================ */
+
+/* Create bulletproof isolation from host page */
+.vibe-container {
+  /* CSS Containment - prevents layout/style bleeding */
+  contain: layout style paint;
+  
+  /* Stacking context isolation */
+  isolation: isolate;
+  
+  /* Force new formatting context */
+  overflow: hidden;
+  
+  /* Reset any inherited styles from host page */
+  all: initial;
+  
+  /* Restore our essential extension styles */
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  
+  /* Set our base font and colors */
+  font-family: 'Fira Code', 'SF Mono', Monaco, 'Roboto Mono', monospace;
+  color: rgb(247 247 247);
+  background: rgb(28 28 28);
+}
+
+/* Comprehensive reset for all child elements */
+.vibe-container *,
+.vibe-container *::before,
+.vibe-container *::after {
+  /* Box model consistency */
+  box-sizing: border-box;
+  
+  /* Reset margins/padding from host page */
+  margin: 0;
+  padding: 0;
+  
+  /* Reset typography inheritance issues */
+  font: inherit;
+  color: inherit;
+  
+  /* Reset borders and backgrounds */
+  border: 0;
+  background: transparent;
+  
+  /* Reset positioning */
+  position: static;
+  
+  /* Reset display issues */
+  vertical-align: baseline;
+}
+
+/* Reset form elements specifically (they're stubborn) */
+.vibe-container input,
+.vibe-container button,
+.vibe-container select,
+.vibe-container textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+/* Reset list styles */
+.vibe-container ul,
+.vibe-container ol {
+  list-style: none;
+}
+
+/* Reset table styles */
+.vibe-container table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
