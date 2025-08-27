@@ -17,26 +17,26 @@
 }
 
 /* Flickering phantom overlay */
-[data-theme="strange-days"] .vibe-header::after {
+[data-theme="strange-days"] .vibe-container .vibe-header::after {
   @apply content-[''] absolute inset-0 pointer-events-none
     bg-gradient-to-r from-primary-500/10 via-transparent to-accent-500/10
     animate-phantom-flicker opacity-30;
 }
 
 /* Phantom buttons with underground glow */
-[data-theme="strange-days"] .btn-base,
-[data-theme="strange-days"] .btn-cyber {
+[data-theme="strange-days"] .vibe-container .btn-base,
+[data-theme="strange-days"] .vibe-container .btn-cyber {
   @apply shadow-button-phantom animate-phantom-flicker
     hover:shadow-neon-dual hover:animate-underground-scan;
 }
 
-[data-theme="strange-days"] .btn-base:active,
-[data-theme="strange-days"] .btn-cyber:active {
+[data-theme="strange-days"] .vibe-container .btn-base:active,
+[data-theme="strange-days"] .vibe-container .btn-cyber:active {
   @apply animate-phantom-glow;
 }
 
 /* Underground terminals */
-[data-theme="strange-days"] .terminal-window {
+[data-theme="strange-days"] .vibe-container .terminal-window {
   @apply shadow-button-phantom relative
     animate-flicker
     hover:animate-phantom-flicker
@@ -44,27 +44,27 @@
 }
 
 /* Slow underground scan */
-[data-theme="strange-days"] .terminal-window::after {
+[data-theme="strange-days"] .vibe-container .terminal-window::after {
   @apply via-accent-500/40;
   animation: underground-scan 5s linear infinite;
 }
 
 /* Flickering headings */
-[data-theme="strange-days"] h1,
-[data-theme="strange-days"] h2 {
+[data-theme="strange-days"] .vibe-container h1,
+[data-theme="strange-days"] .vibe-container h2 {
   @apply text-primary-400 animate-phantom-flicker;
   text-shadow: 0 0 30px rgb(var(--primary-500) / 0.8),
                0 0 60px rgb(var(--accent-500) / 0.4);
 }
 
 /* Glowing phantom text on hover */
-[data-theme="strange-days"] h1:hover,
-[data-theme="strange-days"] h2:hover {
+[data-theme="strange-days"] .vibe-container h1:hover,
+[data-theme="strange-days"] .vibe-container h2:hover {
   @apply animate-phantom-glow text-secondary-400;
 }
 
 /* Terminal-cut geometric cards */
-[data-theme="strange-days"] .card {
+[data-theme="strange-days"] .vibe-container .card {
   @apply clip-terminal hover:clip-corner-xl
     transition-all duration-700
     hover:shadow-neon-dual hover:scale-[1.02]
@@ -72,26 +72,26 @@
 }
 
 /* Mysterious hover states */
-[data-theme="strange-days"] .hover\:theme-glow:hover {
+[data-theme="strange-days"] .vibe-container .hover\:theme-glow:hover {
   @apply shadow-neon-dual animate-phantom-flicker
     scale-[1.01] transition-all duration-500;
 }
 
 /* Flickering LED indicators */
-[data-theme="strange-days"] .group:hover .terminal-led {
+[data-theme="strange-days"] .vibe-container .group:hover .terminal-led {
   @apply animate-phantom-flicker;
   animation-duration: 2.5s;
 }
 
 /* Media with phantom borders */
-[data-theme="strange-days"] .media-wrapper {
+[data-theme="strange-days"] .vibe-container .media-wrapper {
   @apply hover:shadow-neon-dual
     hover:border-accent-500
     hover:animate-phantom-flicker;
 }
 
 /* Underground glitch on links */
-[data-theme="strange-days"] .cyber-link {
+[data-theme="strange-days"] .vibe-container .cyber-link {
   @apply hover:animate-phantom-flicker
     hover:text-secondary-500;
 }

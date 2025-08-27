@@ -692,6 +692,276 @@
   --tw-content: '';
   content: var(--tw-content);
 }
+@keyframes nightdrive-pulse{
+  0%, 100%{
+    box-shadow: 0 0 15px rgb(var(--glow-primary) / 0.3);
+    border-color: rgb(var(--border-primary) / 0.5);
+  }
+  50%{
+    box-shadow: 0 0 30px rgb(var(--glow-primary) / 0.6), 0 0 45px rgb(var(--glow-secondary) / 0.4);
+    border-color: rgb(var(--border-primary) / 0.8);
+  }
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-base,
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-cyber,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-base,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-cyber,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-base,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-cyber{
+  animation: nightdrive-pulse 4s ease-in-out infinite;
+  --tw-shadow: 0 0 20px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.1);
+  --tw-shadow-colored: 0 0 20px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 500ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-base:hover,
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-cyber:hover,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-base:hover,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-cyber:hover,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-base:hover,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-cyber:hover{
+  --tw-shadow: 0 0 30px rgb(var(--glow-secondary) / 0.8), 0 0 50px rgb(var(--glow-accent) / 0.6);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), 0 0 50px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+@keyframes nightdrive-pulse{
+  0%, 100%{
+    box-shadow: 0 0 15px rgb(var(--glow-primary) / 0.3);
+    border-color: rgb(var(--border-primary) / 0.5);
+  }
+  50%{
+    box-shadow: 0 0 30px rgb(var(--glow-primary) / 0.6), 0 0 45px rgb(var(--glow-secondary) / 0.4);
+    border-color: rgb(var(--border-primary) / 0.8);
+  }
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-base,
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-cyber,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-base,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-cyber,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-base,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-cyber{
+  animation: nightdrive-pulse 4s ease-in-out infinite;
+  --tw-shadow: 0 0 20px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.1);
+  --tw-shadow-colored: 0 0 20px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 500ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-base:hover,
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-cyber:hover,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-base:hover,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-cyber:hover,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-base:hover,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-cyber:hover{
+  --tw-shadow: 0 0 30px rgb(var(--glow-secondary) / 0.8), 0 0 50px rgb(var(--glow-accent) / 0.6);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), 0 0 50px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+@keyframes pulse{
+  50%{
+    opacity: .5;
+  }
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-base:active,
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-cyber:active,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-base:active,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-cyber:active,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-base:active,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-cyber:active{
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse{
+  50%{
+    opacity: .5;
+  }
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-base:active,
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .btn-cyber:active,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-base:active,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .btn-cyber:active,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-base:active,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .btn-cyber:active{
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse-glow{
+  0%, 100%{
+    box-shadow: 0 0 15px rgb(var(--glow-primary) / 0.6);
+    border-color: rgb(var(--border-primary) / 0.8);
+  }
+  50%{
+    box-shadow: 0 0 30px rgb(var(--glow-primary) / 0.8), 0 0 45px rgb(var(--glow-secondary) / 0.6);
+    border-color: rgb(var(--border-primary));
+  }
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .terminal-window,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .terminal-window,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .terminal-window{
+  animation: pulse-glow var(--pulse-speed, 2s) ease-in-out infinite;
+  --tw-shadow: 0 0 20px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.1);
+  --tw-shadow-colored: 0 0 20px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .terminal-window:hover,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .terminal-window:hover,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .terminal-window:hover{
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .terminal-window,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .terminal-window,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .terminal-window {
+  animation-duration: var(--pulse-speed);
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .terminal-window::after,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .terminal-window::after,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .terminal-window::after{
+  --tw-gradient-to: rgb(var(--primary-500) / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), rgb(var(--primary-500) / 0.5) var(--tw-gradient-via-position), var(--tw-gradient-to);
+  animation: scan 4s linear infinite;
+}
+@keyframes pulse-glow{
+  0%, 100%{
+    box-shadow: 0 0 15px rgb(var(--glow-primary) / 0.6);
+    border-color: rgb(var(--border-primary) / 0.8);
+  }
+  50%{
+    box-shadow: 0 0 30px rgb(var(--glow-primary) / 0.8), 0 0 45px rgb(var(--glow-secondary) / 0.6);
+    border-color: rgb(var(--border-primary));
+  }
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container h1,
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container h2,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay h1,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay h2,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy h1,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy h2{
+  animation: pulse-glow var(--pulse-speed, 2s) ease-in-out infinite;
+  --tw-text-opacity: 1;
+  color: rgb(var(--primary-400) / var(--tw-text-opacity, 1));
+  text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+}
+@keyframes pulse-glow{
+  0%, 100%{
+    box-shadow: 0 0 15px rgb(var(--glow-primary) / 0.6);
+    border-color: rgb(var(--border-primary) / 0.8);
+  }
+  50%{
+    box-shadow: 0 0 30px rgb(var(--glow-primary) / 0.8), 0 0 45px rgb(var(--glow-secondary) / 0.6);
+    border-color: rgb(var(--border-primary));
+  }
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container h1,
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container h2,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay h1,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay h2,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy h1,
+.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy h2{
+  animation: pulse-glow var(--pulse-speed, 2s) ease-in-out infinite;
+  --tw-text-opacity: 1;
+  color: rgb(var(--primary-400) / var(--tw-text-opacity, 1));
+  text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+  animation-duration: 3s;
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .card,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .card,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .card{
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 700ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  clip-path: polygon(var(--clip-size, 15px) 0%, 100% 0%, calc(100% - var(--clip-size, 15px)) 100%, 0% 100%);
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .card:hover,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .card:hover,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .card:hover{
+  --tw-scale-x: 1.01;
+  --tw-scale-y: 1.01;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-primary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  --clip-size: 25px;
+  clip-path: polygon(var(--clip-size) 0%, 100% 0%, calc(100% - var(--clip-size)) 100%, 0% 100%);
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .hover\:theme-glow:hover,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .hover\:theme-glow:hover,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .hover\:theme-glow:hover{
+  --tw-translate-y: -0.125rem;
+  --tw-scale-x: 1.02;
+  --tw-scale-y: 1.02;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-primary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 500ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  box-shadow: 0 0 15px rgb(var(--primary-500) / 0.4), 0 0 30px rgb(var(--primary-500) / 0.2);
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .media-wrapper,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .media-wrapper,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .media-wrapper{
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 500ms;
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .media-wrapper:hover,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .media-wrapper:hover,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .media-wrapper:hover{
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-primary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+@keyframes pulse{
+  50%{
+    opacity: .5;
+  }
+}
+.vibe-container [data-theme="nightdrive"] .vibe-reader-container .group:hover .terminal-led,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-overlay .group:hover .terminal-led,.vibe-container [data-theme="nightdrive"] 
+.vibe-reader-proxy .group:hover .terminal-led{
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation-duration: 2s;
+}
 .vibe-container [data-theme="neon-surge"] .vibe-reader-container,.vibe-container [data-theme="neon-surge"] 
 .vibe-reader-overlay,.vibe-container [data-theme="neon-surge"] 
 .vibe-reader-proxy{
@@ -733,6 +1003,365 @@
   --tw-content: '';
   content: var(--tw-content);
 }
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .vibe-header::after,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .vibe-header::after,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .vibe-header::after{
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  top: 50%;
+  height: 1px;
+}
+@keyframes electric-scan{
+  0%{
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50%{
+    opacity: 1;
+  }
+  100%{
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .vibe-header::after,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .vibe-header::after,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .vibe-header::after{
+  animation: electric-scan 2s linear infinite;
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+  --tw-gradient-from: transparent var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  --tw-gradient-to: rgb(var(--secondary-500) / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), rgb(var(--secondary-500) / 1) var(--tw-gradient-via-position), var(--tw-gradient-to);
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+  --tw-content: '';
+  content: var(--tw-content);
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .btn-base,
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .btn-cyber,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .btn-base,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .btn-cyber,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .btn-base,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .btn-cyber{
+  animation: electric-pulse 3s ease-in-out infinite;
+  --tw-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8), inset 0 0 25px rgb(var(--secondary-500) / 0.15);
+  --tw-shadow-colored: 0 0 25px var(--tw-shadow-color), inset 0 0 25px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+@keyframes data-corruption{
+  0%, 100%{
+    transform: translateX(0);
+  }
+  25%{
+    transform: translateX(-2px);
+  }
+  75%{
+    transform: translateX(2px);
+  }
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .btn-base:hover,
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .btn-cyber:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .btn-base:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .btn-cyber:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .btn-base:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .btn-cyber:hover{
+  animation: data-corruption 0.2s linear infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .btn-base,
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .btn-cyber,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .btn-base,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .btn-cyber,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .btn-base,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .btn-cyber{
+  animation: electric-pulse 3s ease-in-out infinite;
+  --tw-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8), inset 0 0 25px rgb(var(--secondary-500) / 0.15);
+  --tw-shadow-colored: 0 0 25px var(--tw-shadow-color), inset 0 0 25px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+@keyframes data-corruption{
+  0%, 100%{
+    transform: translateX(0);
+  }
+  25%{
+    transform: translateX(-2px);
+  }
+  75%{
+    transform: translateX(2px);
+  }
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .btn-base:hover,
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .btn-cyber:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .btn-base:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .btn-cyber:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .btn-base:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .btn-cyber:hover{
+  animation: data-corruption 0.2s linear infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .btn-base:active,
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .btn-cyber:active,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .btn-base:active,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .btn-cyber:active,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .btn-base:active,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .btn-cyber:active{
+  animation: glitch 2s infinite;
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .terminal-window,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .terminal-window,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .terminal-window{
+  position: relative;
+  --tw-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8), inset 0 0 25px rgb(var(--secondary-500) / 0.15);
+  --tw-shadow-colored: 0 0 25px var(--tw-shadow-color), inset 0 0 25px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+@keyframes data-corruption{
+  0%, 100%{
+    transform: translateX(0);
+  }
+  25%{
+    transform: translateX(-2px);
+  }
+  75%{
+    transform: translateX(2px);
+  }
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .terminal-window:hover,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .terminal-window:hover,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .terminal-window:hover{
+  animation: data-corruption 0.2s linear infinite;
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .terminal-window::before,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .terminal-window::before,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .terminal-window::before{
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  height: 2px;
+}
+@keyframes electric-scan{
+  0%{
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50%{
+    opacity: 1;
+  }
+  100%{
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .terminal-window::before,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .terminal-window::before,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .terminal-window::before{
+  animation: electric-scan 2s linear infinite;
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+  --tw-gradient-from: transparent var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  --tw-gradient-to: rgb(6 182 212 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), #06b6d4 var(--tw-gradient-via-position), var(--tw-gradient-to);
+  --tw-gradient-to: transparent var(--tw-gradient-to-position);
+  --tw-content: '';
+  content: var(--tw-content);
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container h1,
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container h2,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay h1,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay h2,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy h1,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy h2{
+  position: relative;
+  --tw-text-opacity: 1;
+  color: rgb(var(--secondary-400) / var(--tw-text-opacity, 1));
+}
+@keyframes data-corruption{
+  0%, 100%{
+    transform: translateX(0);
+  }
+  25%{
+    transform: translateX(-2px);
+  }
+  75%{
+    transform: translateX(2px);
+  }
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container h1:hover,
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container h2:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay h1:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay h2:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy h1:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy h2:hover{
+  animation: data-corruption 0.2s linear infinite;
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container h1,
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container h2,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay h1,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay h2,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy h1,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy h2{
+  position: relative;
+  --tw-text-opacity: 1;
+  color: rgb(var(--secondary-400) / var(--tw-text-opacity, 1));
+}
+@keyframes data-corruption{
+  0%, 100%{
+    transform: translateX(0);
+  }
+  25%{
+    transform: translateX(-2px);
+  }
+  75%{
+    transform: translateX(2px);
+  }
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container h1:hover,
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container h2:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay h1:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay h2:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy h1:hover,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy h2:hover{
+  animation: data-corruption 0.2s linear infinite;
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container h1::before,
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container h2::before,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay h1::before,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay h2::before,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy h1::before,
+.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy h2::before{
+  position: absolute;
+  inset: 0px;
+  --tw-translate-x: 1px;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  animation: glitch 2s infinite;
+  --tw-text-opacity: 1;
+  color: rgb(var(--primary-500) / var(--tw-text-opacity, 1));
+  opacity: 0.5;
+  --tw-content: attr(data-text);
+  content: var(--tw-content);
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .card,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .card,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .card{
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+  --clip-size: 10px;
+  clip-path: polygon(var(--clip-size) 0%, 100% 0%, calc(100% - var(--clip-size)) 100%, 0% 100%);
+}
+@keyframes data-corruption{
+  0%, 100%{
+    transform: translateX(0);
+  }
+  25%{
+    transform: translateX(-2px);
+  }
+  75%{
+    transform: translateX(2px);
+  }
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .card:hover,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .card:hover,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .card:hover{
+  animation: data-corruption 0.2s linear infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  clip-path: polygon(var(--bevel-size, 15px) 0%, 100% 0%, calc(100% - var(--bevel-size, 15px)) 100%, 0% 100%);
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .hover\:theme-glow:hover,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .hover\:theme-glow:hover,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .hover\:theme-glow:hover{
+  --tw-scale-x: 1.05;
+  --tw-scale-y: 1.05;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+@keyframes data-corruption{
+  0%, 100%{
+    transform: translateX(0);
+  }
+  25%{
+    transform: translateX(-2px);
+  }
+  75%{
+    transform: translateX(2px);
+  }
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .hover\:theme-glow:hover,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .hover\:theme-glow:hover,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .hover\:theme-glow:hover{
+  animation: data-corruption 0.2s linear infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 100ms;
+  box-shadow: 0 0 15px rgb(var(--secondary-500) / 0.4), 0 0 30px rgb(var(--secondary-500) / 0.2);
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .group:hover .terminal-led,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .group:hover .terminal-led,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .group:hover .terminal-led{
+  animation: neon-flicker 3s linear infinite;
+  animation-duration: 0.5s;
+}
+.vibe-container [data-theme="neon-surge"] .vibe-reader-container .media-wrapper:hover,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-overlay .media-wrapper:hover,.vibe-container [data-theme="neon-surge"] 
+.vibe-reader-proxy .media-wrapper:hover{
+  animation: electric-pulse 3s ease-in-out infinite;
+  --tw-border-opacity: 1;
+  border-color: rgb(var(--secondary-500) / var(--tw-border-opacity, 1));
+  --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
 .vibe-container [data-theme="outrun-storm"] .vibe-reader-container,.vibe-container [data-theme="outrun-storm"] 
 .vibe-reader-overlay,.vibe-container [data-theme="outrun-storm"] 
 .vibe-reader-proxy{
@@ -771,6 +1400,342 @@
   --tw-content: '';
   content: var(--tw-content);
 }
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .vibe-header,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .vibe-header,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .vibe-header{
+  position: relative;
+  overflow: hidden;
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .vibe-header::before,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .vibe-header::before,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .vibe-header::before{
+  pointer-events: none;
+  position: absolute;
+  inset: 0px;
+}
+@keyframes storm-lightning{
+  0%, 90%, 100%{
+    opacity: 0.1;
+  }
+  5%{
+    opacity: 1;
+  }
+  10%{
+    opacity: 0.2;
+  }
+  15%{
+    opacity: 1;
+  }
+  20%{
+    opacity: 0.1;
+  }
+  25%{
+    opacity: 0.9;
+  }
+  30%{
+    opacity: 0.1;
+  }
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .vibe-header::before,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .vibe-header::before,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .vibe-header::before{
+  animation: storm-lightning 8s linear infinite;
+  background-color: rgb(255 255 255 / 0.1);
+  opacity: 0;
+  --tw-content: '';
+  content: var(--tw-content);
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-base,
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-cyber,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-base,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-cyber,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-base,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-cyber{
+  --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.7), inset 0 0 30px rgb(var(--secondary-500) / 0.2);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  animation: storm-pulse 4s ease-in-out infinite;
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-base:hover,
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-cyber:hover,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-base:hover,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-cyber:hover,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-base:hover,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-cyber:hover{
+  animation: storm-scan 3s linear infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-base,
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-cyber,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-base,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-cyber,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-base,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-cyber{
+  --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.7), inset 0 0 30px rgb(var(--secondary-500) / 0.2);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  animation: storm-pulse 4s ease-in-out infinite;
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-base:hover,
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-cyber:hover,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-base:hover,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-cyber:hover,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-base:hover,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-cyber:hover{
+  animation: storm-scan 3s linear infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+@keyframes storm-lightning{
+  0%, 90%, 100%{
+    opacity: 0.1;
+  }
+  5%{
+    opacity: 1;
+  }
+  10%{
+    opacity: 0.2;
+  }
+  15%{
+    opacity: 1;
+  }
+  20%{
+    opacity: 0.1;
+  }
+  25%{
+    opacity: 0.9;
+  }
+  30%{
+    opacity: 0.1;
+  }
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-base:active,
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-cyber:active,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-base:active,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-cyber:active,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-base:active,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-cyber:active{
+  animation: storm-lightning 8s linear infinite;
+}
+@keyframes storm-lightning{
+  0%, 90%, 100%{
+    opacity: 0.1;
+  }
+  5%{
+    opacity: 1;
+  }
+  10%{
+    opacity: 0.2;
+  }
+  15%{
+    opacity: 1;
+  }
+  20%{
+    opacity: 0.1;
+  }
+  25%{
+    opacity: 0.9;
+  }
+  30%{
+    opacity: 0.1;
+  }
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-base:active,
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .btn-cyber:active,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-base:active,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .btn-cyber:active,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-base:active,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .btn-cyber:active{
+  animation: storm-lightning 8s linear infinite;
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .terminal-window,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .terminal-window,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .terminal-window{
+  position: relative;
+  --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.7), inset 0 0 30px rgb(var(--secondary-500) / 0.2);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .terminal-window:hover,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .terminal-window:hover,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .terminal-window:hover{
+  animation: storm-pulse 4s ease-in-out infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .terminal-window::after,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .terminal-window::after,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .terminal-window::after{
+  --tw-gradient-to: rgb(var(--accent-500) / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), rgb(var(--accent-500) / 0.6) var(--tw-gradient-via-position), var(--tw-gradient-to);
+  animation: storm-scan 3s linear infinite;
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container h1,
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container h2,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay h1,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay h2,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy h1,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy h2{
+  position: relative;
+  --tw-text-opacity: 1;
+  color: rgb(var(--primary-400) / var(--tw-text-opacity, 1));
+  animation: storm-pulse 4s ease-in-out infinite;
+  text-shadow: 0 0 20px rgb(var(--primary-500) / 0.5),
+               0 0 40px rgb(var(--secondary-500) / 0.3);
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container h1:hover::after,
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container h2:hover::after,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay h1:hover::after,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay h2:hover::after,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy h1:hover::after,
+.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy h2:hover::after{
+  pointer-events: none;
+  position: absolute;
+  inset: 0px;
+  background-color: rgb(255 255 255 / 0.2);
+  mix-blend-mode: screen;
+  --tw-content: '';
+  content: var(--tw-content);
+  animation: lightning 0.5s linear infinite;
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .card,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .card,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .card{
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 500ms;
+  --clip-size: 20px;
+  clip-path: polygon(var(--clip-size) 0%, 100% 0%, calc(100% - var(--clip-size)) 100%, 0% 100%);
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .card:hover,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .card:hover,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .card:hover{
+  --tw-scale-x: 1.03;
+  --tw-scale-y: 1.03;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  animation: storm-pulse 4s ease-in-out infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  --clip-size: 25px;
+  clip-path: polygon(var(--clip-size) 0%, 100% 0%, calc(100% - var(--clip-size)) 100%, 0% 100%);
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .hover\:theme-glow:hover,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .hover\:theme-glow:hover,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .hover\:theme-glow:hover{
+  --tw-scale-x: 1.03;
+  --tw-scale-y: 1.03;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+@keyframes storm-lightning{
+  0%, 90%, 100%{
+    opacity: 0.1;
+  }
+  5%{
+    opacity: 1;
+  }
+  10%{
+    opacity: 0.2;
+  }
+  15%{
+    opacity: 1;
+  }
+  20%{
+    opacity: 0.1;
+  }
+  25%{
+    opacity: 0.9;
+  }
+  30%{
+    opacity: 0.1;
+  }
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .hover\:theme-glow:hover,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .hover\:theme-glow:hover,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .hover\:theme-glow:hover{
+  animation: storm-lightning 8s linear infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+  box-shadow: 0 0 15px rgb(var(--accent-500) / 0.4), 0 0 30px rgb(var(--accent-500) / 0.2);
+}
+@keyframes storm-lightning{
+  0%, 90%, 100%{
+    opacity: 0.1;
+  }
+  5%{
+    opacity: 1;
+  }
+  10%{
+    opacity: 0.2;
+  }
+  15%{
+    opacity: 1;
+  }
+  20%{
+    opacity: 0.1;
+  }
+  25%{
+    opacity: 0.9;
+  }
+  30%{
+    opacity: 0.1;
+  }
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .group:hover .terminal-led,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .group:hover .terminal-led,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .group:hover .terminal-led{
+  animation: storm-lightning 8s linear infinite;
+}
+.vibe-container [data-theme="outrun-storm"] .vibe-reader-container .media-wrapper:hover,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-overlay .media-wrapper:hover,.vibe-container [data-theme="outrun-storm"] 
+.vibe-reader-proxy .media-wrapper:hover{
+  animation: storm-pulse 4s ease-in-out infinite;
+  --tw-border-opacity: 1;
+  border-color: rgb(var(--accent-500) / var(--tw-border-opacity, 1));
+  --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
 .vibe-container [data-theme="strange-days"] .vibe-reader-container,.vibe-container [data-theme="strange-days"] 
 .vibe-reader-overlay,.vibe-container [data-theme="strange-days"] 
 .vibe-reader-proxy{
@@ -803,6 +1768,403 @@
   mix-blend-mode: multiply;
   --tw-content: '';
   content: var(--tw-content);
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .vibe-header::after,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .vibe-header::after,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .vibe-header::after{
+  pointer-events: none;
+  position: absolute;
+  inset: 0px;
+}
+@keyframes phantom-flicker{
+  0%, 100%{
+    opacity: 1;
+    text-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8);
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+    text-shadow: 0 0 5px rgb(var(--glow-primary) / 0.3);
+  }
+  5%, 9%{
+    opacity: 1;
+    text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .vibe-header::after,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .vibe-header::after,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .vibe-header::after{
+  animation: phantom-flicker 4s ease-in-out infinite;
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+  --tw-gradient-from: rgb(var(--primary-500) / 0.1) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(var(--primary-500) / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  --tw-gradient-to: rgb(0 0 0 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), transparent var(--tw-gradient-via-position), var(--tw-gradient-to);
+  --tw-gradient-to: rgb(var(--accent-500) / 0.1) var(--tw-gradient-to-position);
+  opacity: 0.3;
+  --tw-content: '';
+  content: var(--tw-content);
+}
+@keyframes phantom-flicker{
+  0%, 100%{
+    opacity: 1;
+    text-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8);
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+    text-shadow: 0 0 5px rgb(var(--glow-primary) / 0.3);
+  }
+  5%, 9%{
+    opacity: 1;
+    text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .btn-base,
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .btn-cyber,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .btn-base,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .btn-cyber,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .btn-base,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .btn-cyber{
+  animation: phantom-flicker 4s ease-in-out infinite;
+  --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.3);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .btn-base:hover,
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .btn-cyber:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .btn-base:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .btn-cyber:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .btn-base:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .btn-cyber:hover{
+  animation: underground-scan 5s linear infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+@keyframes phantom-flicker{
+  0%, 100%{
+    opacity: 1;
+    text-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8);
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+    text-shadow: 0 0 5px rgb(var(--glow-primary) / 0.3);
+  }
+  5%, 9%{
+    opacity: 1;
+    text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .btn-base,
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .btn-cyber,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .btn-base,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .btn-cyber,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .btn-base,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .btn-cyber{
+  animation: phantom-flicker 4s ease-in-out infinite;
+  --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.3);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .btn-base:hover,
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .btn-cyber:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .btn-base:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .btn-cyber:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .btn-base:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .btn-cyber:hover{
+  animation: underground-scan 5s linear infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .btn-base:active,
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .btn-cyber:active,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .btn-base:active,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .btn-cyber:active,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .btn-base:active,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .btn-cyber:active {
+  animation: phantom-glow 2.5s ease-in-out infinite alternate;
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .terminal-window,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .terminal-window,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .terminal-window{
+  position: relative;
+}
+@keyframes flicker{
+  0%, 100%{
+    opacity: 1;
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+  }
+  5%, 9%{
+    opacity: 1;
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .terminal-window,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .terminal-window,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .terminal-window{
+  --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.3);
+  --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  animation: flicker 4s ease-in-out infinite;
+}
+@keyframes phantom-flicker{
+  0%, 100%{
+    opacity: 1;
+    text-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8);
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+    text-shadow: 0 0 5px rgb(var(--glow-primary) / 0.3);
+  }
+  5%, 9%{
+    opacity: 1;
+    text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .terminal-window:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .terminal-window:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .terminal-window:hover{
+  animation: phantom-flicker 4s ease-in-out infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .terminal-window::after,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .terminal-window::after,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .terminal-window::after{
+  --tw-gradient-to: rgb(var(--accent-500) / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), rgb(var(--accent-500) / 0.4) var(--tw-gradient-via-position), var(--tw-gradient-to);
+  animation: underground-scan 5s linear infinite;
+}
+@keyframes phantom-flicker{
+  0%, 100%{
+    opacity: 1;
+    text-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8);
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+    text-shadow: 0 0 5px rgb(var(--glow-primary) / 0.3);
+  }
+  5%, 9%{
+    opacity: 1;
+    text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container h1,
+.vibe-container [data-theme="strange-days"] .vibe-reader-container h2,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay h1,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay h2,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy h1,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy h2{
+  animation: phantom-flicker 4s ease-in-out infinite;
+  --tw-text-opacity: 1;
+  color: rgb(var(--primary-400) / var(--tw-text-opacity, 1));
+}
+@keyframes phantom-flicker{
+  0%, 100%{
+    opacity: 1;
+    text-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8);
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+    text-shadow: 0 0 5px rgb(var(--glow-primary) / 0.3);
+  }
+  5%, 9%{
+    opacity: 1;
+    text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container h1,
+.vibe-container [data-theme="strange-days"] .vibe-reader-container h2,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay h1,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay h2,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy h1,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy h2{
+  animation: phantom-flicker 4s ease-in-out infinite;
+  --tw-text-opacity: 1;
+  color: rgb(var(--primary-400) / var(--tw-text-opacity, 1));
+  text-shadow: 0 0 30px rgb(var(--primary-500) / 0.8),
+               0 0 60px rgb(var(--accent-500) / 0.4);
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container h1:hover,
+.vibe-container [data-theme="strange-days"] .vibe-reader-container h2:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay h1:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay h2:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy h1:hover,
+.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy h2:hover{
+  --tw-text-opacity: 1;
+  color: rgb(var(--secondary-400) / var(--tw-text-opacity, 1));
+  animation: phantom-glow 2.5s ease-in-out infinite alternate;
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .card,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .card,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .card{
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 700ms;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--terminal-cut, 10px)), calc(100% - var(--terminal-cut, 10px)) 100%, 0 100%);
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .card:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .card:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .card:hover{
+  --tw-scale-x: 1.02;
+  --tw-scale-y: 1.02;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+@keyframes phantom-flicker{
+  0%, 100%{
+    opacity: 1;
+    text-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8);
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+    text-shadow: 0 0 5px rgb(var(--glow-primary) / 0.3);
+  }
+  5%, 9%{
+    opacity: 1;
+    text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .card:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .card:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .card:hover{
+  animation: phantom-flicker 4s ease-in-out infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  --clip-size: 25px;
+  clip-path: polygon(var(--clip-size) 0%, 100% 0%, calc(100% - var(--clip-size)) 100%, 0% 100%);
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .hover\:theme-glow:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .hover\:theme-glow:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .hover\:theme-glow:hover{
+  --tw-scale-x: 1.01;
+  --tw-scale-y: 1.01;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+@keyframes phantom-flicker{
+  0%, 100%{
+    opacity: 1;
+    text-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8);
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+    text-shadow: 0 0 5px rgb(var(--glow-primary) / 0.3);
+  }
+  5%, 9%{
+    opacity: 1;
+    text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .hover\:theme-glow:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .hover\:theme-glow:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .hover\:theme-glow:hover{
+  animation: phantom-flicker 4s ease-in-out infinite;
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 500ms;
+}
+@keyframes phantom-flicker{
+  0%, 100%{
+    opacity: 1;
+    text-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8);
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+    text-shadow: 0 0 5px rgb(var(--glow-primary) / 0.3);
+  }
+  5%, 9%{
+    opacity: 1;
+    text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .group:hover .terminal-led,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .group:hover .terminal-led,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .group:hover .terminal-led{
+  animation: phantom-flicker 4s ease-in-out infinite;
+  animation-duration: 2.5s;
+}
+@keyframes phantom-flicker{
+  0%, 100%{
+    opacity: 1;
+    text-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8);
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+    text-shadow: 0 0 5px rgb(var(--glow-primary) / 0.3);
+  }
+  5%, 9%{
+    opacity: 1;
+    text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .media-wrapper:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .media-wrapper:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .media-wrapper:hover{
+  animation: phantom-flicker 4s ease-in-out infinite;
+  --tw-border-opacity: 1;
+  border-color: rgb(var(--accent-500) / var(--tw-border-opacity, 1));
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+@keyframes phantom-flicker{
+  0%, 100%{
+    opacity: 1;
+    text-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8);
+  }
+  3%, 7%, 11%{
+    opacity: 0.3;
+    text-shadow: 0 0 5px rgb(var(--glow-primary) / 0.3);
+  }
+  5%, 9%{
+    opacity: 1;
+    text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
+  }
+}
+.vibe-container [data-theme="strange-days"] .vibe-reader-container .cyber-link:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-overlay .cyber-link:hover,.vibe-container [data-theme="strange-days"] 
+.vibe-reader-proxy .cyber-link:hover{
+  animation: phantom-flicker 4s ease-in-out infinite;
+  --tw-text-opacity: 1;
+  color: rgb(var(--secondary-500) / var(--tw-text-opacity, 1));
 }
 /* Header System with geometric clip-path */
 .vibe-container .vibe-header{
@@ -981,39 +2343,7 @@
   transition-duration: 300ms;
   transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-.vibe-container .terminal-window:hover{
-  --tw-border-opacity: 1;
-  border-color: rgb(var(--primary-400) / var(--tw-border-opacity, 1));
-  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
-  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-}
-.vibe-container .terminal-window[data-active="true"]{
-  --tw-border-opacity: 1;
-  border-color: rgb(var(--primary-500) / var(--tw-border-opacity, 1));
-  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-primary) / 0.3);
-  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-  box-shadow: 0 0 15px rgb(var(--primary-500) / 0.4), 0 0 30px rgb(var(--primary-500) / 0.2);
-}
-.vibe-container .terminal-window[data-error="true"]{
-  --tw-border-opacity: 1;
-  border-color: rgb(var(--error-500) / var(--tw-border-opacity, 1));
-  --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
-  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-  box-shadow: 0 0 15px rgb(var(--accent-500) / 0.4), 0 0 30px rgb(var(--accent-500) / 0.2);
-}
-@keyframes pulse{
-  50%{
-    opacity: .5;
-  }
-}
-.vibe-container .terminal-window[data-scanning="true"]{
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-/* Animated scan line effect for terminals */
-.vibe-container .terminal-window::after{
+.vibe-container .terminal-window::before{
   position: absolute;
   left: 0px;
   right: 0px;
@@ -1032,14 +2362,49 @@
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 1000ms;
-  transition-timing-function: linear;
   --tw-content: '';
   content: var(--tw-content);
 }
-.vibe-container .group:hover .terminal-window::after{
-  opacity: 1;
-  transform: translateY(400px);
+@keyframes pulse{
+  50%{
+    opacity: .5;
+  }
 }
+.vibe-container .terminal-window[data-scanning="true"]{
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.vibe-container .terminal-window[data-active="true"]{
+  --tw-border-opacity: 1;
+  border-color: rgb(var(--primary-500) / var(--tw-border-opacity, 1));
+}
+.vibe-container .terminal-window[data-error="true"]{
+  --tw-border-opacity: 1;
+  border-color: rgb(var(--error-500) / var(--tw-border-opacity, 1));
+}
+.vibe-container .terminal-window[data-active="true"]{
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-primary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container .terminal-window[data-error="true"]{
+  --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container .terminal-window:hover{
+  --tw-border-opacity: 1;
+  border-color: rgb(var(--primary-400) / var(--tw-border-opacity, 1));
+  --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
+  --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container .terminal-window:hover::before{
+  --tw-translate-y: 400px;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  content: var(--tw-content);
+  opacity: 1;
+}
+/* Scan line effect is now built into .terminal-window using before pseudo-element */
 .vibe-container .terminal-header{
   display: flex;
   align-items: center;
@@ -1119,6 +2484,34 @@
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 300ms;
 }
+.vibe-container .group[data-error="true"] .terminal-led{
+  animation: neon-flicker 3s linear infinite;
+}
+.vibe-container .group[data-scanning="true"] .terminal-led{
+  animation: data-stream 3s linear infinite;
+}
+.vibe-container .group[data-active="true"] .terminal-led{
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--success-500) / var(--tw-bg-opacity, 1));
+}
+.vibe-container .group[data-error="true"] .terminal-led{
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--error-500) / var(--tw-bg-opacity, 1));
+}
+.vibe-container .group[data-scanning="true"] .terminal-led{
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--accent-500) / var(--tw-bg-opacity, 1));
+}
+.vibe-container .group[data-active="true"] .terminal-led{
+  --tw-shadow: 0 0 8px rgb(var(--success-500));
+  --tw-shadow-colored: 0 0 8px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.vibe-container .group[data-error="true"] .terminal-led{
+  --tw-shadow: 0 0 8px rgb(var(--error-500));
+  --tw-shadow-colored: 0 0 8px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
 @keyframes pulse{
   50%{
     opacity: .5;
@@ -1129,26 +2522,6 @@
   --tw-bg-opacity: 1;
   background-color: rgb(var(--success-500) / var(--tw-bg-opacity, 1));
   box-shadow: 0 0 12px rgb(var(--success-500));
-}
-.vibe-container .group[data-active="true"] .terminal-led{
-  --tw-bg-opacity: 1;
-  background-color: rgb(var(--success-500) / var(--tw-bg-opacity, 1));
-  --tw-shadow: 0 0 8px rgb(var(--success-500));
-  --tw-shadow-colored: 0 0 8px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-}
-.vibe-container .group[data-error="true"] .terminal-led{
-  --tw-bg-opacity: 1;
-  background-color: rgb(var(--error-500) / var(--tw-bg-opacity, 1));
-  --tw-shadow: 0 0 8px rgb(var(--error-500));
-  --tw-shadow-colored: 0 0 8px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-  animation: neon-flicker 3s linear infinite;
-}
-.vibe-container .group[data-scanning="true"] .terminal-led{
-  --tw-bg-opacity: 1;
-  background-color: rgb(var(--accent-500) / var(--tw-bg-opacity, 1));
-  animation: data-stream 5s linear infinite;
 }
 /* Multiple LED array for terminal status */
 .vibe-container .terminal-led-array{
@@ -1588,7 +2961,7 @@
     border-color: rgb(var(--border-primary) / 0.8);
   }
 }
-.vibe-container [data-theme="nightdrive"] .btn-primary{
+[data-theme="nightdrive"] .vibe-container .btn-primary{
   animation: nightdrive-pulse 4s ease-in-out infinite;
   --tw-shadow: 0 0 20px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.1);
   --tw-shadow-colored: 0 0 20px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
@@ -1598,7 +2971,7 @@
   transition-duration: 500ms;
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
-.vibe-container [data-theme="nightdrive"] .btn-primary:hover{
+[data-theme="nightdrive"] .vibe-container .btn-primary:hover{
   --tw-shadow: 0 0 30px rgb(var(--glow-secondary) / 0.8), 0 0 50px rgb(var(--glow-accent) / 0.6);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), 0 0 50px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -1608,10 +2981,10 @@
     opacity: .5;
   }
 }
-.vibe-container [data-theme="nightdrive"] .btn-primary:active{
+[data-theme="nightdrive"] .vibe-container .btn-primary:active{
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
-.vibe-container [data-theme="neon-surge"] .btn-primary{
+[data-theme="neon-surge"] .vibe-container .btn-primary{
   animation: electric-pulse 3s ease-in-out infinite;
   --tw-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8), inset 0 0 25px rgb(var(--secondary-500) / 0.15);
   --tw-shadow-colored: 0 0 25px var(--tw-shadow-color), inset 0 0 25px var(--tw-shadow-color);
@@ -1628,22 +3001,22 @@
     transform: translateX(2px);
   }
 }
-.vibe-container [data-theme="neon-surge"] .btn-primary:hover{
+[data-theme="neon-surge"] .vibe-container .btn-primary:hover{
   animation: data-corruption 0.2s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="neon-surge"] .btn-primary:active{
+[data-theme="neon-surge"] .vibe-container .btn-primary:active{
   animation: glitch 2s infinite;
 }
-.vibe-container [data-theme="outrun-storm"] .btn-primary{
-  animation: storm-pulse 4s ease-in-out infinite;
+[data-theme="outrun-storm"] .vibe-container .btn-primary{
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.7), inset 0 0 30px rgb(var(--secondary-500) / 0.2);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  animation: storm-pulse 4s ease-in-out infinite;
 }
-.vibe-container [data-theme="outrun-storm"] .btn-primary:hover{
+[data-theme="outrun-storm"] .vibe-container .btn-primary:hover{
   animation: storm-scan 3s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
@@ -1672,7 +3045,7 @@
     opacity: 0.1;
   }
 }
-.vibe-container [data-theme="outrun-storm"] .btn-primary:active{
+[data-theme="outrun-storm"] .vibe-container .btn-primary:active{
   animation: storm-lightning 8s linear infinite;
 }
 @keyframes phantom-flicker{
@@ -1689,19 +3062,19 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .btn-primary{
+[data-theme="strange-days"] .vibe-container .btn-primary{
   animation: phantom-flicker 4s ease-in-out infinite;
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.3);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="strange-days"] .btn-primary:hover{
+[data-theme="strange-days"] .vibe-container .btn-primary:hover{
   animation: underground-scan 5s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="strange-days"] .btn-primary:active {
+[data-theme="strange-days"] .vibe-container .btn-primary:active {
   animation: phantom-glow 2.5s ease-in-out infinite alternate;
 }
 .vibe-container .btn-primary:hover{
@@ -1864,7 +3237,7 @@
     border-color: rgb(var(--border-primary) / 0.8);
   }
 }
-.vibe-container [data-theme="nightdrive"] .btn-secondary{
+[data-theme="nightdrive"] .vibe-container .btn-secondary{
   animation: nightdrive-pulse 4s ease-in-out infinite;
   --tw-shadow: 0 0 20px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.1);
   --tw-shadow-colored: 0 0 20px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
@@ -1874,7 +3247,7 @@
   transition-duration: 500ms;
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
-.vibe-container [data-theme="nightdrive"] .btn-secondary:hover{
+[data-theme="nightdrive"] .vibe-container .btn-secondary:hover{
   --tw-shadow: 0 0 30px rgb(var(--glow-secondary) / 0.8), 0 0 50px rgb(var(--glow-accent) / 0.6);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), 0 0 50px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -1884,10 +3257,10 @@
     opacity: .5;
   }
 }
-.vibe-container [data-theme="nightdrive"] .btn-secondary:active{
+[data-theme="nightdrive"] .vibe-container .btn-secondary:active{
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
-.vibe-container [data-theme="neon-surge"] .btn-secondary{
+[data-theme="neon-surge"] .vibe-container .btn-secondary{
   animation: electric-pulse 3s ease-in-out infinite;
   --tw-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8), inset 0 0 25px rgb(var(--secondary-500) / 0.15);
   --tw-shadow-colored: 0 0 25px var(--tw-shadow-color), inset 0 0 25px var(--tw-shadow-color);
@@ -1904,22 +3277,22 @@
     transform: translateX(2px);
   }
 }
-.vibe-container [data-theme="neon-surge"] .btn-secondary:hover{
+[data-theme="neon-surge"] .vibe-container .btn-secondary:hover{
   animation: data-corruption 0.2s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="neon-surge"] .btn-secondary:active{
+[data-theme="neon-surge"] .vibe-container .btn-secondary:active{
   animation: glitch 2s infinite;
 }
-.vibe-container [data-theme="outrun-storm"] .btn-secondary{
-  animation: storm-pulse 4s ease-in-out infinite;
+[data-theme="outrun-storm"] .vibe-container .btn-secondary{
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.7), inset 0 0 30px rgb(var(--secondary-500) / 0.2);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  animation: storm-pulse 4s ease-in-out infinite;
 }
-.vibe-container [data-theme="outrun-storm"] .btn-secondary:hover{
+[data-theme="outrun-storm"] .vibe-container .btn-secondary:hover{
   animation: storm-scan 3s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
@@ -1948,7 +3321,7 @@
     opacity: 0.1;
   }
 }
-.vibe-container [data-theme="outrun-storm"] .btn-secondary:active{
+[data-theme="outrun-storm"] .vibe-container .btn-secondary:active{
   animation: storm-lightning 8s linear infinite;
 }
 @keyframes phantom-flicker{
@@ -1965,19 +3338,19 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .btn-secondary{
+[data-theme="strange-days"] .vibe-container .btn-secondary{
   animation: phantom-flicker 4s ease-in-out infinite;
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.3);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="strange-days"] .btn-secondary:hover{
+[data-theme="strange-days"] .vibe-container .btn-secondary:hover{
   animation: underground-scan 5s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="strange-days"] .btn-secondary:active {
+[data-theme="strange-days"] .vibe-container .btn-secondary:active {
   animation: phantom-glow 2.5s ease-in-out infinite alternate;
 }
 .vibe-container .btn-secondary:hover{
@@ -2140,7 +3513,7 @@
     border-color: rgb(var(--border-primary) / 0.8);
   }
 }
-.vibe-container [data-theme="nightdrive"] .btn-accent{
+[data-theme="nightdrive"] .vibe-container .btn-accent{
   animation: nightdrive-pulse 4s ease-in-out infinite;
   --tw-shadow: 0 0 20px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.1);
   --tw-shadow-colored: 0 0 20px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
@@ -2150,7 +3523,7 @@
   transition-duration: 500ms;
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
-.vibe-container [data-theme="nightdrive"] .btn-accent:hover{
+[data-theme="nightdrive"] .vibe-container .btn-accent:hover{
   --tw-shadow: 0 0 30px rgb(var(--glow-secondary) / 0.8), 0 0 50px rgb(var(--glow-accent) / 0.6);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), 0 0 50px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -2160,10 +3533,10 @@
     opacity: .5;
   }
 }
-.vibe-container [data-theme="nightdrive"] .btn-accent:active{
+[data-theme="nightdrive"] .vibe-container .btn-accent:active{
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
-.vibe-container [data-theme="neon-surge"] .btn-accent{
+[data-theme="neon-surge"] .vibe-container .btn-accent{
   animation: electric-pulse 3s ease-in-out infinite;
   --tw-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8), inset 0 0 25px rgb(var(--secondary-500) / 0.15);
   --tw-shadow-colored: 0 0 25px var(--tw-shadow-color), inset 0 0 25px var(--tw-shadow-color);
@@ -2180,22 +3553,22 @@
     transform: translateX(2px);
   }
 }
-.vibe-container [data-theme="neon-surge"] .btn-accent:hover{
+[data-theme="neon-surge"] .vibe-container .btn-accent:hover{
   animation: data-corruption 0.2s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="neon-surge"] .btn-accent:active{
+[data-theme="neon-surge"] .vibe-container .btn-accent:active{
   animation: glitch 2s infinite;
 }
-.vibe-container [data-theme="outrun-storm"] .btn-accent{
-  animation: storm-pulse 4s ease-in-out infinite;
+[data-theme="outrun-storm"] .vibe-container .btn-accent{
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.7), inset 0 0 30px rgb(var(--secondary-500) / 0.2);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  animation: storm-pulse 4s ease-in-out infinite;
 }
-.vibe-container [data-theme="outrun-storm"] .btn-accent:hover{
+[data-theme="outrun-storm"] .vibe-container .btn-accent:hover{
   animation: storm-scan 3s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
@@ -2224,7 +3597,7 @@
     opacity: 0.1;
   }
 }
-.vibe-container [data-theme="outrun-storm"] .btn-accent:active{
+[data-theme="outrun-storm"] .vibe-container .btn-accent:active{
   animation: storm-lightning 8s linear infinite;
 }
 @keyframes phantom-flicker{
@@ -2241,19 +3614,19 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .btn-accent{
+[data-theme="strange-days"] .vibe-container .btn-accent{
   animation: phantom-flicker 4s ease-in-out infinite;
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.3);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="strange-days"] .btn-accent:hover{
+[data-theme="strange-days"] .vibe-container .btn-accent:hover{
   animation: underground-scan 5s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="strange-days"] .btn-accent:active {
+[data-theme="strange-days"] .vibe-container .btn-accent:active {
   animation: phantom-glow 2.5s ease-in-out infinite alternate;
 }
 .vibe-container .btn-accent:hover{
@@ -2409,7 +3782,7 @@
     border-color: rgb(var(--border-primary) / 0.8);
   }
 }
-.vibe-container [data-theme="nightdrive"] .btn-ghost{
+[data-theme="nightdrive"] .vibe-container .btn-ghost{
   animation: nightdrive-pulse 4s ease-in-out infinite;
   --tw-shadow: 0 0 20px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.1);
   --tw-shadow-colored: 0 0 20px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
@@ -2419,7 +3792,7 @@
   transition-duration: 500ms;
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
-.vibe-container [data-theme="nightdrive"] .btn-ghost:hover{
+[data-theme="nightdrive"] .vibe-container .btn-ghost:hover{
   --tw-shadow: 0 0 30px rgb(var(--glow-secondary) / 0.8), 0 0 50px rgb(var(--glow-accent) / 0.6);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), 0 0 50px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -2429,10 +3802,10 @@
     opacity: .5;
   }
 }
-.vibe-container [data-theme="nightdrive"] .btn-ghost:active{
+[data-theme="nightdrive"] .vibe-container .btn-ghost:active{
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
-.vibe-container [data-theme="neon-surge"] .btn-ghost{
+[data-theme="neon-surge"] .vibe-container .btn-ghost{
   animation: electric-pulse 3s ease-in-out infinite;
   --tw-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8), inset 0 0 25px rgb(var(--secondary-500) / 0.15);
   --tw-shadow-colored: 0 0 25px var(--tw-shadow-color), inset 0 0 25px var(--tw-shadow-color);
@@ -2449,22 +3822,22 @@
     transform: translateX(2px);
   }
 }
-.vibe-container [data-theme="neon-surge"] .btn-ghost:hover{
+[data-theme="neon-surge"] .vibe-container .btn-ghost:hover{
   animation: data-corruption 0.2s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="neon-surge"] .btn-ghost:active{
+[data-theme="neon-surge"] .vibe-container .btn-ghost:active{
   animation: glitch 2s infinite;
 }
-.vibe-container [data-theme="outrun-storm"] .btn-ghost{
-  animation: storm-pulse 4s ease-in-out infinite;
+[data-theme="outrun-storm"] .vibe-container .btn-ghost{
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.7), inset 0 0 30px rgb(var(--secondary-500) / 0.2);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  animation: storm-pulse 4s ease-in-out infinite;
 }
-.vibe-container [data-theme="outrun-storm"] .btn-ghost:hover{
+[data-theme="outrun-storm"] .vibe-container .btn-ghost:hover{
   animation: storm-scan 3s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
@@ -2493,7 +3866,7 @@
     opacity: 0.1;
   }
 }
-.vibe-container [data-theme="outrun-storm"] .btn-ghost:active{
+[data-theme="outrun-storm"] .vibe-container .btn-ghost:active{
   animation: storm-lightning 8s linear infinite;
 }
 @keyframes phantom-flicker{
@@ -2510,19 +3883,19 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .btn-ghost{
+[data-theme="strange-days"] .vibe-container .btn-ghost{
   animation: phantom-flicker 4s ease-in-out infinite;
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.3);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="strange-days"] .btn-ghost:hover{
+[data-theme="strange-days"] .vibe-container .btn-ghost:hover{
   animation: underground-scan 5s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="strange-days"] .btn-ghost:active {
+[data-theme="strange-days"] .vibe-container .btn-ghost:active {
   animation: phantom-glow 2.5s ease-in-out infinite alternate;
 }
 .vibe-container .btn-ghost:hover{
@@ -3190,6 +4563,18 @@
 .vibe-container .animate-lightning {
   animation: lightning 0.5s linear infinite;
 }
+.vibe-container .animate-storm-pulse {
+  animation: storm-pulse 4s ease-in-out infinite;
+}
+.vibe-container .animate-underground-scan {
+  animation: underground-scan 5s linear infinite;
+}
+.vibe-container .animate-storm-scan {
+  animation: storm-scan 3s linear infinite;
+}
+.vibe-container .animate-flicker {
+  animation: flicker 4s ease-in-out infinite;
+}
 /* Enhanced Keyframe Animations */
 @keyframes neon-pulse {
   0% {
@@ -3247,6 +4632,38 @@
 @keyframes ascii-fade-in {
   0% { opacity: 0; transform: scale(0.95); }
   100% { opacity: 1; transform: scale(1); }
+}
+@keyframes glitch {
+  0%, 100% { transform: translate(0); filter: hue-rotate(0deg); }
+  20% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); }
+  40% { transform: translate(-2px, -2px); filter: hue-rotate(180deg); }
+  60% { transform: translate(2px, 2px); filter: hue-rotate(270deg); }
+  80% { transform: translate(2px, -2px); filter: hue-rotate(360deg); }
+}
+@keyframes electric-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.05); filter: brightness(1.2) saturate(1.2); }
+}
+@keyframes storm-pulse {
+  0% { box-shadow: 0 0 20px rgb(var(--primary-500) / 0.5); }
+  33% { box-shadow: 0 0 40px rgb(var(--secondary-500) / 0.7); }
+  66% { box-shadow: 0 0 40px rgb(var(--accent-500) / 0.7); }
+  100% { box-shadow: 0 0 20px rgb(var(--primary-500) / 0.5); }
+}
+@keyframes underground-scan {
+  0% { transform: translateX(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+@keyframes storm-scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+  75% { opacity: 0.8; }
 }
 /* ==========================================================================
    SPECIAL EFFECTS & UTILITIES
@@ -3405,8 +4822,8 @@
     border-color: rgb(var(--border-primary) / 0.8);
   }
 }
-.vibe-container [data-theme="nightdrive"] .btn-base,
-.vibe-container [data-theme="nightdrive"] .btn-cyber{
+[data-theme="nightdrive"] .vibe-container .btn-base,
+[data-theme="nightdrive"] .vibe-container .btn-cyber{
   animation: nightdrive-pulse 4s ease-in-out infinite;
   --tw-shadow: 0 0 20px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.1);
   --tw-shadow-colored: 0 0 20px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
@@ -3416,8 +4833,8 @@
   transition-duration: 500ms;
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
-.vibe-container [data-theme="nightdrive"] .btn-base:hover,
-.vibe-container [data-theme="nightdrive"] .btn-cyber:hover{
+[data-theme="nightdrive"] .vibe-container .btn-base:hover,
+[data-theme="nightdrive"] .vibe-container .btn-cyber:hover{
   --tw-shadow: 0 0 30px rgb(var(--glow-secondary) / 0.8), 0 0 50px rgb(var(--glow-accent) / 0.6);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), 0 0 50px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -3427,8 +4844,8 @@
     opacity: .5;
   }
 }
-.vibe-container [data-theme="nightdrive"] .btn-base:active,
-.vibe-container [data-theme="nightdrive"] .btn-cyber:active{
+[data-theme="nightdrive"] .vibe-container .btn-base:active,
+[data-theme="nightdrive"] .vibe-container .btn-cyber:active{
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 /* Smooth terminal animations */
@@ -3442,22 +4859,22 @@
     border-color: rgb(var(--border-primary));
   }
 }
-.vibe-container [data-theme="nightdrive"] .terminal-window{
+[data-theme="nightdrive"] .vibe-container .terminal-window{
   animation: pulse-glow var(--pulse-speed, 2s) ease-in-out infinite;
   --tw-shadow: 0 0 20px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.1);
   --tw-shadow-colored: 0 0 20px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="nightdrive"] .terminal-window:hover{
+[data-theme="nightdrive"] .vibe-container .terminal-window:hover{
   --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="nightdrive"] .terminal-window {
+[data-theme="nightdrive"] .vibe-container .terminal-window {
   animation-duration: var(--pulse-speed);
 }
 /* Gentle scan line for nightdrive */
-.vibe-container [data-theme="nightdrive"] .terminal-window::after{
+[data-theme="nightdrive"] .vibe-container .terminal-window::after{
   --tw-gradient-to: rgb(var(--primary-500) / 0)  var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), rgb(var(--primary-500) / 0.5) var(--tw-gradient-via-position), var(--tw-gradient-to);
   animation: scan 4s linear infinite;
@@ -3473,8 +4890,8 @@
     border-color: rgb(var(--border-primary));
   }
 }
-.vibe-container [data-theme="nightdrive"] h1,
-.vibe-container [data-theme="nightdrive"] h2{
+[data-theme="nightdrive"] .vibe-container h1,
+[data-theme="nightdrive"] .vibe-container h2{
   animation: pulse-glow var(--pulse-speed, 2s) ease-in-out infinite;
   --tw-text-opacity: 1;
   color: rgb(var(--primary-400) / var(--tw-text-opacity, 1));
@@ -3482,14 +4899,14 @@
   animation-duration: 3s;
 }
 /* Cards with corner clips and smooth transitions */
-.vibe-container [data-theme="nightdrive"] .card{
+[data-theme="nightdrive"] .vibe-container .card{
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 700ms;
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
   clip-path: polygon(var(--clip-size, 15px) 0%, 100% 0%, calc(100% - var(--clip-size, 15px)) 100%, 0% 100%);
 }
-.vibe-container [data-theme="nightdrive"] .card:hover{
+[data-theme="nightdrive"] .vibe-container .card:hover{
   --tw-scale-x: 1.01;
   --tw-scale-y: 1.01;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -3500,7 +4917,7 @@
   clip-path: polygon(var(--clip-size) 0%, 100% 0%, calc(100% - var(--clip-size)) 100%, 0% 100%);
 }
 /* Smooth hover states */
-.vibe-container [data-theme="nightdrive"] .hover\:theme-glow:hover{
+[data-theme="nightdrive"] .vibe-container .hover\:theme-glow:hover{
   --tw-translate-y: -0.125rem;
   --tw-scale-x: 1.02;
   --tw-scale-y: 1.02;
@@ -3515,12 +4932,12 @@
   box-shadow: 0 0 15px rgb(var(--primary-500) / 0.4), 0 0 30px rgb(var(--primary-500) / 0.2);
 }
 /* Media elements with smooth transitions */
-.vibe-container [data-theme="nightdrive"] .media-wrapper{
+[data-theme="nightdrive"] .vibe-container .media-wrapper{
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 500ms;
 }
-.vibe-container [data-theme="nightdrive"] .media-wrapper:hover{
+[data-theme="nightdrive"] .vibe-container .media-wrapper:hover{
   --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-primary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -3531,7 +4948,7 @@
     opacity: .5;
   }
 }
-.vibe-container [data-theme="nightdrive"] .group:hover .terminal-led{
+[data-theme="nightdrive"] .vibe-container .group:hover .terminal-led{
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   animation-duration: 2s;
 }
@@ -3576,7 +4993,7 @@
   content: var(--tw-content);
 }
 /* Electric scan lines across the interface */
-.vibe-container [data-theme="neon-surge"] .vibe-header::after{
+[data-theme="neon-surge"] .vibe-container .vibe-header::after{
   position: absolute;
   left: 0px;
   right: 0px;
@@ -3596,7 +5013,7 @@
     opacity: 0;
   }
 }
-.vibe-container [data-theme="neon-surge"] .vibe-header::after{
+[data-theme="neon-surge"] .vibe-container .vibe-header::after{
   animation: electric-scan 2s linear infinite;
   background-image: linear-gradient(to right, var(--tw-gradient-stops));
   --tw-gradient-from: transparent var(--tw-gradient-from-position);
@@ -3609,8 +5026,8 @@
   content: var(--tw-content);
 }
 /* Glitchy buttons with corruption on hover */
-.vibe-container [data-theme="neon-surge"] .btn-base,
-.vibe-container [data-theme="neon-surge"] .btn-cyber{
+[data-theme="neon-surge"] .vibe-container .btn-base,
+[data-theme="neon-surge"] .vibe-container .btn-cyber{
   animation: electric-pulse 3s ease-in-out infinite;
   --tw-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8), inset 0 0 25px rgb(var(--secondary-500) / 0.15);
   --tw-shadow-colored: 0 0 25px var(--tw-shadow-color), inset 0 0 25px var(--tw-shadow-color);
@@ -3627,19 +5044,19 @@
     transform: translateX(2px);
   }
 }
-.vibe-container [data-theme="neon-surge"] .btn-base:hover,
-.vibe-container [data-theme="neon-surge"] .btn-cyber:hover{
+[data-theme="neon-surge"] .vibe-container .btn-base:hover,
+[data-theme="neon-surge"] .vibe-container .btn-cyber:hover{
   animation: data-corruption 0.2s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="neon-surge"] .btn-base:active,
-.vibe-container [data-theme="neon-surge"] .btn-cyber:active{
+[data-theme="neon-surge"] .vibe-container .btn-base:active,
+[data-theme="neon-surge"] .vibe-container .btn-cyber:active{
   animation: glitch 2s infinite;
 }
 /* Terminals with electric scan effect */
-.vibe-container [data-theme="neon-surge"] .terminal-window{
+[data-theme="neon-surge"] .vibe-container .terminal-window{
   position: relative;
   --tw-shadow: 0 0 25px rgb(var(--glow-primary) / 0.8), inset 0 0 25px rgb(var(--secondary-500) / 0.15);
   --tw-shadow-colored: 0 0 25px var(--tw-shadow-color), inset 0 0 25px var(--tw-shadow-color);
@@ -3656,11 +5073,11 @@
     transform: translateX(2px);
   }
 }
-.vibe-container [data-theme="neon-surge"] .terminal-window:hover{
+[data-theme="neon-surge"] .vibe-container .terminal-window:hover{
   animation: data-corruption 0.2s linear infinite;
 }
 /* Continuous electric scan for terminals */
-.vibe-container [data-theme="neon-surge"] .terminal-window::before{
+[data-theme="neon-surge"] .vibe-container .terminal-window::before{
   position: absolute;
   left: 0px;
   right: 0px;
@@ -3679,7 +5096,7 @@
     opacity: 0;
   }
 }
-.vibe-container [data-theme="neon-surge"] .terminal-window::before{
+[data-theme="neon-surge"] .vibe-container .terminal-window::before{
   animation: electric-scan 2s linear infinite;
   background-image: linear-gradient(to right, var(--tw-gradient-stops));
   --tw-gradient-from: transparent var(--tw-gradient-from-position);
@@ -3692,8 +5109,8 @@
   content: var(--tw-content);
 }
 /* Glitchy text effects */
-.vibe-container [data-theme="neon-surge"] h1,
-.vibe-container [data-theme="neon-surge"] h2{
+[data-theme="neon-surge"] .vibe-container h1,
+[data-theme="neon-surge"] .vibe-container h2{
   position: relative;
   --tw-text-opacity: 1;
   color: rgb(var(--secondary-400) / var(--tw-text-opacity, 1));
@@ -3709,13 +5126,13 @@
     transform: translateX(2px);
   }
 }
-.vibe-container [data-theme="neon-surge"] h1:hover,
-.vibe-container [data-theme="neon-surge"] h2:hover{
+[data-theme="neon-surge"] .vibe-container h1:hover,
+[data-theme="neon-surge"] .vibe-container h2:hover{
   animation: data-corruption 0.2s linear infinite;
 }
 /* Glitch shadows on headings */
-.vibe-container [data-theme="neon-surge"] h1::before,
-.vibe-container [data-theme="neon-surge"] h2::before{
+[data-theme="neon-surge"] .vibe-container h1::before,
+[data-theme="neon-surge"] .vibe-container h2::before{
   position: absolute;
   inset: 0px;
   --tw-translate-x: 1px;
@@ -3728,7 +5145,7 @@
   content: var(--tw-content);
 }
 /* Sharp geometric cards with glitch */
-.vibe-container [data-theme="neon-surge"] .card{
+[data-theme="neon-surge"] .vibe-container .card{
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 200ms;
@@ -3746,7 +5163,7 @@
     transform: translateX(2px);
   }
 }
-.vibe-container [data-theme="neon-surge"] .card:hover{
+[data-theme="neon-surge"] .vibe-container .card:hover{
   animation: data-corruption 0.2s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
@@ -3754,7 +5171,7 @@
   clip-path: polygon(var(--bevel-size, 15px) 0%, 100% 0%, calc(100% - var(--bevel-size, 15px)) 100%, 0% 100%);
 }
 /* Aggressive hover states */
-.vibe-container [data-theme="neon-surge"] .hover\:theme-glow:hover{
+[data-theme="neon-surge"] .vibe-container .hover\:theme-glow:hover{
   --tw-scale-x: 1.05;
   --tw-scale-y: 1.05;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -3770,7 +5187,7 @@
     transform: translateX(2px);
   }
 }
-.vibe-container [data-theme="neon-surge"] .hover\:theme-glow:hover{
+[data-theme="neon-surge"] .vibe-container .hover\:theme-glow:hover{
   animation: data-corruption 0.2s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-secondary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
@@ -3781,12 +5198,12 @@
   box-shadow: 0 0 15px rgb(var(--secondary-500) / 0.4), 0 0 30px rgb(var(--secondary-500) / 0.2);
 }
 /* LED indicators with rapid flicker */
-.vibe-container [data-theme="neon-surge"] .group:hover .terminal-led {
+[data-theme="neon-surge"] .vibe-container .group:hover .terminal-led{
   animation: neon-flicker 3s linear infinite;
   animation-duration: 0.5s;
 }
 /* Media with electric borders */
-.vibe-container [data-theme="neon-surge"] .media-wrapper:hover{
+[data-theme="neon-surge"] .vibe-container .media-wrapper:hover{
   animation: electric-pulse 3s ease-in-out infinite;
   --tw-border-opacity: 1;
   border-color: rgb(var(--secondary-500) / var(--tw-border-opacity, 1));
@@ -3832,11 +5249,11 @@
   content: var(--tw-content);
 }
 /* Lightning flash overlay for header */
-.vibe-container [data-theme="outrun-storm"] .vibe-header{
+[data-theme="outrun-storm"] .vibe-container .vibe-header{
   position: relative;
   overflow: hidden;
 }
-.vibe-container [data-theme="outrun-storm"] .vibe-header::before{
+[data-theme="outrun-storm"] .vibe-container .vibe-header::before{
   pointer-events: none;
   position: absolute;
   inset: 0px;
@@ -3864,7 +5281,7 @@
     opacity: 0.1;
   }
 }
-.vibe-container [data-theme="outrun-storm"] .vibe-header::before{
+[data-theme="outrun-storm"] .vibe-container .vibe-header::before{
   animation: storm-lightning 8s linear infinite;
   background-color: rgb(255 255 255 / 0.1);
   opacity: 0;
@@ -3872,15 +5289,15 @@
   content: var(--tw-content);
 }
 /* Storm-affected buttons with dramatic shadows */
-.vibe-container [data-theme="outrun-storm"] .btn-base,
-.vibe-container [data-theme="outrun-storm"] .btn-cyber{
-  animation: storm-pulse 4s ease-in-out infinite;
+[data-theme="outrun-storm"] .vibe-container .btn-base,
+[data-theme="outrun-storm"] .vibe-container .btn-cyber{
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.7), inset 0 0 30px rgb(var(--secondary-500) / 0.2);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  animation: storm-pulse 4s ease-in-out infinite;
 }
-.vibe-container [data-theme="outrun-storm"] .btn-base:hover,
-.vibe-container [data-theme="outrun-storm"] .btn-cyber:hover{
+[data-theme="outrun-storm"] .vibe-container .btn-base:hover,
+[data-theme="outrun-storm"] .vibe-container .btn-cyber:hover{
   animation: storm-scan 3s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
@@ -3909,42 +5326,42 @@
     opacity: 0.1;
   }
 }
-.vibe-container [data-theme="outrun-storm"] .btn-base:active,
-.vibe-container [data-theme="outrun-storm"] .btn-cyber:active{
+[data-theme="outrun-storm"] .vibe-container .btn-base:active,
+[data-theme="outrun-storm"] .vibe-container .btn-cyber:active{
   animation: storm-lightning 8s linear infinite;
 }
 /* Terminals with storm effects */
-.vibe-container [data-theme="outrun-storm"] .terminal-window{
+[data-theme="outrun-storm"] .vibe-container .terminal-window{
   position: relative;
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.7), inset 0 0 30px rgb(var(--secondary-500) / 0.2);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="outrun-storm"] .terminal-window:hover{
+[data-theme="outrun-storm"] .vibe-container .terminal-window:hover{
   animation: storm-pulse 4s ease-in-out infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 /* Rain-like scan effect */
-.vibe-container [data-theme="outrun-storm"] .terminal-window::after{
+[data-theme="outrun-storm"] .vibe-container .terminal-window::after{
   --tw-gradient-to: rgb(var(--accent-500) / 0)  var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), rgb(var(--accent-500) / 0.6) var(--tw-gradient-via-position), var(--tw-gradient-to);
   animation: storm-scan 3s linear infinite;
 }
 /* Dramatic heading effects */
-.vibe-container [data-theme="outrun-storm"] h1,
-.vibe-container [data-theme="outrun-storm"] h2{
+[data-theme="outrun-storm"] .vibe-container h1,
+[data-theme="outrun-storm"] .vibe-container h2{
   position: relative;
-  animation: storm-pulse 4s ease-in-out infinite;
   --tw-text-opacity: 1;
   color: rgb(var(--primary-400) / var(--tw-text-opacity, 1));
+  animation: storm-pulse 4s ease-in-out infinite;
   text-shadow: 0 0 20px rgb(var(--primary-500) / 0.5),
                0 0 40px rgb(var(--secondary-500) / 0.3);
 }
 /* Lightning flash on hover */
-.vibe-container [data-theme="outrun-storm"] h1:hover::after,
-.vibe-container [data-theme="outrun-storm"] h2:hover::after{
+[data-theme="outrun-storm"] .vibe-container h1:hover::after,
+[data-theme="outrun-storm"] .vibe-container h2:hover::after{
   pointer-events: none;
   position: absolute;
   inset: 0px;
@@ -3955,14 +5372,14 @@
   animation: lightning 0.5s linear infinite;
 }
 /* Large dramatic cards */
-.vibe-container [data-theme="outrun-storm"] .card{
+[data-theme="outrun-storm"] .vibe-container .card{
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 500ms;
   --clip-size: 20px;
   clip-path: polygon(var(--clip-size) 0%, 100% 0%, calc(100% - var(--clip-size)) 100%, 0% 100%);
 }
-.vibe-container [data-theme="outrun-storm"] .card:hover{
+[data-theme="outrun-storm"] .vibe-container .card:hover{
   --tw-scale-x: 1.03;
   --tw-scale-y: 1.03;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -3974,7 +5391,7 @@
   clip-path: polygon(var(--clip-size) 0%, 100% 0%, calc(100% - var(--clip-size)) 100%, 0% 100%);
 }
 /* Weather-affected hover states */
-.vibe-container [data-theme="outrun-storm"] .hover\:theme-glow:hover{
+[data-theme="outrun-storm"] .vibe-container .hover\:theme-glow:hover{
   --tw-scale-x: 1.03;
   --tw-scale-y: 1.03;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -4002,7 +5419,7 @@
     opacity: 0.1;
   }
 }
-.vibe-container [data-theme="outrun-storm"] .hover\:theme-glow:hover{
+[data-theme="outrun-storm"] .vibe-container .hover\:theme-glow:hover{
   animation: storm-lightning 8s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-accent) / 0.5), 0 0 30px rgb(var(--glow-accent) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
@@ -4036,11 +5453,11 @@
     opacity: 0.1;
   }
 }
-.vibe-container [data-theme="outrun-storm"] .group:hover .terminal-led{
+[data-theme="outrun-storm"] .vibe-container .group:hover .terminal-led{
   animation: storm-lightning 8s linear infinite;
 }
 /* Media with storm borders */
-.vibe-container [data-theme="outrun-storm"] .media-wrapper:hover{
+[data-theme="outrun-storm"] .vibe-container .media-wrapper:hover{
   animation: storm-pulse 4s ease-in-out infinite;
   --tw-border-opacity: 1;
   border-color: rgb(var(--accent-500) / var(--tw-border-opacity, 1));
@@ -4081,7 +5498,7 @@
   content: var(--tw-content);
 }
 /* Flickering phantom overlay */
-.vibe-container [data-theme="strange-days"] .vibe-header::after{
+[data-theme="strange-days"] .vibe-container .vibe-header::after{
   pointer-events: none;
   position: absolute;
   inset: 0px;
@@ -4100,7 +5517,7 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .vibe-header::after{
+[data-theme="strange-days"] .vibe-container .vibe-header::after{
   animation: phantom-flicker 4s ease-in-out infinite;
   background-image: linear-gradient(to right, var(--tw-gradient-stops));
   --tw-gradient-from: rgb(var(--primary-500) / 0.1) var(--tw-gradient-from-position);
@@ -4128,26 +5545,26 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .btn-base,
-.vibe-container [data-theme="strange-days"] .btn-cyber{
+[data-theme="strange-days"] .vibe-container .btn-base,
+[data-theme="strange-days"] .vibe-container .btn-cyber{
   animation: phantom-flicker 4s ease-in-out infinite;
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.3);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="strange-days"] .btn-base:hover,
-.vibe-container [data-theme="strange-days"] .btn-cyber:hover{
+[data-theme="strange-days"] .vibe-container .btn-base:hover,
+[data-theme="strange-days"] .vibe-container .btn-cyber:hover{
   animation: underground-scan 5s linear infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
-.vibe-container [data-theme="strange-days"] .btn-base:active,
-.vibe-container [data-theme="strange-days"] .btn-cyber:active {
+[data-theme="strange-days"] .vibe-container .btn-base:active,
+[data-theme="strange-days"] .vibe-container .btn-cyber:active {
   animation: phantom-glow 2.5s ease-in-out infinite alternate;
 }
 /* Underground terminals */
-.vibe-container [data-theme="strange-days"] .terminal-window{
+[data-theme="strange-days"] .vibe-container .terminal-window{
   position: relative;
 }
 @keyframes flicker{
@@ -4161,11 +5578,11 @@
     opacity: 1;
   }
 }
-.vibe-container [data-theme="strange-days"] .terminal-window{
-  animation: flicker 4s ease-in-out infinite;
+[data-theme="strange-days"] .vibe-container .terminal-window{
   --tw-shadow: 0 0 30px rgb(var(--glow-primary) / 0.6), inset 0 0 20px rgb(var(--secondary-500) / 0.3);
   --tw-shadow-colored: 0 0 30px var(--tw-shadow-color), inset 0 0 20px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  animation: flicker 4s ease-in-out infinite;
 }
 @keyframes phantom-flicker{
   0%, 100%{
@@ -4181,14 +5598,14 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .terminal-window:hover{
+[data-theme="strange-days"] .vibe-container .terminal-window:hover{
   animation: phantom-flicker 4s ease-in-out infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 /* Slow underground scan */
-.vibe-container [data-theme="strange-days"] .terminal-window::after{
+[data-theme="strange-days"] .vibe-container .terminal-window::after{
   --tw-gradient-to: rgb(var(--accent-500) / 0)  var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), rgb(var(--accent-500) / 0.4) var(--tw-gradient-via-position), var(--tw-gradient-to);
   animation: underground-scan 5s linear infinite;
@@ -4208,8 +5625,8 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] h1,
-.vibe-container [data-theme="strange-days"] h2{
+[data-theme="strange-days"] .vibe-container h1,
+[data-theme="strange-days"] .vibe-container h2{
   animation: phantom-flicker 4s ease-in-out infinite;
   --tw-text-opacity: 1;
   color: rgb(var(--primary-400) / var(--tw-text-opacity, 1));
@@ -4217,20 +5634,20 @@
                0 0 60px rgb(var(--accent-500) / 0.4);
 }
 /* Glowing phantom text on hover */
-.vibe-container [data-theme="strange-days"] h1:hover,
-.vibe-container [data-theme="strange-days"] h2:hover{
+[data-theme="strange-days"] .vibe-container h1:hover,
+[data-theme="strange-days"] .vibe-container h2:hover{
   --tw-text-opacity: 1;
   color: rgb(var(--secondary-400) / var(--tw-text-opacity, 1));
   animation: phantom-glow 2.5s ease-in-out infinite alternate;
 }
 /* Terminal-cut geometric cards */
-.vibe-container [data-theme="strange-days"] .card{
+[data-theme="strange-days"] .vibe-container .card{
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 700ms;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--terminal-cut, 10px)), calc(100% - var(--terminal-cut, 10px)) 100%, 0 100%);
 }
-.vibe-container [data-theme="strange-days"] .card:hover{
+[data-theme="strange-days"] .vibe-container .card:hover{
   --tw-scale-x: 1.02;
   --tw-scale-y: 1.02;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -4249,7 +5666,7 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .card:hover{
+[data-theme="strange-days"] .vibe-container .card:hover{
   animation: phantom-flicker 4s ease-in-out infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
@@ -4258,7 +5675,7 @@
   clip-path: polygon(var(--clip-size) 0%, 100% 0%, calc(100% - var(--clip-size)) 100%, 0% 100%);
 }
 /* Mysterious hover states */
-.vibe-container [data-theme="strange-days"] .hover\:theme-glow:hover{
+[data-theme="strange-days"] .vibe-container .hover\:theme-glow:hover{
   --tw-scale-x: 1.01;
   --tw-scale-y: 1.01;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -4277,7 +5694,7 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .hover\:theme-glow:hover{
+[data-theme="strange-days"] .vibe-container .hover\:theme-glow:hover{
   animation: phantom-flicker 4s ease-in-out infinite;
   --tw-shadow: 0 0 15px rgb(var(--glow-primary) / 0.5), 0 0 30px rgb(var(--glow-secondary) / 0.3);
   --tw-shadow-colored: 0 0 15px var(--tw-shadow-color), 0 0 30px var(--tw-shadow-color);
@@ -4301,7 +5718,7 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .group:hover .terminal-led{
+[data-theme="strange-days"] .vibe-container .group:hover .terminal-led{
   animation: phantom-flicker 4s ease-in-out infinite;
   animation-duration: 2.5s;
 }
@@ -4320,7 +5737,7 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .media-wrapper:hover{
+[data-theme="strange-days"] .vibe-container .media-wrapper:hover{
   animation: phantom-flicker 4s ease-in-out infinite;
   --tw-border-opacity: 1;
   border-color: rgb(var(--accent-500) / var(--tw-border-opacity, 1));
@@ -4343,7 +5760,7 @@
     text-shadow: 0 0 40px rgb(var(--glow-primary) / 1);
   }
 }
-.vibe-container [data-theme="strange-days"] .cyber-link:hover{
+[data-theme="strange-days"] .vibe-container .cyber-link:hover{
   animation: phantom-flicker 4s ease-in-out infinite;
   --tw-text-opacity: 1;
   color: rgb(var(--secondary-500) / var(--tw-text-opacity, 1));
@@ -5098,6 +6515,9 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 .vibe-container .animate-matrix-fall{
   animation: matrix-fall 5s linear infinite;
 }
+.vibe-container .cursor-pointer{
+  cursor: pointer;
+}
 .vibe-container .items-center{
   align-items: center;
 }
@@ -5168,4 +6588,8 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 }
 .vibe-container .clip-none{
   clip-path: none;
+}
+.vibe-container .hover\:text-primary-400:hover{
+  --tw-text-opacity: 1;
+  color: rgb(var(--primary-400) / var(--tw-text-opacity, 1));
 }

@@ -10,7 +10,8 @@
       "Bash(npm init:*)",
       "Bash(npx tailwindcss init:*)",
       "Bash(mkdir:*)",
-      "Bash(npm run build:css:prod:*)"
+      "Bash(npm run build:css:prod:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

@@ -16,59 +16,59 @@
 }
 
 /* Nightdrive buttons with smooth pulse */
-[data-theme="nightdrive"] .btn-base,
-[data-theme="nightdrive"] .btn-cyber {
+[data-theme="nightdrive"] .vibe-container .btn-base,
+[data-theme="nightdrive"] .vibe-container .btn-cyber {
   @apply shadow-button-nightdrive animate-nightdrive-pulse
     hover:shadow-neon-hover
     transition-all duration-500 ease-out;
 }
 
-[data-theme="nightdrive"] .btn-base:active,
-[data-theme="nightdrive"] .btn-cyber:active {
+[data-theme="nightdrive"] .vibe-container .btn-base:active,
+[data-theme="nightdrive"] .vibe-container .btn-cyber:active {
   @apply animate-pulse;
 }
 
 /* Smooth terminal animations */
-[data-theme="nightdrive"] .terminal-window {
+[data-theme="nightdrive"] .vibe-container .terminal-window {
   @apply animate-pulse-glow shadow-button-nightdrive
     hover:shadow-neon-dual;
   animation-duration: var(--pulse-speed);
 }
 
 /* Gentle scan line for nightdrive */
-[data-theme="nightdrive"] .terminal-window::after {
+[data-theme="nightdrive"] .vibe-container .terminal-window::after {
   @apply via-primary-500/50;
   animation: scan 4s linear infinite;
 }
 
 /* Headers with smooth neon glow */
-[data-theme="nightdrive"] h1,
-[data-theme="nightdrive"] h2 {
+[data-theme="nightdrive"] .vibe-container h1,
+[data-theme="nightdrive"] .vibe-container h2 {
   @apply text-primary-400 text-glow-strong
     animate-pulse-glow;
   animation-duration: 3s;
 }
 
 /* Cards with corner clips and smooth transitions */
-[data-theme="nightdrive"] .card {
+[data-theme="nightdrive"] .vibe-container .card {
   @apply clip-corner hover:clip-corner-xl 
     transition-all duration-700 ease-out
     hover:shadow-neon-primary hover:scale-[1.01];
 }
 
 /* Smooth hover states */
-[data-theme="nightdrive"] .hover\:theme-glow:hover {
+[data-theme="nightdrive"] .vibe-container .hover\:theme-glow:hover {
   @apply shadow-neon-primary scale-[1.02] -translate-y-0.5
     transition-all duration-500 ease-out;
 }
 
 /* Media elements with smooth transitions */
-[data-theme="nightdrive"] .media-wrapper {
+[data-theme="nightdrive"] .vibe-container .media-wrapper {
   @apply hover:shadow-neon-primary transition-all duration-500;
 }
 
 /* Status indicators with gentle pulse */
-[data-theme="nightdrive"] .group:hover .terminal-led {
+[data-theme="nightdrive"] .vibe-container .group:hover .terminal-led {
   @apply animate-pulse;
   animation-duration: 2s;
 }

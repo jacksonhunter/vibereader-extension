@@ -16,54 +16,54 @@
 }
 
 /* Electric scan lines across the interface */
-[data-theme="neon-surge"] .vibe-header::after {
+[data-theme="neon-surge"] .vibe-container .vibe-header::after {
   @apply content-[''] absolute inset-x-0 h-[1px] top-1/2
     bg-gradient-to-r from-transparent via-secondary-500 to-transparent
     animate-electric-scan;
 }
 
 /* Glitchy buttons with corruption on hover */
-[data-theme="neon-surge"] .btn-base,
-[data-theme="neon-surge"] .btn-cyber {
+[data-theme="neon-surge"] .vibe-container .btn-base,
+[data-theme="neon-surge"] .vibe-container .btn-cyber {
   @apply shadow-button-neon animate-electric-pulse
     hover:animate-data-corruption hover:shadow-neon-secondary;
 }
 
-[data-theme="neon-surge"] .btn-base:active,
-[data-theme="neon-surge"] .btn-cyber:active {
+[data-theme="neon-surge"] .vibe-container .btn-base:active,
+[data-theme="neon-surge"] .vibe-container .btn-cyber:active {
   @apply animate-glitch;
 }
 
 /* Terminals with electric scan effect */
-[data-theme="neon-surge"] .terminal-window {
+[data-theme="neon-surge"] .vibe-container .terminal-window {
   @apply shadow-button-neon relative
     hover:animate-data-corruption;
 }
 
 /* Continuous electric scan for terminals */
-[data-theme="neon-surge"] .terminal-window::before {
+[data-theme="neon-surge"] .vibe-container .terminal-window::before {
   @apply content-[''] absolute inset-x-0 h-[2px] 
     bg-gradient-to-r from-transparent via-cyan-500 to-transparent
     animate-electric-scan;
 }
 
 /* Glitchy text effects */
-[data-theme="neon-surge"] h1,
-[data-theme="neon-surge"] h2 {
+[data-theme="neon-surge"] .vibe-container h1,
+[data-theme="neon-surge"] .vibe-container h2 {
   @apply text-secondary-400 relative
     hover:animate-data-corruption;
 }
 
 /* Glitch shadows on headings */
-[data-theme="neon-surge"] h1::before,
-[data-theme="neon-surge"] h2::before {
+[data-theme="neon-surge"] .vibe-container h1::before,
+[data-theme="neon-surge"] .vibe-container h2::before {
   @apply content-[attr(data-text)] absolute inset-0
     text-primary-500 opacity-50 translate-x-[1px]
     animate-glitch;
 }
 
 /* Sharp geometric cards with glitch */
-[data-theme="neon-surge"] .card {
+[data-theme="neon-surge"] .vibe-container .card {
   @apply clip-corner-sm hover:clip-bevel
     transition-all duration-200
     hover:animate-data-corruption
@@ -71,19 +71,19 @@
 }
 
 /* Aggressive hover states */
-[data-theme="neon-surge"] .hover\:theme-glow:hover {
+[data-theme="neon-surge"] .vibe-container .hover\:theme-glow:hover {
   @apply shadow-neon-secondary animate-data-corruption
     scale-[1.05] transition-all duration-100;
 }
 
 /* LED indicators with rapid flicker */
-[data-theme="neon-surge"] .group:hover .terminal-led {
+[data-theme="neon-surge"] .vibe-container .group:hover .terminal-led {
   @apply animate-neon-flicker;
   animation-duration: 0.5s;
 }
 
 /* Media with electric borders */
-[data-theme="neon-surge"] .media-wrapper {
+[data-theme="neon-surge"] .vibe-container .media-wrapper {
   @apply hover:shadow-neon-secondary 
     hover:border-secondary-500
     hover:animate-electric-pulse;

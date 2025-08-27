@@ -197,6 +197,8 @@ module.exports = {
                 'glitch': 'glitch 2s infinite',
                 'scan': 'scan 4s linear infinite',
                 'pulse-glow': 'pulse-glow var(--pulse-speed, 2s) ease-in-out infinite',
+                'neon-flicker': 'neon-flicker 3s linear infinite',
+                'data-stream': 'data-stream 3s linear infinite',
                 'flicker': 'flicker 4s ease-in-out infinite',
             },
 
@@ -367,6 +369,33 @@ module.exports = {
             'arrow-left': 'polygon(0% 50%, 40% 0%, 40% 30%, 100% 30%, 100% 70%, 40% 70%, 40% 100%)',
             'arrow-right': 'polygon(0% 30%, 60% 30%, 60% 0%, 100% 50%, 60% 100%, 60% 70%, 0% 70%)',
     }
+        }
+      )
+
+      // Add terminal border utilities with correct ampersand-first syntax
+      matchUtilities(
+        {
+          'terminal-border': (value) => ({
+            '&[data-side="left"]': {
+              borderLeftWidth: '4px',
+              borderLeftColor: `rgb(var(--${value}) / 1)`,
+              boxShadow: `inset 4px 0 10px rgb(var(--${value}) / 0.3)`,
+            },
+            '&[data-side="right"]': {
+              borderRightWidth: '4px',
+              borderRightColor: `rgb(var(--${value}) / 1)`,
+              boxShadow: `inset -4px 0 10px rgb(var(--${value}) / 0.3)`,
+            },
+          }),
+        },
+        {
+          values: {
+            primary: 'primary-500',
+            secondary: 'secondary-500',
+            accent: 'accent-500',
+            success: 'success-500',
+            error: 'error-500',
+          },
         }
       )
 

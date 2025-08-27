@@ -9,33 +9,21 @@
   @apply relative bg-bg-surface border border-border-accent rounded-lg 
     shadow-lg z-sidebar overflow-hidden
     transition-all duration-300 ease-cyber
-    hover:shadow-neon-dual hover:border-primary-400;
+    hover:shadow-neon-dual hover:border-primary-400
+    
+    data-[active=true]:shadow-neon-primary data-[active=true]:border-primary-500
+    data-[error=true]:shadow-neon-accent data-[error=true]:border-error-500
+    data-[scanning=true]:animate-pulse
+    
+    before:content-[''] before:absolute before:inset-x-0 before:top-0 before:h-[2px]
+    before:bg-gradient-to-r before:from-transparent before:via-secondary-500 before:to-transparent
+    before:opacity-0 before:-translate-y-full
+    before:transition-all before:duration-1000
+    
+    hover:before:opacity-100 hover:before:translate-y-[400px];
 }
 
-.terminal-window[data-active="true"] {
-  @apply shadow-neon-primary border-primary-500;
-}
-
-.terminal-window[data-error="true"] {
-  @apply shadow-neon-accent border-error-500;
-}
-
-.terminal-window[data-scanning="true"] {
-  @apply animate-pulse;
-}
-
-/* Animated scan line effect for terminals */
-.terminal-window::after {
-  @apply content-[''] absolute inset-x-0 top-0 h-[2px] 
-    bg-gradient-to-r from-transparent via-secondary-500 to-transparent
-    opacity-0 -translate-y-full
-    transition-all duration-1000 ease-linear;
-}
-
-.group:hover .terminal-window::after {
-  @apply opacity-100;
-  transform: translateY(400px);
-}
+/* Scan line effect is now built into .terminal-window using before pseudo-element */
 
 .terminal-header {
   @apply flex justify-between items-center p-3 bg-bg-elevated border-b border-border-default rounded-t-lg;
@@ -81,24 +69,23 @@
 
 /* Terminal LED Indicators with Group Interactivity */
 .terminal-led {
-  @apply w-2 h-2 rounded-full bg-neutral-600 transition-all duration-300;
+  @apply w-2 h-2 rounded-full bg-neutral-600 transition-all duration-300
+    
+    group-data-[active=true]:bg-success-500 
+    group-data-[active=true]:shadow-[0_0_8px_rgb(var(--success-500))]
+    
+    group-data-[error=true]:bg-error-500 
+    group-data-[error=true]:shadow-[0_0_8px_rgb(var(--error-500))] 
+    group-data-[error=true]:animate-neon-flicker
+    
+    group-data-[scanning=true]:bg-accent-500 
+    group-data-[scanning=true]:animate-data-stream
+    
+    group-hover:bg-success-500 group-hover:animate-pulse;
 }
 
 .group:hover .terminal-led {
-  @apply bg-success-500 animate-pulse;
   box-shadow: 0 0 12px rgb(var(--success-500));
-}
-
-.group[data-active="true"] .terminal-led {
-  @apply bg-success-500 shadow-[0_0_8px_rgb(var(--success-500))];
-}
-
-.group[data-error="true"] .terminal-led {
-  @apply bg-error-500 shadow-[0_0_8px_rgb(var(--error-500))] animate-neon-flicker;
-}
-
-.group[data-scanning="true"] .terminal-led {
-  @apply bg-accent-500 animate-data-stream;
 }
 
 /* Multiple LED array for terminal status */
