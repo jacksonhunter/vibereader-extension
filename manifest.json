@@ -19,7 +19,7 @@
   ],
 
   "background": {
-    "scripts": ["src/vibe-utils.js", , "src/background-enhanced.js"],
+    "scripts": ["src/vibe-utils.js", "src/background-enhanced.js"],
     "persistent": true
   },
 
