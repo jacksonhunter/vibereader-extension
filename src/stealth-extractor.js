@@ -16,6 +16,12 @@ if (window.__vibeReaderStealthExtractor) {
                 this.contentStabilityResolver = null;
                 this.lastContentHash = null;
                 this.extractionInProgress = false;
+                this.broker = new MessageBroker();
+
+                // Register all handlers
+                this.broker.register('extractContent', (config) => this.startExtraction(config));
+                this.broker.register('executeProxyCommand', (data) => this.executeCommand(data));
+
 
                 this.init();
             }
@@ -26,51 +32,10 @@ if (window.__vibeReaderStealthExtractor) {
                     timestamp: new Date().toISOString()
                 });
 
-                // Set up message listener
-                browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-                    this.handleMessageSafe(request, sender, sendResponse);
-                    return true;
-                });
-
                 this.detectFramework();
-                this.reportProgress('initialized', 0);
+                this.broker.send(null, 'extractionProgress', { status: 'initialized', progress: 0 });
 
                 console.log('✅ StealthExtractor ready');
-            }
-
-            async handleMessageSafe(request, sender, sendResponse) {
-                try {
-                    const result = await this.handleMessage(request, sender);
-                    sendResponse(MessageSerializer.serialize(result));
-                } catch (error) {
-                    console.error('❌ Message handling error:', error);
-                    sendResponse({
-                        success: false,
-                        error: error.message || 'Unknown error'
-                    });
-                }
-            }
-
-            async handleMessage(request, sender) {
-                console.log('📨 Received message:', request.action);
-
-                switch (request.action) {
-                    case 'ping':
-                        return {success: true, type: 'extractor'};
-
-                    case 'extractContent':
-                        if (this.extractionInProgress) {
-                            console.log('⚠️ Extraction already in progress');
-                            return {success: false, error: 'Extraction in progress'};
-                        }
-                        return await this.startExtraction(request.config);
-
-                    case 'executeProxyCommand':
-                        return await this.executeProxyCommand(request.command, request.data);
-
-                    default:
-                        return {success: false, error: 'Unknown action'};
-                }
             }
 
             detectFramework() {
@@ -98,13 +63,13 @@ if (window.__vibeReaderStealthExtractor) {
                     this.extractionInProgress = true;
                     console.log('🕵️ Starting extraction:', config);
 
-                    this.reportProgress('waiting_for_framework', 10);
+                    this.broker.send(null, 'extractionProgress', { status: 'waiting_for_framework', progress: 10 });
 
                     if (config.waitForFramework) {
                         await this.waitForFramework();
                     }
 
-                    this.reportProgress('extracting', 40);
+                    this.broker.send(null, 'extractionProgress', { status: 'extracting', progress: 40 });
 
                     const content = await this.extractWithReadability();
 
@@ -112,7 +77,7 @@ if (window.__vibeReaderStealthExtractor) {
                         throw new Error('No content extracted');
                     }
 
-                    this.reportProgress('complete', 90);
+                    this.broker.send(null, 'extractionProgress', { status: 'complete', progress: 90 });
 
                     this.reportExtraction(content);
 
@@ -129,7 +94,7 @@ if (window.__vibeReaderStealthExtractor) {
 
                 } catch (error) {
                     console.error('❌ Extraction failed:', error);
-                    this.reportProgress('error', 0);
+                    this.broker.send(null, 'extractionProgress', { status: 'error', progress: 0 });
 
                     return {
                         success: false,
@@ -156,7 +121,7 @@ if (window.__vibeReaderStealthExtractor) {
                             case 'react':
                             case 'nextjs':
                                 const reactRoot = document.querySelector('[data-reactroot], #root, #__next');
-                                isReady = reactRoot && reactRoot.children.length > 0;
+                                isReady = reactRoot && !!reactRoot.children.length;
                                 if (!isReady) {
                                     console.log('⏳ React/Next not hydrated yet...');
                                 }
@@ -164,14 +129,14 @@ if (window.__vibeReaderStealthExtractor) {
 
                             case 'vue':
                                 const vueApp = document.querySelector('#app');
-                                isReady = vueApp && (vueApp.hasAttribute('data-v-') || vueApp.children.length > 0);
+                                isReady = vueApp && (vueApp.hasAttribute('data-v-') || !!vueApp.children.length);
                                 if (!isReady) {
                                     console.log('⏳ Vue not mounted yet...');
                                 }
                                 break;
 
                             default:
-                                isReady = document.body.children.length > 0;
+                                isReady = !!document.body.children.length;
                         }
 
                         const elapsed = Date.now() - startTime;
@@ -179,13 +144,8 @@ if (window.__vibeReaderStealthExtractor) {
                         if (isReady || elapsed > waitTime) {
                             console.log(`✅ Framework ready after ${elapsed}ms`);
 
-                            // Send to proxy for logging
-                            browser.runtime.sendMessage({
-                                action: 'logToProxy',
-                                level: 'INFO',
-                                message: `${this.frameworkDetected} ready in ${elapsed}ms`,
-                                category: 'NETWORK'
-                            });
+                            // Log framework readiness
+                            console.log(`✅ Framework ${this.frameworkDetected} ready in ${elapsed}ms`);
 
                             resolve();
                         } else {
@@ -451,8 +411,7 @@ if (window.__vibeReaderStealthExtractor) {
                 // Gather enhanced metadata for terminal displays
                 const domStats = this.gatherDOMStats();
 
-                browser.runtime.sendMessage({
-                    action: 'contentExtracted',
+                this.broker.send(null, 'contentExtracted', {
                     content: extractedContent.content,
                     metadata: {
                         title: extractedContent.title || document.title,
@@ -525,7 +484,10 @@ if (window.__vibeReaderStealthExtractor) {
                             currentScroll += scrollAmount;
                             this.scrollProgress = Math.min(100, (currentScroll / scrollDistance) * 100);
 
-                            this.reportProgress('simulating_scroll', Math.floor(this.scrollProgress));
+                            this.broker.send(null, 'extractionProgress', { 
+                                status: 'simulating_scroll', 
+                                progress: Math.floor(this.scrollProgress) 
+                            });
 
                             setTimeout(scrollStep, 50 + Math.random() * 100);
                         } else {
@@ -605,15 +567,6 @@ if (window.__vibeReaderStealthExtractor) {
                 }
             }
 
-            reportProgress(status, progress) {
-                browser.runtime.sendMessage({
-                    action: 'extractionProgress',
-                    status: status,
-                    progress: progress
-                }).catch(error => {
-                    console.log('Could not send progress:', error);
-                });
-            }
 
             gatherDOMStats() {
                 return {
@@ -764,15 +717,15 @@ if (window.__vibeReaderStealthExtractor) {
                 // Score based on how much text is in proper sentences (weighted heavily)
                 textQualityScore += sentenceTextRatio * 6; // Up to 6 points for sentence structure
                 
-                if (properSentences.length > 0) {
+                if (properSentences.length) {
                     // Check sentence length distribution (20-300 characters)
                     const validLengthSentences = properSentences.filter(s => s.length >= 20 && s.length <= 300);
                     const validLengthRatio = validLengthSentences.length / properSentences.length;
                     textQualityScore += validLengthRatio * 2; // Up to 2 points for proper length
                     
                     // Check average word length in sentences (3-5 chars = English-like)
-                    const wordsInSentences = properSentences.join(' ').split(/\s+/).filter(w => w.length > 0);
-                    if (wordsInSentences.length > 0) {
+                    const wordsInSentences = properSentences.join(' ').split(/\s+/).filter(w => !!w.length);
+                    if (wordsInSentences.length) {
                         const avgWordLength = wordsInSentences.reduce((sum, word) => sum + word.replace(/[^\w]/g, '').length, 0) / wordsInSentences.length;
                         if (avgWordLength >= 3 && avgWordLength <= 5) {
                             textQualityScore += 2; // 2 points for English-like word length

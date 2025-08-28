@@ -37,16 +37,20 @@ VibeReader is a Firefox browser extension that transforms any webpage into a **9
 
 ### Extension Commands  
 ```bash
-# Load extension with verbose debugging
-cd "C:\Users\jacks\PycharmProjects\NightDrive theme\theme_exports\synthwave-themes\vibe-reader-extension"
-web-ext run --verbose --devtools --browser-console --firefox="C:\Program Files\Firefox Developer Edition\firefox.exe" > dump.log 2>&1
+# Modern Development Workflow (v2.2)
+npm run dev:extension     # Launch extension in Firefox Developer Edition (no auto-reload)
+npm run build:extension   # Build distribution package
+npm run lint             # ESLint JavaScript code quality
+npm run lint:webext      # Web-ext extension validation
+npm run test             # Run all linting checks
 
 # CSS Build Commands (Tailwind)
-npm run build:css:prod    # Production build with minification
+npm run build:css:prod   # Production build with minification
 npm run dev              # Development watch mode
 npm run build            # Alias for production build
 
-# Package for distribution  
+# Legacy Commands (deprecated)
+web-ext run --config=web-ext-config.cjs
 zip -r vibe-reader.xpi * -x "*.DS_Store" "*.git*" "*.md" "test-exports/*" "node_modules/*" "src/*"
 ```
 
@@ -288,11 +292,32 @@ SYSTEM: 'LOG:', '✅', 'initialized', 'activated'
 - [ ] **API Integration** - Connect with external services
 - [ ] **Analytics Dashboard** - Reading statistics and insights
 
-## 🆕 RECENT IMPROVEMENTS (v2.1 - Enhanced Stability)
+## 🆕 RECENT IMPROVEMENTS (v2.2 - Development Workflow Enhancement)
 
-### ✅ **Critical Bug Fixes Implemented:**
+### ✅ **Development Infrastructure Implemented:**
 
-1. **Enhanced WeakMap Registry** - Complete rewrite of tab data management
+1. **Complete ESLint Setup** - Modern JavaScript linting with browser extension support
+   - **ESLint 9 flat config** with security plugins (no-unsanitized, security)
+   - **Mozilla WebExtensions plugin** with proper flat config integration
+   - **Custom globals** for VibeReader utility classes (MessageBroker, VibeLogger, etc.)
+   - **98 linting issues identified** for code quality improvements
+
+2. **Comprehensive Web-ext Configuration** - Professional extension development setup
+   - **Firefox Developer Edition integration** with debugging preferences
+   - **Comprehensive ignore patterns** for clean builds and packaging
+   - **Auto-reload disabled by default** for stable development
+   - **Development tools auto-open** (devtools, browser console)
+
+3. **Enhanced NPM Scripts** - Modern development workflow
+   - **npm run dev:extension** - Launch extension in Firefox with full debugging
+   - **npm run lint:webext** - Extension-specific validation (32 warnings, 0 errors)
+   - **npm run test** - Combined linting pipeline (ESLint + Web-ext)
+   - **npm run build:extension** - Production package building
+
+4. **MessageBroker Bug Fix** - Resolved popup toggle functionality
+   - **Fixed request.data handling** to support both nested and direct property formats
+   - **Eliminated "tabId undefined" errors** in popup activation
+   - **Backward compatibility** maintained for different message formats
    - **Comprehensive tab data storage** with performance metrics, settings, and timer tracking
    - **Automatic memory cleanup** when tabs are garbage collected
    - **Reverse lookup cache** for efficient tab reference management

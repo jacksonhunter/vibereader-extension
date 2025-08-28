@@ -237,7 +237,7 @@ class VibeReaderPopup {
           browser.tabs
             .sendMessage(tab.id, {
               action: "toggleVibeDebug",
-              enabled: enabled,
+              enabled,
             })
             .catch(() => {}); // Ignore tabs without content scripts
         }

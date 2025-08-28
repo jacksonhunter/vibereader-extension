@@ -92,60 +92,61 @@ if (window.__vibeReaderProxyController) {
             }
 
             setupEventListeners() {
+                // Use consistent broker reference
                 // ============== EXTRACTION EVENTS ==============
-                this.messageBroker.on('extraction-start', () => {
+                this.broker.on('extraction-start', () => {
                     console.log('🚀 Extraction starting');
                     this.addToDiagnostics('INFO', 'Content extraction initiated', 'SYSADMIN');
                     this.updateTerminalStatus('initializing', 0);
                 });
 
-                this.messageBroker.on('extraction-progress', (data) => {
+                this.broker.on('extraction-progress', (data) => {
                     console.log(`📊 Extraction progress: ${data.status} - ${data.progress}%`);
                     this.showExtractionProgress(data.status, data.progress);
                     this.addToDiagnostics('INFO', `Extraction: ${data.status} (${data.progress}%)`, 'NETMON');
                 });
 
-                this.messageBroker.on('extraction-complete', (data) => {
+                this.broker.on('extraction-complete', (data) => {
                     console.log('✅ Extraction complete');
                     this.displayExtractedContent(data.content, data.metadata);
                     this.addToDiagnostics('INFO', `Content extracted: ${data.metadata?.title || 'Untitled'}`, 'SYSADMIN');
                     // Emit CSS debugging event after content loads
-                    this.messageBroker.emit('content-loaded', {metadata: data.metadata});
+                    this.broker.emit('content-loaded', {metadata: data.metadata});
                 });
 
-                this.messageBroker.on('extraction-failed', (error) => {
+                this.broker.on('extraction-failed', (error) => {
                     console.error('❌ Extraction failed:', error);
                     this.showError(error.message || 'Extraction failed');
                     this.addToDiagnostics('ERR', `Extraction failed: ${error.message}`, 'SYSADMIN');
                 });
 
                 // ============== CSS & STYLING EVENTS ==============
-                this.messageBroker.on('css-loading', () => {
+                this.broker.on('css-loading', () => {
                     console.log('CSS: 🎨 Loading stylesheets...');
                     this.addToDiagnostics('INFO', 'Loading CSS resources', 'CSS');
                 });
 
-                this.messageBroker.on('css-loaded', (data) => {
+                this.broker.on('css-loaded', (data) => {
                     console.log('CSS: ✅ Stylesheets loaded successfully');
                     this.addToDiagnostics('INFO', `CSS loaded: ${data.rules || 0} rules`, 'CSS');
                     this.debugCSSVariables();
                 });
 
-                this.messageBroker.on('css-failed', (error) => {
+                this.broker.on('css-failed', (error) => {
                     console.error('CSS: ❌ Failed to load:', error);
                     this.addToDiagnostics('ERR', `CSS load failed: ${error.message}`, 'CSS');
                     // Try fallback CSS injection
-                    this.messageBroker.emit('css-fallback-needed', {error});
+                    this.broker.emit('css-fallback-needed', {error});
                 });
 
-                this.messageBroker.on('css-verification', (data) => {
+                this.broker.on('css-verification', (data) => {
                     if (data.attempt) {
                         console.log(`CSS: ⏳ Verification attempt ${data.attempt}/${data.maxAttempts}`);
                         this.addToDiagnostics('INFO', `CSS verification attempt ${data.attempt}`, 'CSS');
                     }
                 });
 
-                this.messageBroker.on('theme-change', (data) => {
+                this.broker.on('theme-change', (data) => {
                     console.log(`🎨 Theme changed to: ${data.theme}`);
                     this.applyTheme(data.theme);
                     this.updateButtonTexts();
@@ -153,12 +154,12 @@ if (window.__vibeReaderProxyController) {
                 });
 
                 // ============== MEDIA PROCESSING EVENTS ==============
-                this.messageBroker.on('media-found', (data) => {
+                this.broker.on('media-found', (data) => {
                     console.log(`📷 Found ${data.count} media items`);
                     this.addToDiagnostics('INFO', `Found ${data.count} ${data.type} items`, 'MEDIA');
                 });
 
-                this.messageBroker.on('media-mode-change', (data) => {
+                this.broker.on('media-mode-change', (data) => {
                     console.log(`🖼️ Media mode changed to: ${data.mode}`);
                     this.settings.mediaMode = data.mode;
 
@@ -172,23 +173,23 @@ if (window.__vibeReaderProxyController) {
                     this.addToDiagnostics('INFO', `Media mode: ${data.mode}`, 'MEDIA');
                 });
 
-                this.messageBroker.on('ascii-conversion-start', (data) => {
+                this.broker.on('ascii-conversion-start', (data) => {
                     console.log('🎯 Starting ASCII conversion:', data.src);
                     this.addToDiagnostics('INFO', `Converting image to ASCII`, 'ASCII');
                 });
 
-                this.messageBroker.on('ascii-conversion-complete', (data) => {
+                this.broker.on('ascii-conversion-complete', (data) => {
                     console.log('✅ ASCII conversion complete');
                     this.addToDiagnostics('INFO', `ASCII conversion successful`, 'ASCII');
                 });
 
-                this.messageBroker.on('ascii-conversion-failed', (error) => {
+                this.broker.on('ascii-conversion-failed', (error) => {
                     console.error('❌ ASCII conversion failed:', error);
                     this.addToDiagnostics('ERR', `ASCII conversion failed: ${error.message}`, 'ASCII');
                 });
 
                 // ============== TERMINAL & LOGGING EVENTS ==============
-                this.messageBroker.on('terminal-log', (data) => {
+                this.broker.on('terminal-log', (data) => {
                     this.logToTerminal(
                         data.level || 'INFO',
                         data.message || '',
@@ -198,7 +199,7 @@ if (window.__vibeReaderProxyController) {
                     );
                 });
 
-                this.messageBroker.on('terminal-category-toggle', (data) => {
+                this.broker.on('terminal-category-toggle', (data) => {
                     const {category, expanded} = data;
                     if (this.diagnosticCategories[category]) {
                         this.diagnosticCategories[category].expanded = expanded;
@@ -206,7 +207,7 @@ if (window.__vibeReaderProxyController) {
                     }
                 });
 
-                this.messageBroker.on('terminal-clear', (data) => {
+                this.broker.on('terminal-clear', (data) => {
                     const side = data.side || 'both';
                     if (side === 'left' || side === 'both') {
                         this.sysadminLogs = [];
@@ -217,33 +218,33 @@ if (window.__vibeReaderProxyController) {
                     if (side === 'right' || side === 'both') {
                         this.networkLogs = [];
                     }
-                    this.messageBroker.emit('terminals-updated', {cleared: side});
+                    this.broker.emit('terminals-updated', {cleared: side});
                 });
 
                 // ============== ERROR HANDLING EVENTS ==============
-                this.messageBroker.on('error', (error) => {
+                this.broker.on('error', (error) => {
                     console.error('❌ Error event:', error);
                     this.showError(error.message || 'Unknown error');
                     this.addToDiagnostics('ERR', error.message, 'ERRORS');
                 });
 
-                this.messageBroker.on('warning', (warning) => {
+                this.broker.on('warning', (warning) => {
                     console.warn('⚠️ Warning:', warning);
                     this.addToDiagnostics('WARN', warning.message, 'SYSTEM');
                 });
 
-                this.messageBroker.on('console-error', (data) => {
+                this.broker.on('console-error', (data) => {
                     // Capture console errors
                     this.addToDiagnostics('ERR', `Console: ${data.message}`, 'ERRORS');
                 });
 
                 // ============== TAB LIFECYCLE EVENTS ==============
-                this.messageBroker.on('activation-start', () => {
+                this.broker.on('activation-start', () => {
                     console.log('🔥 Starting Vibe Mode activation');
                     this.addToDiagnostics('INFO', 'Vibe Mode activating...', 'SYSTEM');
                 });
 
-                this.messageBroker.on('activation-complete', () => {
+                this.broker.on('activation-complete', () => {
                     console.log('✅ Vibe Mode activated');
                     this.isActive = true;
                     this.addToDiagnostics('INFO', 'Vibe Mode active', 'SYSTEM');
@@ -251,36 +252,36 @@ if (window.__vibeReaderProxyController) {
                     if (statusEl) statusEl.textContent = '[ ACTIVE ]';
                 });
 
-                this.messageBroker.on('deactivation-request', () => {
+                this.broker.on('deactivation-request', () => {
                     console.log('🔌 Deactivation requested');
                     this.requestDeactivation();
                 });
 
-                this.messageBroker.on('deactivation-complete', () => {
+                this.broker.on('deactivation-complete', () => {
                     console.log('✅ Vibe Mode deactivated');
                     this.isActive = false;
                     this.deactivate();
                 });
 
-                this.messageBroker.on('hidden-tab-created', (data) => {
+                this.broker.on('hidden-tab-created', (data) => {
                     console.log('🌐 Hidden tab created:', data.hiddenTabId);
                     this.addToDiagnostics('INFO', `Hidden tab: ${data.hiddenTabId}`, 'NETWORK');
                 });
 
-                this.messageBroker.on('hidden-tab-closed', (data) => {
+                this.broker.on('hidden-tab-closed', (data) => {
                     console.warn('⚠️ Hidden tab closed unexpectedly');
                     this.handleHiddenTabClosed(data.error);
                     this.addToDiagnostics('WARN', 'Hidden tab connection lost', 'NETWORK');
                 });
 
                 // ============== SETTINGS & CONFIG EVENTS ==============
-                this.messageBroker.on('settings-update', (settings) => {
+                this.broker.on('settings-update', (settings) => {
                     console.log('⚙️ Settings updated:', settings);
                     this.updateSettings(settings);
                     this.addToDiagnostics('INFO', 'Settings updated', 'SYSTEM');
                 });
 
-                this.messageBroker.on('settings-loaded', (settings) => {
+                this.broker.on('settings-loaded', (settings) => {
                     console.log('⚙️ Settings loaded:', settings);
                     this.settings = {...this.settings, ...settings};
                     this.currentTheme = this.settings.theme || 'nightdrive';
@@ -288,7 +289,7 @@ if (window.__vibeReaderProxyController) {
                 });
 
                 // ============== NETWORK & BACKGROUND EVENTS ==============
-                this.messageBroker.on('background-message', (data) => {
+                this.broker.on('background-message', (data) => {
                     // Handle messages from background script
                     this.logToTerminal(
                         data.level || 'INFO',
@@ -299,16 +300,16 @@ if (window.__vibeReaderProxyController) {
                     );
                 });
 
-                this.messageBroker.on('network-request', (data) => {
+                this.broker.on('network-request', (data) => {
                     this.addToDiagnostics('INFO', `${data.method} ${data.url}`, 'NETWORK');
                 });
 
-                this.messageBroker.on('network-response', (data) => {
+                this.broker.on('network-response', (data) => {
                     this.addToDiagnostics('INFO', `Response: ${data.status}`, 'NETWORK');
                 });
 
                 // ============== UI INTERACTION EVENTS ==============
-                this.messageBroker.on('button-click', (data) => {
+                this.broker.on('button-click', (data) => {
                     switch (data.action) {
                         case 'cycle-theme':
                             this.cycleTheme();
@@ -322,36 +323,36 @@ if (window.__vibeReaderProxyController) {
                     }
                 });
 
-                this.messageBroker.on('media-item-click', (data) => {
+                this.broker.on('media-item-click', (data) => {
                     if (data.wrapper) {
                         this.cycleMediaItem(data.wrapper);
                     }
                 });
 
                 // ============== PERFORMANCE & DEBUG EVENTS ==============
-                this.messageBroker.on('performance-metric', (data) => {
+                this.broker.on('performance-metric', (data) => {
                     console.log(`⚡ Performance: ${data.metric} = ${data.value}ms`);
                     this.addToDiagnostics('INFO', `${data.metric}: ${data.value}ms`, 'SYSTEM');
                 });
 
-                this.messageBroker.on('debug-info', (data) => {
+                this.broker.on('debug-info', (data) => {
                     console.log('🔍 Debug:', data);
                     if (this.settings.debug) {
                         this.addToDiagnostics('LOG', `Debug: ${JSON.stringify(data)}`, 'SYSTEM');
                     }
                 });
 
-                this.messageBroker.on('memory-warning', (data) => {
+                this.broker.on('memory-warning', (data) => {
                     console.warn('⚠️ Memory warning:', data);
                     this.addToDiagnostics('WARN', `Memory usage: ${data.usage}MB`, 'SYSTEM');
                     // Trigger cleanup if needed
                     if (data.usage > 100) {
-                        this.messageBroker.emit('cleanup-needed', {reason: 'memory'});
+                        this.broker.emit('cleanup-needed', {reason: 'memory'});
                     }
                 });
 
                 // ============== CLEANUP EVENTS ==============
-                this.messageBroker.on('cleanup-needed', (data) => {
+                this.broker.on('cleanup-needed', (data) => {
                     console.log('🧹 Cleanup triggered:', data.reason);
                     // Clear old logs
                     Object.keys(this.diagnosticCategories).forEach(cat => {
@@ -366,13 +367,13 @@ if (window.__vibeReaderProxyController) {
                 });
 
                 // ============== FRAMEWORK DETECTION EVENTS ==============
-                this.messageBroker.on('framework-detected', (data) => {
+                this.broker.on('framework-detected', (data) => {
                     console.log(`🔍 Framework detected: ${data.framework}`);
                     this.addToDiagnostics('INFO', `Framework: ${data.framework}`, 'NETWORK');
                 });
 
                 // ============== READABILITY EVENTS ==============
-                this.messageBroker.on('readability-score', (data) => {
+                this.broker.on('readability-score', (data) => {
                     console.log(`📊 Readability score: ${data.score}`);
                     this.addToDiagnostics('INFO', `Readability: ${data.score}`, 'SYSTEM');
                 });
@@ -521,9 +522,10 @@ if (window.__vibeReaderProxyController) {
                 this.sysadminLogs = [];
                 this.networkLogs = [];
                 this.maxLogsPerTerminal = 10;
-                this.messageBroker = new MessageBroker(this);
+                this.broker = new MessageBroker();
                 this.centralizedLogger = new CentralizedLogger(this);
                 this.setupEventListeners();
+                this.setupMessageHandlers();
 
                 // hook to vibelogger
                 if (window.__VibeReaderUtils.VibeLogger) {  // or messageDebugger, whatever you call it
@@ -943,12 +945,7 @@ if (window.__vibeReaderProxyController) {
                 const initStart = performance.now();
 
                 try {
-                    // Get and store current tab ID
-                    browser.runtime.sendMessage({action: 'getTabId'})
-                        .then(response => {
-                            this.tabId = response.tabId;
-                        })
-                        .catch(err => console.error('Failed to get tab ID:', err));
+                    // Tab ID will be available through broker context
                     console.log('🎮 ProxyController.init() starting:', {
                         url: window.location.href, timestamp: new Date().toISOString()
                     });
@@ -962,11 +959,7 @@ if (window.__vibeReaderProxyController) {
                     // Setup enhanced error capture
                     this.setupEnhancedErrorCapture();
 
-                    // Set up message listener with error handling
-                    browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-                        this.handleMessageSafe(request, sender, sendResponse);
-                        return true; // Keep channel open
-                    });
+                    // MessageBroker was already initialized in constructor
 
                     // Load settings
                     this.loadSettings();
@@ -982,17 +975,6 @@ if (window.__vibeReaderProxyController) {
                 }
             }
 
-            async handleMessageSafe(request, sender, sendResponse) {
-                try {
-                    const result = await this.handleMessage(request, sender);
-                    sendResponse(MessageSerializer.serialize(result));
-                } catch (error) {
-                    console.error('❌ Message handling error:', error);
-                    sendResponse({
-                        success: false, error: error.message || 'Unknown error'
-                    });
-                }
-            }
 
             // ====== LOGGING HELPER METHODS ======
             categorizeMessage(message) {
@@ -1007,9 +989,9 @@ if (window.__vibeReaderProxyController) {
                     return 'ASCII';
                 } else if (lowerMsg.includes('bg:') || lowerMsg.includes('extraction') || lowerMsg.includes('proxy') || lowerMsg.includes('netmon') || lowerMsg.includes('framework') || lowerMsg.includes('injection')) {
                     return 'NETWORK';
-                } else {
+                } 
                     return 'SYSTEM';
-                }
+                
             }
 
             getCategoryIcon(category) {
@@ -1023,73 +1005,59 @@ if (window.__vibeReaderProxyController) {
                 return icons[category] || '📝';
             }
 
-            async handleMessage(request, sender) {
-                console.log('📨 Received message:', request.action);
-
-                switch (request.action) {
-                    case 'ping':
-                        return {success: true, type: 'proxy'};
-
-                    case 'displayContent':
-                        this.displayExtractedContent(request.content, request.metadata);
-                        return {success: true};
-
-                    case 'extractionProgress':
-                        this.showExtractionProgress(request.status, request.progress);
-                        return {success: true};
-
-                    case 'deactivate':
-                        this.deactivate();
-                        return {success: true};
-
-                    case 'showError':
-                        this.showError(request.error);
-                        return {success: true};
-
-                    case 'hiddenTabClosed':
-                        this.handleHiddenTabClosed(request.error);
-                        return {success: true};
-
-                    case 'updateSettings':
-                        this.updateSettings(request.settings);
-                        return {success: true};
-
-                    case 'getStatus':
-                        return {active: this.isActive};
-
-                    case 'logFromBackground':
-                        // Route background logs through the centralized logging system
-                        this.logToTerminal(
-                            request.level || 'INFO',
-                            request.message || 'Unknown message',
-                            request.category || 'SYSTEM',
-                            request.source || 'background',
-                            request.metadata || {}
-                        );
-                        return {success: true};
-
-                    case 'terminalLog':
-                        // Handle external terminal logging
-                        this.logToTerminal(
-                            request.level || 'INFO',
-                            request.message || 'Unknown message',
-                            request.category || 'SYSTEM',
-                            request.source || 'external',
-                            request.metadata || {}
-                        );
-                        return {success: true};
-
-                    default:
-                        console.warn('Unknown message action:', request.action);
-                        return {success: false, error: 'Unknown action'};
-                }
+            setupMessageHandlers() {
+                // Register all action handlers with the broker
+                this.broker.register('ping', () => ({ success: true, type: 'proxy' }));
+                this.broker.register('displayContent', (request) => {
+                    this.displayExtractedContent(request.content, request.metadata);
+                    return { success: true };
+                });
+                this.broker.register('extractionProgress', (request) => {
+                    this.showExtractionProgress(request.status, request.progress);
+                    return { success: true };
+                });
+                this.broker.register('deactivate', () => {
+                    this.deactivate();
+                    return { success: true };
+                });
+                this.broker.register('showError', (request) => {
+                    this.showError(request.error);
+                    return { success: true };
+                });
+                this.broker.register('hiddenTabClosed', (request) => {
+                    this.handleHiddenTabClosed(request.error);
+                    return { success: true };
+                });
+                this.broker.register('updateSettings', (request) => {
+                    this.updateSettings(request.settings);
+                    return { success: true };
+                });
+                this.broker.register('getStatus', () => ({ active: this.isActive }));
+                this.broker.register('logFromBackground', (request) => {
+                    this.logToTerminal(
+                        request.level || 'INFO',
+                        request.message || 'Unknown message',
+                        request.category || 'SYSTEM',
+                        request.source || 'background',
+                        request.metadata || {}
+                    );
+                    return { success: true };
+                });
+                this.broker.register('terminalLog', (request) => {
+                    this.logToTerminal(
+                        request.level || 'INFO',
+                        request.message || 'Unknown message',
+                        request.category || 'SYSTEM',
+                        request.source || 'external',
+                        request.metadata || {}
+                    );
+                    return { success: true };
+                });
             }
 
             async loadSettings() {
                 try {
-                    const response = await browser.runtime.sendMessage({
-                        action: 'getSettings'
-                    });
+                    const response = await this.broker.send(null, 'getSettings');
 
                     if (response && typeof response === 'object') {
                         this.settings = {...this.settings, ...response};
@@ -1119,9 +1087,7 @@ if (window.__vibeReaderProxyController) {
                     }
                 }
 
-                browser.runtime.sendMessage({
-                    action: 'saveSettings', settings: this.settings
-                }).catch(error => {
+                this.broker.send(null, 'saveSettings', { settings: this.settings }).catch(error => {
                     console.error('Failed to save settings:', error);
                 });
             }
@@ -1135,9 +1101,7 @@ if (window.__vibeReaderProxyController) {
                     this.hideOriginalContent();
                     this.createInterface();
 
-                    browser.runtime.sendMessage({
-                        action: 'updateBadge', active: true
-                    }).catch(error => {
+                    this.broker.send(null, 'updateBadge', { active: true }).catch(error => {
                         console.error('Failed to update badge:', error);
                     });
 
@@ -1158,7 +1122,7 @@ if (window.__vibeReaderProxyController) {
                 document.documentElement.style.overflow = 'hidden';
 
                 const elements = document.body.children;
-                for (let el of elements) {
+                for (const el of elements) {
                     if (!el.classList.contains('vibe-reader-container')) {
                         const originalDisplay = el.style.display;
                         el.style.display = 'none';
@@ -1485,7 +1449,7 @@ if (window.__vibeReaderProxyController) {
                             mediaIcons: {image: '🎴', video: '📹'}
                         }
                     };
-                    config = THEME_CONFIGS[this.currentTheme] || THEME_CONFIGS['nightdrive'];
+                    config = THEME_CONFIGS[this.currentTheme] || THEME_CONFIGS.nightdrive;
                 }
 
                 return isVideo ? config.mediaIcons.video : config.mediaIcons.image;
@@ -1493,7 +1457,7 @@ if (window.__vibeReaderProxyController) {
 
             createAsciiDisplay(isVideo) {
                 const theme = this.getThemedAsciiPlaceholder(this.currentTheme);
-                const label = isVideo ? theme['video'] : theme['image'];
+                const label = isVideo ? theme.video : theme.image;
 
                 return `
                 <div class="flex items-center justify-center p-4 text-text-muted">
@@ -1530,7 +1494,7 @@ if (window.__vibeReaderProxyController) {
                 try {
                     // Enhanced debug logging with dump() output
                     console.log('🎯 ASCII Conversion ENTRY POINT:', {
-                        src: src, wrapperExists: !!wrapper, aalibExists: !!aalib
+                        src, wrapperExists: !!wrapper, aalibExists: !!aalib
                     });
                     if (typeof dump !== 'undefined') {
                         dump(`[ASCII] 🎯 ASCII Conversion starting for: ${src}\n`);
@@ -1627,7 +1591,7 @@ if (window.__vibeReaderProxyController) {
                         }))
                         .map(aalib.render.canvas({
                             el: canvas,
-                            fontFamily: fontFamily,
+                            fontFamily,
                             fontSize: this.fontMetrics.fontSize,
                             charWidth: this.fontMetrics.charWidth,
                             lineHeight: this.fontMetrics.lineHeight,
@@ -1658,7 +1622,7 @@ if (window.__vibeReaderProxyController) {
                                 const themeData = this.getThemedAsciiPlaceholder(theme);
                                 const placeholder = document.createElement('div');
                                 placeholder.className = 'flex items-center justify-center p-4 text-error-400';
-                                placeholder.textContent = themeData['image'] || '⚠️ CONVERSION FAILED';
+                                placeholder.textContent = themeData.image || '⚠️ CONVERSION FAILED';
                                 wrapper.appendChild(placeholder);
                             }
                         });
@@ -1670,7 +1634,7 @@ if (window.__vibeReaderProxyController) {
                     const themeData = this.getThemedAsciiPlaceholder(this.currentTheme || 'nightdrive');
                     const placeholder = document.createElement('div');
                     placeholder.className = 'flex items-center justify-center p-4 text-error-400';
-                    placeholder.textContent = themeData['image'] || '⚠️ CONVERSION FAILED';
+                    placeholder.textContent = themeData.image || '⚠️ CONVERSION FAILED';
                     wrapper.innerHTML = '';
                     wrapper.appendChild(placeholder);
                 }
@@ -1810,7 +1774,7 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_)  (_,_) `
                     },
                 };
-                return placeholders[theme] || placeholders['nightdrive'];
+                return placeholders[theme] || placeholders.nightdrive;
             }
 
 
@@ -1932,7 +1896,7 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
                     }
                 };
 
-                const currentConfig = THEME_CONFIGS[this.currentTheme] || THEME_CONFIGS['nightdrive'];
+                const currentConfig = THEME_CONFIGS[this.currentTheme] || THEME_CONFIGS.nightdrive;
 
                 if (themeBtn) {
                     themeBtn.textContent = currentConfig.themeBtn;
@@ -1951,9 +1915,7 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
             }
 
             requestDeactivation() {
-                browser.runtime.sendMessage({
-                    action: 'updateBadge', active: false
-                }).catch(error => {
+                this.broker.send(null, 'updateBadge', { active: false }).catch(error => {
                     console.error('Failed to update badge:', error);
                 });
 
@@ -1965,8 +1927,8 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
                     console.log('🔌 ProxyController deactivating...');
 
                     // Clear event listeners
-                    if (this.messageBroker) {
-                        this.messageBroker.listeners.clear();
+                    if (this.broker) {
+                        this.broker.listeners.clear();
                     }
 
                     // Restore console (FIX: use underscore)
@@ -1978,8 +1940,8 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
                     }
 
                     // Clear message queue
-                    if (this.messageBroker) {
-                        this.messageBroker.messageQueue = [];
+                    if (this.broker) {
+                        this.broker.messageQueue = [];
                     }
 
                     // Remove DOM
@@ -2058,9 +2020,9 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
                     return 'Unable to parse page content. May be a dynamic app or unsupported format.';
                 } else if (error.includes('Injection failed')) {
                     return 'Failed to inject content scripts. Page may block extensions.';
-                } else {
+                } 
                     return 'Unknown extraction error occurred.';
-                }
+                
             }
 
             handleHiddenTabClosed(error) {
@@ -2164,7 +2126,7 @@ Y8b Y888P  "   e88 888  ,e e,   e88 88e
                 let latestMessage = '';
                 for (const cat of categories) {
                     const logs = this.diagnosticCategories[cat].logs;
-                    if (logs.length > 0) {
+                    if (logs.length) {
                         const latest = logs[0];
                         if (latest.count > 1) {
                             latestMessage = `${latest.message.substring(0, 30)} x${latest.count}`;

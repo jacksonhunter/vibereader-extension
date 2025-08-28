@@ -20,17 +20,21 @@ if (window.__vibeReaderUtils) {
 
     class VibeLogger {
       constructor() {
-        this.enabled = false;
+        this.enabled = true;
         this.logToConsole = true;
-        this.logToStorage = false;
+        this.logToStorage = true;
         this.logToTerminal = true;
         this.messageLog = [];
         this.maxLogSize = 500;
         this.filters = {
-          actions: [], // Only log these actions if set
-          exclude: ["ping"], // Never log these actions
-          sources: [], // Only log from these sources if set
+          actions: [],
+          exclude: ["ping"],
+          sources: [],
         };
+
+        // Store TRULY native functions before ANY wrapping
+        this.nativeSendMessage = null;
+        this.nativeTabsSendMessage = null;
 
         // Color coding for different components
         this.colors = {
@@ -57,38 +61,41 @@ if (window.__vibeReaderUtils) {
       }
 
       async init() {
-        // Load settings FIRST and wait
         await this.loadDebugSettings();
-
-        // Detect context
         this.context = detectVibeContext();
 
-        // Store original functions
-        if (typeof browser !== "undefined") {
-          this.originalSendMessage = browser.runtime.sendMessage;
-          if (browser.tabs?.sendMessage) {
-            this.originalTabsSendMessage = browser.tabs.sendMessage;
+        // Only store natives if we haven't already
+        if (typeof browser !== "undefined" && browser.runtime) {
+          if (!browser.runtime.__vibeNatives) {
+            // Store the TRULY native functions globally
+            browser.runtime.__vibeNatives = {
+              sendMessage: browser.runtime.sendMessage.bind(browser.runtime),
+              tabsSendMessage: browser.tabs?.sendMessage?.bind(browser.tabs),
+            };
+          }
+
+          // Always use the stored natives
+          this.nativeSendMessage = browser.runtime.__vibeNatives.sendMessage;
+          this.nativeTabsSendMessage =
+            browser.runtime.__vibeNatives.tabsSendMessage;
+
+          if (this.enabled && !browser.runtime.__vibeWrapped) {
+            this.wrapMessagingAPIs();
+            browser.runtime.__vibeWrapped = true;
           }
         }
 
-        // Only wrap if previously enabled
-        if (this.enabled) {
-          this.wrapMessagingAPIs();
-        }
-
-        // Listen for toggle messages from popup
+        // Listen for toggle messages
         if (typeof browser !== "undefined") {
           browser.runtime.onMessage.addListener((message) => {
             if (message.action === "toggleVibeDebug") {
               if (message.enabled !== undefined) {
-                // Explicit enable/disable from popup
                 if (message.enabled && !this.enabled) {
                   this.enable();
                 } else if (!message.enabled && this.enabled) {
                   this.disable();
                 }
               } else {
-                // Just toggle
                 this.toggle();
               }
               return Promise.resolve({ enabled: this.enabled });
@@ -96,7 +103,6 @@ if (window.__vibeReaderUtils) {
           });
         }
 
-        // Inject into console for easy access
         if (typeof window !== "undefined") {
           window.vibeDebug = this;
         }
@@ -116,33 +122,31 @@ if (window.__vibeReaderUtils) {
         }
       }
 
-      unwrapMessagingAPIs() {
-        // Restore original functions
-        browser.runtime.sendMessage = this.originalSendMessage;
-
-        if (browser.tabs?.sendMessage) {
-          browser.tabs.sendMessage = this.originalTabsSendMessage;
-        }
-      }
-
       wrapMessagingAPIs() {
-        if (!this.originalSendMessage) return; // No originals stored
+        if (!this.nativeSendMessage) return;
 
         const self = this;
+        const BYPASS_LOGGING = Symbol("bypass");
 
         // Wrap browser.runtime.sendMessage
         browser.runtime.sendMessage = function (message) {
-          self.logMessage("send", message.action || "unknown", message, {
+          // Check for bypass BEFORE doing anything else
+          if (message?.action === "terminalLog" || message?.[BYPASS_LOGGING]) {
+            delete message[BYPASS_LOGGING];
+            return self.nativeSendMessage(message);
+          }
+
+          self.logMessage("send", message?.action || "unknown", message, {
             source: self.context,
             target: "background",
           });
 
-          return self.originalSendMessage
-            .apply(this, arguments)
+          return self
+            .nativeSendMessage(message)
             .then((response) => {
               self.logMessage(
                 "response",
-                message.action || "unknown",
+                message?.action || "unknown",
                 response,
                 {
                   source: "background",
@@ -154,7 +158,7 @@ if (window.__vibeReaderUtils) {
             .catch((error) => {
               self.logMessage(
                 "error",
-                message.action || "unknown",
+                message?.action || "unknown",
                 { error: error.message },
                 {
                   source: self.context,
@@ -165,25 +169,34 @@ if (window.__vibeReaderUtils) {
         };
 
         // Wrap tabs.sendMessage if available
-        if (browser.tabs?.sendMessage && this.originalTabsSendMessage) {
+        if (browser.tabs?.sendMessage && this.nativeTabsSendMessage) {
           browser.tabs.sendMessage = function (tabId, message) {
-            self.logMessage("send", message.action || "unknown", message, {
+            // Check for bypass BEFORE doing anything else
+            if (
+              message?.action === "terminalLog" ||
+              message?.[BYPASS_LOGGING]
+            ) {
+              delete message[BYPASS_LOGGING];
+              return self.nativeTabsSendMessage(tabId, message);
+            }
+
+            self.logMessage("send", message?.action || "unknown", message, {
               source: self.context,
               target: `tab-${tabId}`,
-              tabId: tabId,
+              tabId,
             });
 
-            return self.originalTabsSendMessage
-              .apply(this, arguments)
+            return self
+              .nativeTabsSendMessage(tabId, message)
               .then((response) => {
                 self.logMessage(
                   "response",
-                  message.action || "unknown",
+                  message?.action || "unknown",
                   response,
                   {
                     source: `tab-${tabId}`,
                     target: self.context,
-                    tabId: tabId,
+                    tabId,
                   },
                 );
                 return response;
@@ -191,17 +204,32 @@ if (window.__vibeReaderUtils) {
               .catch((error) => {
                 self.logMessage(
                   "error",
-                  message.action || "unknown",
+                  message?.action || "unknown",
                   { error: error.message },
                   {
                     source: self.context,
                     target: `tab-${tabId}`,
-                    tabId: tabId,
+                    tabId,
                   },
                 );
                 throw error;
               });
           };
+        }
+      }
+
+      unwrapMessagingAPIs() {
+        if (browser.runtime.__vibeNatives) {
+          browser.runtime.sendMessage =
+            browser.runtime.__vibeNatives.sendMessage;
+          if (
+            browser.tabs?.sendMessage &&
+            browser.runtime.__vibeNatives.tabsSendMessage
+          ) {
+            browser.tabs.sendMessage =
+              browser.runtime.__vibeNatives.tabsSendMessage;
+          }
+          browser.runtime.__vibeWrapped = false;
         }
       }
 
@@ -252,8 +280,8 @@ if (window.__vibeReaderUtils) {
         const entry = {
           id: this.generateId(),
           timestamp: Date.now(),
-          type: type, // 'send', 'receive', 'broadcast', 'error', 'forward'
-          action: action,
+          type, // 'send', 'receive', 'broadcast', 'error', 'forward'
+          action,
           data: this.sanitizeData(data),
           context: {
             source: context.source || this.context,
@@ -319,7 +347,7 @@ if (window.__vibeReaderUtils) {
         console.group(header, style);
 
         // Show data if present
-        if (entry.data && Object.keys(entry.data).length > 0) {
+        if (entry.data && Object.keys(entry.data).length) {
           console.log(
             "%c📦 Data:",
             "color: #3498db; font-weight: bold;",
@@ -349,7 +377,7 @@ if (window.__vibeReaderUtils) {
         }
 
         // Show call stack for tracing
-        if (entry.context.stack && entry.context.stack.length > 0) {
+        if (entry.context.stack && entry.context.stack.length) {
           console.log("%c📍 Call Stack:", "color: #95a5a6; font-size: 10px;");
           entry.context.stack.forEach((frame, i) => {
             console.log(`  ${i}: ${frame}`);
@@ -372,11 +400,12 @@ if (window.__vibeReaderUtils) {
           };
 
           // Try to send to active tabs
-          if (browser?.tabs) {
+          if (browser?.tabs && this.nativeTabsSendMessage) {
             const tabs = await browser.tabs.query({});
-            tabs.forEach((tab) => {
-              browser.tabs.sendMessage(tab.id, message).catch(() => {});
-            });
+            for (const tab of tabs) {
+              // Use the NATIVE function directly for terminal messages
+              await this.nativeTabsSendMessage(tab.id, message).catch(() => {});
+            }
           }
         } catch (e) {
           // Terminal might not be available
@@ -456,7 +485,7 @@ if (window.__vibeReaderUtils) {
 
         // Check action filter
         if (
-          this.filters.actions.length > 0 &&
+          this.filters.actions.length &&
           !this.filters.actions.includes(action)
         ) {
           return false;
@@ -464,7 +493,7 @@ if (window.__vibeReaderUtils) {
 
         // Check source filter
         if (
-          this.filters.sources.length > 0 &&
+          this.filters.sources.length &&
           !this.filters.sources.includes(source)
         ) {
           return false;
@@ -481,7 +510,7 @@ if (window.__vibeReaderUtils) {
       dumpLog() {
         console.log(
           "%c📊 VibeReader Message Log Dump",
-          "background: #2c3e50; color: white; padding: 10px; font-size: 14px; font-weight: bold;",
+          "color: #667eea; padding: 10px; font-size: 14px; font-weight: bold;",
         );
 
         console.table(
@@ -502,7 +531,7 @@ if (window.__vibeReaderUtils) {
       analyzeFlow() {
         console.log(
           "%c🔍 Message Flow Analysis",
-          "background: #34495e; color: white; padding: 10px; font-size: 12px; font-weight: bold;",
+          "color: #667eea; padding: 10px; font-size: 12px; font-weight: bold;",
         );
 
         // Count by action
@@ -683,55 +712,105 @@ if (window.__vibeReaderUtils) {
       }
     }
 
-    class MessageBroker {
-      constructor() {
-        this.listeners = new Map();
+      class MessageBroker {
+          constructor() {
+              this.handlers = new Map();
+              this.middlewares = [];
+              this.context = detectVibeContext();
+
+        // Auto-register as the message listener
+        if (typeof browser !== "undefined") {
+          browser.runtime.onMessage.addListener(
+            (request, sender, sendResponse) => {
+              this.dispatch(request, sender).then(sendResponse);
+              return true; // Keep channel open
+            },
+          );
+        }
       }
 
-      on(event, callback, options = {}) {
-        const listener = {
-          callback,
-          once: options.once || false,
-          priority: options.priority || 0,
-        };
-
-        if (!this.listeners.has(event)) {
-          this.listeners.set(event, []);
+      // Register action handlers
+      on(action, handler, options = {}) {
+        if (!this.handlers.has(action)) {
+          this.handlers.set(action, []);
         }
 
-        const listeners = this.listeners.get(event);
-        listeners.push(listener);
-        // Sort by priority (higher first)
-        listeners.sort((a, b) => b.priority - a.priority);
+        this.handlers.get(action).push({
+          handler,
+          priority: options.priority || 0,
+          validate: options.validate || null,
+        });
 
-        // Return unsubscribe function
-        return () => {
-          const index = listeners.indexOf(listener);
-          if (index !== -1) {
-            listeners.splice(index, 1);
-          }
-        };
+        // Sort by priority
+        this.handlers.get(action).sort((a, b) => b.priority - a.priority);
       }
 
-      emit(event, data) {
-        const listeners = this.listeners.get(event) || [];
-        const toRemove = [];
+      // Middleware for all messages
+      use(middleware) {
+        this.middlewares.push(middleware);
+      }
 
-        listeners.forEach((listener, index) => {
+      // Main dispatcher - replaces handleMessage
+      async dispatch(request, sender) {
+        const { action } = request;
+
+        // Run middlewares first
+        for (const middleware of this.middlewares) {
+          const result = await middleware(request, sender);
+          if (result === false)
+            return { success: false, error: "Blocked by middleware" };
+        }
+
+        // Get handlers for this action
+        const handlers = this.handlers.get(action) || [];
+
+        if (handlers.length === 0) {
+          console.warn("No handler for action:", action);
+          return { success: false, error: "Unknown action" };
+        }
+
+        // Run handlers in priority order
+        for (const { handler, validate } of handlers) {
+          // Optional validation
+          if (validate && !validate(request)) {
+            continue;
+          }
+
           try {
-            listener.callback(data);
-            if (listener.once) {
-              toRemove.push(index);
+            const result = await handler(request, sender);
+            if (result !== undefined) {
+              return result;
             }
           } catch (error) {
-            console.error(`Event handler error for ${event}:`, error);
+            console.error(`Handler error for ${action}:`, error);
+            // Continue to next handler
           }
-        });
+        }
 
-        // Remove once listeners
-        toRemove.reverse().forEach((index) => {
-          listeners.splice(index, 1);
+        return { success: false, error: "No handler returned a result" };
+      }
+
+      // Convenience method for simple responses
+      register(action, handler) {
+        this.on(action, async (request, sender) => {
+          // Handle both formats: request.data and direct request properties
+          const data = request.data || request;
+          const result = await handler(data, sender);
+          return { success: true, ...result };
         });
+      }
+
+      // Send message with automatic response handling
+      async send(target, action, data) {
+        const message = { action, data, from: this.context };
+
+        if (typeof target === "number") {
+          // Tab ID
+          return await browser.tabs.sendMessage(target, message);
+        } 
+          // Runtime message
+          return await browser.runtime.sendMessage(message);
+        
       }
     }
 
@@ -764,125 +843,23 @@ if (window.__vibeReaderUtils) {
 
     window.__vibeReaderUtils = {
       VibeLogger: new VibeLogger(),
-      MessageSerializer: MessageSerializer,
-      MessageBroker: MessageBroker,
-      ThrottledEmitter: ThrottledEmitter,
+      MessageSerializer,
+      MessageBroker,
+      ThrottledEmitter,
       detectVibeContext: detectVibeContext(),
     };
+      // Expose commonly used classes as globals for easier access
+      window.MessageBroker = MessageBroker;
+      window.MessageSerializer = MessageSerializer;
+      window.VibeLogger = window.__vibeReaderUtils.VibeLogger;
+      window.detectVibeContext = detectVibeContext()
 
     console.log("✅ VibeReader Message Serializer static class loaded");
-
-    // Wrap browser message APIs with debugging
-    if (typeof browser !== "undefined") {
-      // Wrap sendMessage
-      const originalSendMessage = browser.runtime.sendMessage;
-      browser.runtime.sendMessage = function (message) {
-        if (message[BYPASS_LOGGING]) {
-          delete message[BYPASS_LOGGING];
-          return originalSendMessage.call(this, message);
-        }
-
-        window.__vibeReaderUtils.VibeLogger.logMessage("send", message.action || "unknown", message, {
-          source: window.__vibeReaderUtils.VibeLogger.context,
-          target: "background",
-        });
-
-        return originalSendMessage
-          .apply(this, arguments)
-          .then((response) => {
-            window.__vibeReaderUtils.VibeLogger.logMessage(
-              "response",
-              message.action || "unknown",
-              response,
-              {
-                source: "background",
-                target: window.__vibeReaderUtils.VibeLogger.context,
-              },
-            );
-            return response;
-          })
-          .catch((error) => {
-            window.__vibeReaderUtils.VibeLogger.logMessage(
-              "error",
-              message.action || "unknown",
-              { error: error.message },
-              {
-                source: window.__vibeReaderUtils.VibeLogger.context,
-              },
-            );
-            throw error;
-          });
-      };
-
-      // Wrap tabs.sendMessage if available
-      if (browser.tabs?.sendMessage) {
-        const originalTabsSendMessage = browser.tabs.sendMessage;
-        browser.tabs.sendMessage = function (tabId, message) {
-          window.__vibeReaderUtils.VibeLogger.logMessage("send", message.action || "unknown", message, {
-            source: window.__vibeReaderUtils.VibeLogger.context,
-            target: `tab-${tabId}`,
-            tabId: tabId,
-          });
-
-          return originalTabsSendMessage
-            .apply(this, arguments)
-            .then((response) => {
-              window.__vibeReaderUtils.VibeLogger.logMessage(
-                "response",
-                message.action || "unknown",
-                response,
-                {
-                  source: `tab-${tabId}`,
-                  target: window.__vibeReaderUtils.VibeLogger.context,
-                  tabId: tabId,
-                },
-              );
-              return response;
-            })
-            .catch((error) => {
-              window.__vibeReaderUtils.VibeLogger.logMessage(
-                "error",
-                message.action || "unknown",
-                { error: error.message },
-                {
-                  source: window.__vibeReaderUtils.VibeLogger.context,
-                  target: `tab-${tabId}`,
-                  tabId: tabId,
-                },
-              );
-              throw error;
-            });
-        };
-      }
-
-      // Wrap onMessage listener
-      const originalAddListener = browser.runtime.onMessage.addListener;
-      browser.runtime.onMessage.addListener = function (listener) {
-        const wrappedListener = function (message, sender, sendResponse) {
-          window.__vibeReaderUtils.VibeLogger.logMessage(
-            "receive",
-            message.action || "unknown",
-            message,
-            {
-              source: sender.tab ? `tab-${sender.tab.id}` : "background",
-              target: window.__vibeReaderUtils.VibeLogger.context,
-              tabId: sender.tab?.id,
-              frameId: sender.frameId,
-              url: sender.url,
-            },
-          );
-
-          return listener(message, sender, sendResponse);
-        };
-
-        return originalAddListener.call(this, wrappedListener);
-      };
-    }
 
     // Console banner when loaded
     console.log(
       "%c🐛 VibeReader VibeLogger Loaded\nPress Ctrl+Shift+D to toggle debug mode\nPress Ctrl+Shift+L to dump log\nAccess via: window.vibeDebug",
-      "background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px; font-size: 12px; border-radius: 5px;",
+      "color: #667eea; padding: 10px; font-size: 12px; border-radius: 5px;",
     );
 
     // Convenience globals

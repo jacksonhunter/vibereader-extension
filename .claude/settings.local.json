@@ -11,7 +11,8 @@
       "Bash(npx tailwindcss init:*)",
       "Bash(mkdir:*)",
       "Bash(npm run build:css:prod:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(web-ext lint:*)"
     ],
     "deny": [],
     "ask": []
