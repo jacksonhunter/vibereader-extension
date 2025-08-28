@@ -119,21 +119,23 @@ if (window.__vibeReaderStealthExtractor) {
 
                         switch (this.frameworkDetected) {
                             case 'react':
-                            case 'nextjs':
+                            case 'nextjs': {
                                 const reactRoot = document.querySelector('[data-reactroot], #root, #__next');
                                 isReady = reactRoot && !!reactRoot.children.length;
                                 if (!isReady) {
                                     console.log('⏳ React/Next not hydrated yet...');
                                 }
                                 break;
+                            }
 
-                            case 'vue':
+                            case 'vue': {
                                 const vueApp = document.querySelector('#app');
                                 isReady = vueApp && (vueApp.hasAttribute('data-v-') || !!vueApp.children.length);
                                 if (!isReady) {
                                     console.log('⏳ Vue not mounted yet...');
                                 }
                                 break;
+                            }
 
                             default:
                                 isReady = !!document.body.children.length;
@@ -202,7 +204,18 @@ if (window.__vibeReaderStealthExtractor) {
 
                     this.preprocessDocument(documentClone);
 
-                    const reader = new Readability(documentClone, {
+                    const serialized = new XMLSerializer().serializeToString(documentClone);
+                    const cleanClone = DOMPurify.sanitize(serialized, {
+                        WHOLE_DOCUMENT: true,
+                        RETURN_DOM: true,
+                        ALLOWED_TAGS: null, // Allow all tags during extraction
+                        ALLOWED_ATTR: null, // Allow all attrs during extraction
+                        KEEP_CONTENT: true
+                    });
+
+                    this.loadLazies(cleanClone)
+
+                    const reader = new Readability(cleanClone, {
                         debug: false,
                         maxElemsToParse: 0,
                         nbTopCandidates: 5,
@@ -239,7 +252,7 @@ if (window.__vibeReaderStealthExtractor) {
                     'script',
                     'style',
                     'noscript',
-                    'iframe:not([src*="youtube"]):not([src*="vimeo"])',
+                    //'iframe:not([src*="youtube"]):not([src*="vimeo"])',
                     '.advertisement',
                     '.ads',
                     '[class*="ad-"]',
@@ -257,7 +270,7 @@ if (window.__vibeReaderStealthExtractor) {
                     'aside.sidebar',
                     'nav',
                     'header:not(article header)',
-                    'footer:not(article footer)'
+                    'footer:not(article footer)',
                 ];
 
                 selectorsToRemove.forEach(selector => {
@@ -268,6 +281,14 @@ if (window.__vibeReaderStealthExtractor) {
                     }
                 });
 
+                doc.querySelectorAll('*').forEach(el => {
+                    Array.from(el.attributes).forEach(attr => {
+                        if (attr.name.startsWith('on')) {
+                            el.removeAttribute(attr.name);
+                        }
+                        });
+                });
+
                 doc.querySelectorAll('[style*="display: none"], [style*="display:none"]').forEach(el => {
                     el.style.display = '';
                 });
@@ -276,6 +297,13 @@ if (window.__vibeReaderStealthExtractor) {
                     el.removeAttribute('hidden');
                 });
 
+                // Also check for javascript: protocol
+                doc.querySelectorAll('[href^="javascript:"], [src^="javascript:"]').forEach(el => {
+                    el.removeAttribute(el.hasAttribute('href') ? 'href' : 'src');
+                });
+            }
+
+            async loadLazies(doc) {
                 doc.querySelectorAll('img[data-src], img[data-lazy-src]').forEach(img => {
                     const src = img.getAttribute('data-src') ||
                         img.getAttribute('data-lazy-src') ||
@@ -285,10 +313,10 @@ if (window.__vibeReaderStealthExtractor) {
                     }
                 });
             }
-
             postprocessContent(content) {
                 const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = content;
+                // eslint-disable-next-line no-unsanitized/property
+                tempDiv.innerHTML = content; // Content from Readability.js is already sanitized
 
                 tempDiv.querySelectorAll('p').forEach(p => {
                     if (!p.textContent.trim()) {
@@ -484,9 +512,9 @@ if (window.__vibeReaderStealthExtractor) {
                             currentScroll += scrollAmount;
                             this.scrollProgress = Math.min(100, (currentScroll / scrollDistance) * 100);
 
-                            this.broker.send(null, 'extractionProgress', { 
-                                status: 'simulating_scroll', 
-                                progress: Math.floor(this.scrollProgress) 
+                            this.broker.send(null, 'extractionProgress', {
+                                status: 'simulating_scroll',
+                                progress: Math.floor(this.scrollProgress)
                             });
 
                             setTimeout(scrollStep, 50 + Math.random() * 100);
@@ -542,13 +570,14 @@ if (window.__vibeReaderStealthExtractor) {
                             window.scrollTo(0, data.scrollPosition);
                             return {success: true};
 
-                        case 'click':
+                        case 'click': {
                             const clickEl = document.querySelector(data.selector);
                             if (clickEl) {
                                 clickEl.click();
                                 return {success: true};
                             }
                             return {success: false, error: 'Element not found'};
+                        }
 
                         case 'getState':
                             return {
@@ -596,7 +625,7 @@ if (window.__vibeReaderStealthExtractor) {
 
                 const numericalScore = this.calculateNumericalScore(content);
                 const qualitativeScore = this.getQualitativeScore(numericalScore);
-                
+
                 return `${qualitativeScore} (${numericalScore}/100)`;
             }
 
@@ -631,8 +660,8 @@ if (window.__vibeReaderStealthExtractor) {
                 const headings = (htmlContent.match(/<h[1-6]/gi) || []).length;
                 const paragraphs = (htmlContent.match(/<p>/gi) || []).length;
                 const lists = (htmlContent.match(/<[uo]l>/gi) || []).length;
-                
-                const structureScore = Math.min(20, 
+
+                const structureScore = Math.min(20,
                     (headings * 3) + // Headings are important
                     (paragraphs * 0.3) + // Paragraphs show organization
                     (lists * 2) // Lists show structured content
@@ -641,47 +670,47 @@ if (window.__vibeReaderStealthExtractor) {
 
                 // 4. Enhanced Media Quality (0-10 points) - Size and quality-based scoring
                 let mediaScore = 0;
-                
+
                 // Parse images from HTML and check their dimensions
                 const imgRegex = /<img[^>]*>/gi;
                 const imgMatches = htmlContent.match(imgRegex) || [];
                 let qualityImages = 0;
                 let greatImages = 0;
-                
+
                 imgMatches.forEach(imgTag => {
                     const widthMatch = imgTag.match(/width\s*=\s*["']?(\d+)/i);
                     const heightMatch = imgTag.match(/height\s*=\s*["']?(\d+)/i);
-                    
+
                     if (widthMatch && heightMatch) {
                         const width = parseInt(widthMatch[1]);
                         const height = parseInt(heightMatch[1]);
                         const pixels = width * height;
-                        
+
                         // Great size range: 600x400 to 1920x1080 (240K to 2M pixels)
                         if (pixels >= 240000 && pixels <= 2073600 && width >= 600 && height >= 400) {
                             greatImages++;
                         }
-                        // OK size range: 300x200 to 1200x800 (60K to 960K pixels)  
+                        // OK size range: 300x200 to 1200x800 (60K to 960K pixels)
                         else if (pixels >= 60000 && pixels <= 960000 && width >= 300 && height >= 200) {
                             qualityImages++;
                         }
                     }
                 });
-                
+
                 // Parse videos and check dimensions
                 const videoRegex = /<video[^>]*>/gi;
                 const videoMatches = htmlContent.match(videoRegex) || [];
                 let qualityVideos = 0;
                 let greatVideos = 0;
-                
+
                 videoMatches.forEach(videoTag => {
                     const widthMatch = videoTag.match(/width\s*=\s*["']?(\d+)/i);
                     const heightMatch = videoTag.match(/height\s*=\s*["']?(\d+)/i);
-                    
+
                     if (widthMatch && heightMatch) {
                         const width = parseInt(widthMatch[1]);
                         const height = parseInt(heightMatch[1]);
-                        
+
                         // Great video size: 720p+ (1280x720 or larger)
                         if (width >= 1280 && height >= 720) {
                             greatVideos++;
@@ -692,37 +721,37 @@ if (window.__vibeReaderStealthExtractor) {
                         }
                     }
                 });
-                
+
                 // Tables still count as structured data
                 const tables = (htmlContent.match(/<table/gi) || []).length;
-                
+
                 mediaScore = Math.min(10,
                     (greatImages * 1.5) + // High-quality images
-                    (qualityImages * 0.8) + // OK quality images  
+                    (qualityImages * 0.8) + // OK quality images
                     (greatVideos * 3) + // High-quality videos
                     (qualityVideos * 2) + // OK quality videos
                     (tables * 1.5) // Tables show structured data
                 );
-                
+
                 score += mediaScore;
 
                 // 5. Enhanced Text Quality (0-10 points) - Favor proper sentences over script leakage
                 let textQualityScore = 0;
-                
+
                 // Find proper sentences: start with capital, end with punctuation, reasonable internal punctuation
                 const properSentences = textContent.match(/[A-Z][^.!?]*[,.;:\-–—'']*[^.!?]*[.!?]/g) || [];
                 const totalTextInSentences = properSentences.join('').length;
                 const sentenceTextRatio = totalTextInSentences / Math.max(textContent.length, 1);
-                
+
                 // Score based on how much text is in proper sentences (weighted heavily)
                 textQualityScore += sentenceTextRatio * 6; // Up to 6 points for sentence structure
-                
+
                 if (properSentences.length) {
                     // Check sentence length distribution (20-300 characters)
                     const validLengthSentences = properSentences.filter(s => s.length >= 20 && s.length <= 300);
                     const validLengthRatio = validLengthSentences.length / properSentences.length;
                     textQualityScore += validLengthRatio * 2; // Up to 2 points for proper length
-                    
+
                     // Check average word length in sentences (3-5 chars = English-like)
                     const wordsInSentences = properSentences.join(' ').split(/\s+/).filter(w => !!w.length);
                     if (wordsInSentences.length) {
@@ -734,7 +763,7 @@ if (window.__vibeReaderStealthExtractor) {
                         }
                     }
                 }
-                
+
                 score += Math.min(10, textQualityScore);
 
                 return Math.round(Math.min(100, score));

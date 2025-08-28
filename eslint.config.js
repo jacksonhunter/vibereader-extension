@@ -28,6 +28,7 @@ export default [
                 ...globals.webextensions,
                 // Custom globals for your libraries
                 Readability: 'readonly',
+                DOMPurify: 'readonly',
                 Rx: 'readonly',
                 aalib: 'readonly',
                 dump: 'readonly',
@@ -97,6 +98,21 @@ export default [
                 Node: 'readonly',
                 NodeList: 'readonly',
                 HTMLCollection: 'readonly'
+            }
+        }
+    },
+    
+    // Node.js configuration files
+    {
+        files: ['*.config.js', 'web-ext-config.cjs'],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+                module: 'writable',
+                require: 'readonly',
+                process: 'readonly',
+                __dirname: 'readonly',
+                __filename: 'readonly'
             }
         }
     },

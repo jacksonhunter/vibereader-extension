@@ -279,6 +279,7 @@ class VibeReaderPopup {
       const advancedSection = document.createElement("div");
       advancedSection.id = "advanced-settings";
       advancedSection.className = "settings-section advanced-section";
+      // eslint-disable-next-line no-unsanitized/property
       advancedSection.innerHTML = `
                 <div class="section-header">
                     <span class="section-title">💾 PERSISTENCE</span>
@@ -803,7 +804,7 @@ Created with love for cyberpunk enthusiasts.
     // Remove after animation
     setTimeout(() => {
       if (feedback.parentNode) {
-        feedback.parentNode.removeChild(feedback);
+        feedback.remove();
       }
     }, 3000);
   }

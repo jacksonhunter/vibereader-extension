@@ -69,8 +69,8 @@ if (!browser.runtime.__vibeNatives) {
 ### 3. **Utility Availability Issues**
 ```javascript
 // In proxy-controller.js constructor:
-if (window.__VibeReaderUtils.VibeLogger) {
-  window.__VibeReaderUtils.VibeLogger.setTerminalHandler(...);
+if (window.VibeLogger) {
+  window.VibeLogger.setTerminalHandler(...);
 }
 ```
 This assumes utilities are available, but due to the broken guard, they might not initialize properly on re-injection.

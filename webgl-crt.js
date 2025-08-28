@@ -148,7 +148,7 @@ class WebGLCRT {
     }
 
     getFragmentShader() {
-        const colorLevels = this.options.colorDepth === 8 ? 8.0 : 32.0;
+        const _colorLevels = this.options.colorDepth === 8 ? 8.0 : 32.0;
 
         return `
             precision mediump float;
@@ -419,7 +419,9 @@ class WebGLCRT {
 }
 
 // Export for use in proxy-controller.js
+// eslint-disable-next-line no-undef
 if (typeof module !== 'undefined' && module.exports) {
+    // eslint-disable-next-line no-undef
     module.exports = WebGLCRT;
 } else {
     window.WebGLCRT = WebGLCRT;

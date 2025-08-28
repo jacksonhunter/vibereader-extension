@@ -100,6 +100,7 @@ if (window.__vibeReaderUtils) {
               }
               return Promise.resolve({ enabled: this.enabled });
             }
+            return undefined; // Explicitly return undefined for non-matching messages
           });
         }
 
@@ -126,7 +127,7 @@ if (window.__vibeReaderUtils) {
         if (!this.nativeSendMessage) return;
 
         const self = this;
-        const BYPASS_LOGGING = Symbol("bypass");
+        // Use the module-level BYPASS_LOGGING symbol
 
         // Wrap browser.runtime.sendMessage
         browser.runtime.sendMessage = function (message) {
@@ -272,10 +273,10 @@ if (window.__vibeReaderUtils) {
 
       // Enhanced message logging with full context
       logMessage(type, action, data, context = {}) {
-        if (!this.enabled) return;
+        if (!this.enabled) return undefined;
 
         // Check filters
-        if (!this.shouldLog(action, context.source)) return;
+        if (!this.shouldLog(action, context.source)) return undefined;
 
         const entry = {
           id: this.generateId(),
@@ -688,11 +689,12 @@ if (window.__vibeReaderUtils) {
 
         if (obj.__type) {
           switch (obj.__type) {
-            case "Error":
+            case "Error": {
               const error = new Error(obj.message);
               error.name = obj.name;
               error.stack = obj.stack;
               return error;
+            }
             case "Date":
               return new Date(obj.value);
             case "Element":

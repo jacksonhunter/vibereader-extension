@@ -47,6 +47,7 @@
     "styles/*",
     "fonts/*",
     "assets/*",
+    "lib/purify.min.js",
     "lib/readability.js",
     "lib/rxjs.min.js",
     "lib/aalib.js",

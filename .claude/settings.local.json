@@ -12,7 +12,10 @@
       "Bash(mkdir:*)",
       "Bash(npm run build:css:prod:*)",
       "WebSearch",
-      "Bash(web-ext lint:*)"
+      "Bash(web-ext lint:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm run lint:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []
