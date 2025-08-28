@@ -307,6 +307,9 @@ class HiddenTabManager {
     this.broker.register("proxyCommand", (request, sender) =>
       this.routeProxyCommand(request, sender),
     );
+    this.broker.register("proxyReady", (request, sender) =>
+      this.handleProxyReady(request, sender),
+    );
   }
 
   // Consolidated tab state management
@@ -319,6 +322,8 @@ class HiddenTabManager {
         timers: new Set(),
         extractionStatus: this.extractionStatus.get(tabId) || {},
         createdAt: Date.now(),
+        proxyReady: false,
+        pendingContent: null,
       });
     }
     return this.tabStates.get(tabId);
@@ -359,6 +364,7 @@ class HiddenTabManager {
     return promise;
   }
 
+  // eslint-disable-next-line require-await
   async waitForTabReady(tab, timeout = 10000) {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -677,24 +683,34 @@ class HiddenTabManager {
       );
     }
 
-    // Wait for tab to be ready
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error("Hidden tab creation timeout"));
-      }, 10000);
-
-      const listener = (tabId, changeInfo) => {
-        if (tabId === hiddenTab.id && changeInfo.status === "complete") {
-          clearTimeout(timeout);
-          browser.tabs.onUpdated.removeListener(listener);
-          resolve(hiddenTab);
-        }
-      };
-      browser.tabs.onUpdated.addListener(listener);
-    });
+    // Tab exists and is ready to use - no need to wait for "complete" status
+    // executeScript with runAt: "document_end" will handle DOM readiness
+    return hiddenTab;
   }
 
   // Legacy injection methods removed - now handled by ScriptInjector class
+
+  async handleProxyReady(request, sender) {
+    console.log("📡 Proxy ready signal received from tab:", sender.tab.id);
+    
+    // Mark the tab as proxy-ready
+    const state = this.getTabState(sender.tab.id);
+    state.proxyReady = true;
+    
+    // Check if we have pending content to send
+    if (state.pendingContent) {
+      console.log("📤 Sending pending content to now-ready proxy");
+      try {
+        await this.broker.send(sender.tab.id, "displayContent", state.pendingContent);
+        delete state.pendingContent; // Clear pending content after sending
+        console.log("✅ Pending content sent successfully");
+      } catch (error) {
+        console.error("Failed to send pending content:", error);
+      }
+    }
+    
+    return { success: true };
+  }
 
   async handleExtractedContent(request, sender) {
     const extractionInfo = this.extractionStatus.get(sender.tab.id);
@@ -705,12 +721,22 @@ class HiddenTabManager {
     }
 
     try {
-      // Send to visible tab with consistent action name
-      await this.broker.send(extractionInfo.visibleTabId, "displayContent", {
+      const visibleTabState = this.getTabState(extractionInfo.visibleTabId);
+      const contentData = {
         content: request.content,
         metadata: request.metadata,
         source: "hiddenTab",
-      });
+      };
+      
+      // Check if proxy is ready
+      if (visibleTabState.proxyReady) {
+        // Proxy is ready, send immediately
+        await this.broker.send(extractionInfo.visibleTabId, "displayContent", contentData);
+      } else {
+        // Proxy not ready yet, store content for later
+        console.log("⏳ Proxy not ready yet, storing content for later delivery");
+        visibleTabState.pendingContent = contentData;
+      }
 
       // Update extraction status
       this.extractionStatus.set(sender.tab.id, {
@@ -763,15 +789,18 @@ class HiddenTabManager {
         progress: request.progress,
       });
 
-      // Send progress update to visible tab
-      this.broker
-        .send(extractionInfo.visibleTabId, "extractionProgress", {
-          status: request.status,
-          progress: request.progress,
-        })
-        .catch(() => {
-          // Proxy controller might not be ready yet
-        });
+      // Send progress update to visible tab if proxy is ready
+      const visibleTabState = this.getTabState(extractionInfo.visibleTabId);
+      if (visibleTabState.proxyReady) {
+        this.broker
+          .send(extractionInfo.visibleTabId, "extractionProgress", {
+            status: request.status,
+            progress: request.progress,
+          })
+          .catch(() => {
+            // Proxy controller might have disconnected
+          });
+      }
     }
   }
 
@@ -1001,16 +1030,12 @@ class HiddenTabManager {
   }
 
   async checkAutoActivate(tabId, tab) {
-    // Add check to prevent multiple activations
+    // Check to prevent multiple activations
     if (
       this.activeTabIds.has(tabId) ||
       this.injectionStatus.has(tabId) || // Already processing
       !this.isValidUrl(tab.url)
     ) {
-      return;
-    }
-
-    if (this.activeTabIds.has(tabId) || !this.isValidUrl(tab.url)) {
       return;
     }
 

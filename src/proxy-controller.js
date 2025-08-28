@@ -958,16 +958,11 @@ if (window.__vibeReaderProxyController) {
                         url: window.location.href, timestamp: new Date().toISOString()
                     });
 
-                    // Initialize console logging capture
-                    this.initConsoleCapture();
-
                     // Initialize CSS debugging
                     this.initCSSDebugging();
 
                     // Setup enhanced error capture
                     this.setupEnhancedErrorCapture();
-
-                    // MessageBroker was already initialized in constructor
 
                     // Load settings
                     this.loadSettings();
@@ -976,6 +971,16 @@ if (window.__vibeReaderProxyController) {
                     this.activate();
 
                     console.log(`✅ ProxyController initialized in ${(performance.now() - initStart).toFixed(1)}ms`);
+
+                    // Signal to background that proxy is ready to receive messages
+                    browser.runtime.sendMessage({ 
+                        action: "proxyReady",
+                        url: window.location.href
+                    }).then(() => {
+                        console.log('📡 Signaled proxyReady to background');
+                    }).catch(err => {
+                        console.warn('Could not signal proxyReady:', err);
+                    });
 
                 } catch (error) {
                     console.error('❌ ProxyController initialization failed:', error);
@@ -1481,6 +1486,7 @@ if (window.__vibeReaderProxyController) {
             `;
             }
 
+            // eslint-disable-next-line require-await
             async getImageDimensions(src) {
                 return new Promise((resolve, _reject) => {
                     const img = new Image();
