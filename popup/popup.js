@@ -603,7 +603,7 @@ class VibeReaderPopup {
     this.addSuccessEffect(resetBtn);
   }
 
-  async exportSettings() {
+  exportSettings() {
     const exportData = {
       version: "2.0.0",
       timestamp: Date.now(),
@@ -626,7 +626,7 @@ class VibeReaderPopup {
     this.addSuccessEffect(document.getElementById("export-settings"));
   }
 
-  async importSettings() {
+  importSettings() {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json";

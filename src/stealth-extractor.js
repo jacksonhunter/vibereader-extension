@@ -107,6 +107,7 @@ if (window.__vibeReaderStealthExtractor) {
                 }
             }
 
+            // eslint-disable-next-line require-await
             async waitForFramework() {
                 const startTime = Date.now();
                 const waitTime = this.getFrameworkWaitTime();
@@ -171,6 +172,7 @@ if (window.__vibeReaderStealthExtractor) {
                 return waitTimes[this.frameworkDetected] || 500;
             }
 
+            // eslint-disable-next-line require-await
             async extractWithReadability() {
                 try {
                     const extractedContent = this.extractContent();
@@ -208,8 +210,6 @@ if (window.__vibeReaderStealthExtractor) {
                     const cleanClone = DOMPurify.sanitize(serialized, {
                         WHOLE_DOCUMENT: true,
                         RETURN_DOM: true,
-                        ALLOWED_TAGS: null, // Allow all tags during extraction
-                        ALLOWED_ATTR: null, // Allow all attrs during extraction
                         KEEP_CONTENT: true
                     });
 
@@ -303,7 +303,7 @@ if (window.__vibeReaderStealthExtractor) {
                 });
             }
 
-            async loadLazies(doc) {
+            loadLazies(doc) {
                 doc.querySelectorAll('img[data-src], img[data-lazy-src]').forEach(img => {
                     const src = img.getAttribute('data-src') ||
                         img.getAttribute('data-lazy-src') ||
@@ -493,6 +493,7 @@ if (window.__vibeReaderStealthExtractor) {
                 }
             }
 
+            // eslint-disable-next-line require-await
             async simulateHumanScroll() {
                 return new Promise((resolve) => {
                     const scrollHeight = document.documentElement.scrollHeight;
@@ -528,6 +529,7 @@ if (window.__vibeReaderStealthExtractor) {
                 });
             }
 
+            // eslint-disable-next-line require-await
             async waitForContentStability() {
                 return new Promise((resolve) => {
                     let stabilityTimer = null;
@@ -563,6 +565,7 @@ if (window.__vibeReaderStealthExtractor) {
                 return hash;
             }
 
+            // eslint-disable-next-line require-await
             async executeProxyCommand(command, data) {
                 try {
                     switch (command) {

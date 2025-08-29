@@ -7,7 +7,6 @@ if (window.__vibeReaderUtils) {
 } else {
   try {
     // VibeReader Message Debugging System
-    // Add this to vibe-utils.js or create message-debugger.js
     function detectVibeContext() {
       if (typeof window === "undefined") return "background";
       if (window.__vibeReaderProxyController) return "proxy";
@@ -31,6 +30,9 @@ if (window.__vibeReaderUtils) {
           exclude: ["ping"],
           sources: [],
         };
+
+        // Add CLI dump mode without breaking existing functionality
+        this.cliDumpMode = false; // New feature for spartan terminal output
 
         // Store TRULY native functions before ANY wrapping
         this.nativeSendMessage = null;
@@ -308,7 +310,12 @@ if (window.__vibeReaderUtils) {
 
         // Output based on settings
         if (this.logToConsole) {
+          // Use CLI dump in terminal mode, otherwise use original
+          if (this.cliDumpMode && typeof dump !== 'undefined') {
+            this.cliDump(entry);
+          } else {
           this.consoleOutput(entry);
+        }
         }
 
         if (this.logToStorage) {
@@ -332,6 +339,27 @@ if (window.__vibeReaderUtils) {
         }
 
         return entry;
+      }
+
+      // NEW: Spartan CLI dump for terminal debugging
+      cliDump(entry) {
+        const time = new Date(entry.timestamp).toISOString().slice(11, 19);
+        const icon = this.icons[entry.type] || '-';
+        const src = (entry.context.source || '???').slice(0, 3).toUpperCase();
+        const dst = (entry.context.target || '???').slice(0, 3).toUpperCase();
+
+        let line = `${time} ${src}${icon}${dst} ${entry.action}`;
+
+        if (entry.data) {
+          const size = JSON.stringify(entry.data).length;
+          line += ` [${size}b]`;
+        }
+
+        if (entry.type === 'error' && entry.data?.error) {
+          line += ` ERR:${entry.data.error}`;
+        }
+
+        dump(line + '\n');
       }
 
       consoleOutput(entry) {
@@ -379,7 +407,7 @@ if (window.__vibeReaderUtils) {
 
         // Show call stack for tracing
         if (entry.context.stack && entry.context.stack.length) {
-          console.log("%c📍 Call Stack:", "color: #95a5a6; font-size: 10px;");
+          console.log("%c🔍 Call Stack:", "color: #95a5a6; font-size: 10px;");
           entry.context.stack.forEach((frame, i) => {
             console.log(`  ${i}: ${frame}`);
           });
@@ -391,12 +419,15 @@ if (window.__vibeReaderUtils) {
       async terminalOutput(entry) {
         // Send to proxy-controller's terminal system
         try {
+          // Map to terminal categories (consolidate duplicate logic)
+          const category = this.categorizeMessage(entry.action);
+
           const message = {
             [BYPASS_LOGGING]: true, // Skip logging this message
             action: "terminalLog",
             level: entry.type === "error" ? "ERR" : "INFO",
             message: `${entry.action} from ${entry.context.source}`,
-            category: "NETWORK",
+            category: category,
             metadata: entry,
           };
 
@@ -432,6 +463,24 @@ if (window.__vibeReaderUtils) {
         } catch (e) {
           console.warn("Failed to store message log:", e);
         }
+      }
+
+      // Consolidate categorization logic
+      categorizeMessage(message) {
+        const lowerMsg = message.toLowerCase();
+
+        if (lowerMsg.includes('err') || lowerMsg.includes('failed') || lowerMsg.includes('error')) {
+          return 'ERRORS';
+        } else if (lowerMsg.includes('media') || lowerMsg.includes('image') || lowerMsg.includes('video')) {
+          return 'MEDIA';
+        } else if (lowerMsg.includes('css') || lowerMsg.includes('style')) {
+          return 'CSS';
+        } else if (lowerMsg.includes('ascii') || lowerMsg.includes('conversion')) {
+          return 'ASCII';
+        } else if (lowerMsg.includes('extraction') || lowerMsg.includes('proxy') || lowerMsg.includes('framework')) {
+          return 'NETWORK';
+        }
+        return 'SYSTEM';
       }
 
       // Utility methods
@@ -634,6 +683,12 @@ if (window.__vibeReaderUtils) {
       setTerminalHandler(handler) {
         this.terminalHandler = handler;
       }
+
+      // NEW: Enable/disable CLI dump mode
+      setCliDumpMode(enabled) {
+        this.cliDumpMode = enabled;
+        console.log(`CLI dump mode: ${enabled ? 'ON' : 'OFF'}`);
+      }
     }
 
     class MessageSerializer {
@@ -816,6 +871,7 @@ if (window.__vibeReaderUtils) {
       }
     }
 
+    // NEW: Improved ThrottledEmitter with better queue management
     class ThrottledEmitter {
       constructor(broker, delay = 100) {
         this.broker = broker;
@@ -825,6 +881,7 @@ if (window.__vibeReaderUtils) {
       }
 
       emit(event, data) {
+        // Always update with latest data
         this.queue.set(event, data);
 
         if (!this.timer) {
@@ -837,9 +894,81 @@ if (window.__vibeReaderUtils) {
 
       flush() {
         for (const [event, data] of this.queue) {
-          this.broker.emit(event, data);
+          this.broker.emit ?
+            this.broker.emit(event, data) :
+            this.broker.send(null, event, data);
         }
         this.queue.clear();
+      }
+
+      // NEW: Force immediate flush
+      forceFlush() {
+        if (this.timer) {
+          clearTimeout(this.timer);
+          this.timer = null;
+        }
+        this.flush();
+      }
+
+      // NEW: Clear without sending
+      clear() {
+        if (this.timer) {
+          clearTimeout(this.timer);
+          this.timer = null;
+        }
+        this.queue.clear();
+      }
+    }
+
+    // NEW: EventBus for intra-context events
+    class EventBus {
+      constructor() {
+        this.listeners = new Map();
+        this.once = new Map();
+      }
+
+      on(event, handler) {
+        if (!this.listeners.has(event)) {
+          this.listeners.set(event, new Set());
+        }
+        this.listeners.get(event).add(handler);
+
+        // Return unsubscribe function
+        return () => this.off(event, handler);
+      }
+
+      once(event, handler) {
+        const wrapper = (...args) => {
+          handler(...args);
+          this.off(event, wrapper);
+        };
+        return this.on(event, wrapper);
+      }
+
+      off(event, handler) {
+        this.listeners.get(event)?.delete(handler);
+      }
+
+      emit(event, ...args) {
+        const handlers = this.listeners.get(event);
+        if (!handlers) return;
+
+        // Copy to avoid mutation during iteration
+        [...handlers].forEach(handler => {
+          try {
+            handler(...args);
+          } catch (error) {
+            console.error(`EventBus error in ${event}:`, error);
+          }
+        });
+      }
+
+      clear(event) {
+        if (event) {
+          this.listeners.delete(event);
+        } else {
+          this.listeners.clear();
+        }
       }
     }
 
@@ -848,26 +977,25 @@ if (window.__vibeReaderUtils) {
       MessageSerializer,
       MessageBroker,
       ThrottledEmitter,
+      EventBus,
       detectVibeContext: detectVibeContext(),
+      BYPASS_LOGGING // Export the symbol
     };
       // Expose commonly used classes as globals for easier access
       window.MessageBroker = MessageBroker;
       window.MessageSerializer = MessageSerializer;
+    window.ThrottledEmitter = ThrottledEmitter;
+    window.EventBus = EventBus;
       window.VibeLogger = window.__vibeReaderUtils.VibeLogger;
-      window.detectVibeContext = detectVibeContext()
+    window.detectVibeContext = detectVibeContext;
 
-    console.log("✅ VibeReader Message Serializer static class loaded");
+    console.log("✅ VibeReader Utilities v2.0 loaded");
 
     // Console banner when loaded
     console.log(
-      "%c🐛 VibeReader VibeLogger Loaded\nPress Ctrl+Shift+D to toggle debug mode\nPress Ctrl+Shift+L to dump log\nAccess via: window.vibeDebug",
+      "%c🛠 VibeReader Debug Tools\nCtrl+Shift+D: Toggle debug\nCtrl+Shift+L: Dump log\nwindow.vibeDebug: Access logger",
       "color: #667eea; padding: 10px; font-size: 12px; border-radius: 5px;",
     );
-
-    // Convenience globals
-    window.MessageSerializer = MessageSerializer;
-    window.VibeLogger = window.__vibeReaderUtils.VibeLogger;
-    window.VibeLogger.enabled = true; // Auto-enable
 
     true;
   } catch (error) {
