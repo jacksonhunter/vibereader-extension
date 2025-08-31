@@ -1,4 +1,1023 @@
 // VibeReader v2.0 - Background manager and script injector
+// enhanced-background.js - Add this class extension to the background script
+
+/**
+ * MessageBroker - Extends base MessageBridge with routing and batching
+ * Only works in background context where we have access to tabs API
+ *
+ * Features:
+ * - Message batching with strategies (accumulate/replace/merge)
+ * - Cross-tab routing with relationship mapping
+ * - Unhandled message detection
+ * - Error tracking and recovery
+ */
+// VibeReader v2.0 - Enhanced Message Broker with Pure Middleware Architecture
+// enhanced-background.js - Refactored to use only subscriber middleware
+
+/**
+ * MessageBroker - Pure middleware-based message broker for background context
+ *
+ * Features:
+ * - Message batching with strategies (accumulate/replace/merge)
+ * - Cross-tab routing with relationship mapping
+ * - Unhandled message detection
+ * - Error tracking and recovery
+ * - All handled through subscriber middleware pipeline
+ */
+class MessageBroker extends SubscriberEnabledComponent {
+    constructor() {
+        super();
+
+        // Verify we're in background context
+        if (typeof browser.tabs === 'undefined' || !browser.tabs.create) {
+            console.error('MessageBroker requires background context with tabs API');
+            throw new Error('MessageBroker requires background context');
+        }
+
+        // Message queuing with strategies
+        this.messageQueues = new Map();
+        this.queueTimers = new Map();
+        this.flushingQueues = new Set(); // Prevent race conditions
+        this.queueStrategies = new Map();
+
+        // Callback management (fixes promise serialization issue)
+        this.pendingCallbacks = new Map();
+        this.callbackTimeout = 30000; // 30 seconds
+
+        // Routing for cross-tab communication
+        this.routingTable = new Map();
+        this.tabRelationships = new Map(); // hidden -> visible mapping
+
+        // Unhandled message tracking with limits
+        this.unhandledMessages = new Map();
+        this.maxUnhandledPerType = 50; // Prevent unbounded growth
+
+        // Comprehensive statistics
+        this.stats = {
+            sent: 0,
+            received: 0,
+            routed: 0,
+            batched: 0,
+            unhandled: 0,
+            errors: {
+                send: 0,
+                route: 0,
+                timeout: 0,
+                invalid: 0
+            }
+        };
+
+        this.initialize();
+    }
+
+    initialize() {
+        // Load default strategies
+        this.loadDefaultStrategies();
+
+        // Set up middleware pipeline
+        this.setupMiddleware();
+
+        // Set up enhanced message handling
+        this.setupEnhancedListener();
+
+        // Track tab lifecycle
+        browser.tabs.onRemoved.addListener(tabId => {
+            this.cleanupTab(tabId);
+        });
+
+        // Periodic cleanup every 2 minutes
+        this.cleanupInterval = setInterval(() => {
+            this.cleanup();
+        }, 120000);
+    }
+
+    setupMiddleware() {
+        // Add routing middleware
+        this.subscriberManager.addGlobalMiddleware(
+            new MessageRoutingMiddleware(this)
+        );
+
+        // Add batching middleware
+        this.subscriberManager.addGlobalMiddleware(
+            new MessageBatchingMiddleware(this)
+        );
+
+        // Add statistics middleware
+        this.subscriberManager.addGlobalMiddleware(
+            new MessageStatisticsMiddleware(this)
+        );
+
+        // Add unhandled tracking middleware
+        this.subscriberManager.addGlobalMiddleware(
+            new UnhandledMessageMiddleware(this)
+        );
+    }
+
+    loadDefaultStrategies() {
+        // Content extraction - only latest matters
+        this.setStrategy('contentExtracted', {
+            queue: 'replace',
+            priority: 10
+        });
+
+        // Progress updates - only latest
+        this.setStrategy('extractionProgress', {
+            queue: 'replace',
+            priority: 5
+        });
+
+        // Media discovery - batch for efficiency
+        this.setStrategy('media-discovered', {
+            queue: 'accumulate',
+            maxBatchSize: 20,
+            batchDelay: 200,
+            priority: 3
+        });
+
+        // Terminal logs - batch but keep all
+        this.setStrategy('terminal-log', {
+            queue: 'accumulate',
+            maxBatchSize: 50,
+            batchDelay: 100,
+            priority: 1
+        });
+
+        // Errors - never batch, send immediately
+        this.setStrategy('error', {
+            queue: 'direct',
+            priority: 10
+        });
+    }
+
+    setStrategy(action, config) {
+        this.queueStrategies.set(action, {
+            queue: config.queue || 'direct',
+            maxBatchSize: config.maxBatchSize || 10,
+            batchDelay: config.batchDelay || 100,
+            priority: config.priority || 5
+        });
+    }
+
+    setupEnhancedListener() {
+        // Add our enhanced listener using browser API directly
+        browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+            // Handle async properly
+            this.handleEnhancedMessage(request, sender)
+                .then(response => {
+                    sendResponse(response);
+                })
+                .catch(error => {
+                    this.stats.errors.invalid++;
+                    console.error('Message handling error:', error);
+                    sendResponse({ error: error.message });
+                });
+
+            return true; // Keep channel open for async response
+        });
+    }
+
+    // === ENHANCED MESSAGE HANDLING VIA SUBSCRIBERS ===
+    async handleEnhancedMessage(request, sender) {
+        this.stats.received++;
+
+        // Validate message structure
+        if (!request || typeof request !== 'object') {
+            this.stats.errors.invalid++;
+            throw new Error('Invalid message format');
+        }
+
+        const { action, data } = request;
+
+        if (!action) {
+            this.stats.errors.invalid++;
+            throw new Error('Message missing action');
+        }
+
+        // Check if we should route this message to another tab
+        const targetTab = this.findTargetTab(sender, action);
+
+        if (targetTab) {
+            this.stats.routed++;
+            try {
+                // Route to target tab
+                const response = await browser.tabs.sendMessage(targetTab, request);
+                return response || { success: true, routed: true };
+
+            } catch (error) {
+                this.stats.errors.route++;
+                console.error(`Failed to route ${action} to tab ${targetTab}:`, error.message);
+
+                // Try to handle locally as fallback
+                const localResult = await this.handleLocally(action, request, sender);
+                if (localResult.handled) {
+                    console.log(`Falling back to local handler for ${action}`);
+                    return localResult.response;
+                }
+
+                throw new Error(`Failed to route and no local handler: ${action}`);
+            }
+        }
+
+        // Handle locally through subscriber system
+        const localResult = await this.handleLocally(action, request, sender);
+
+        if (!localResult.handled) {
+            // Track unhandled message
+            this.trackUnhandled(action, sender);
+
+            // Return error response
+            return {
+                error: `No handler or route for action: ${action}`,
+                unhandled: true
+            };
+        }
+
+        return localResult.response;
+    }
+
+    async handleLocally(action, request, sender) {
+        // Emit to subscriber system
+        const result = await this.emit(`message-${action}`, request.data || request, {
+            sender,
+            action,
+            source: 'runtime-message',
+            timestamp: Date.now()
+        });
+
+        if (result && result.successCount > 0) {
+            return { handled: true, response: { success: true } };
+        }
+
+        return { handled: false };
+    }
+
+    // === MESSAGE REGISTRATION VIA SUBSCRIBE ===
+    register(action, handler) {
+        return this.subscribe(`message-${action}`, async (eventType, data, context) => {
+            try {
+                const result = await handler(data, context.sender);
+                return { success: true, ...result };
+            } catch (error) {
+                console.error(`Handler error for ${action}:`, error);
+                throw error;
+            }
+        }, {
+            id: `handler-${action}`,
+            maxRetries: 2,
+            fallbackBehavior: 'fallback',
+            fallbackCallback: (eventType, data, error) => {
+                console.error(`Handler fallback for ${action}:`, error);
+                return { success: false, error: error.message };
+            }
+        });
+    }
+
+    // === ENHANCED SEND WITH BATCHING ===
+    async send(target, action, data, options = {}) {
+        this.stats.sent++;
+
+        const strategy = this.queueStrategies.get(action) || { queue: 'direct' };
+
+        // Apply queueing strategy
+        if (strategy.queue !== 'direct' && !options.immediate) {
+            return this.queueMessage(target, action, data, strategy);
+        }
+
+        // Direct send
+        return this.sendDirect(target, action, data);
+    }
+
+    async queueMessage(target, action, data, strategy) {
+        const key = `${action}:${target || 'broadcast'}`;
+
+        if (!this.messageQueues.has(key)) {
+            this.messageQueues.set(key, []);
+        }
+
+        const queue = this.messageQueues.get(key);
+        const callbackId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+        const message = {
+            target,
+            action,
+            data,
+            timestamp: Date.now(),
+            callbackId
+        };
+
+        // Create promise BEFORE applying strategy
+        const promise = new Promise((resolve, reject) => {
+            this.pendingCallbacks.set(callbackId, { resolve, reject });
+
+            // Timeout cleanup
+            setTimeout(() => {
+                if (this.pendingCallbacks.has(callbackId)) {
+                    this.stats.errors.timeout++;
+                    reject(new Error(`Message timeout: ${action}`));
+                    this.pendingCallbacks.delete(callbackId);
+                }
+            }, this.callbackTimeout);
+        });
+
+        // Apply queue strategy
+        switch (strategy.queue) {
+            case 'accumulate':
+                queue.push(message);
+                break;
+
+            case 'replace':
+                // Cancel previous callbacks
+                queue.forEach(msg => {
+                    if (this.pendingCallbacks.has(msg.callbackId)) {
+                        const { reject } = this.pendingCallbacks.get(msg.callbackId);
+                        reject(new Error('Replaced by newer message'));
+                        this.pendingCallbacks.delete(msg.callbackId);
+                    }
+                });
+                queue.length = 0;
+                queue.push(message);
+                break;
+
+            case 'merge':
+                if (queue.length > 0) {
+                    // Deep merge data objects
+                    const last = queue[queue.length - 1];
+                    last.data = this.mergeData(last.data, data);
+                    // Return the original promise, not a new one
+                    return this.pendingCallbacks.get(last.callbackId).promise || promise;
+                } else {
+                    queue.push(message);
+                }
+                break;
+
+            case 'dedupe':
+                // Check for duplicate
+                const duplicate = queue.find(m =>
+                    JSON.stringify(m.data) === JSON.stringify(data)
+                );
+                if (duplicate) {
+                    // Return existing promise
+                    return this.pendingCallbacks.get(duplicate.callbackId).promise || promise;
+                }
+                queue.push(message);
+                break;
+        }
+
+        // Store promise reference for merge/dedupe cases
+        if (this.pendingCallbacks.has(callbackId)) {
+            this.pendingCallbacks.get(callbackId).promise = promise;
+        }
+
+        // Schedule flush
+        this.scheduleFlush(key, strategy);
+
+        return promise;
+    }
+
+    scheduleFlush(key, strategy) {
+        // Clear existing timer
+        if (this.queueTimers.has(key)) {
+            clearTimeout(this.queueTimers.get(key));
+        }
+
+        // Priority affects delay (higher priority = shorter delay)
+        const delay = Math.max(10, strategy.batchDelay - (strategy.priority * 5));
+
+        this.queueTimers.set(key, setTimeout(() => {
+            this.flushQueue(key, strategy).catch(error => {
+                console.error(`Flush failed for ${key}:`, error);
+                this.stats.errors.send++;
+            });
+            this.queueTimers.delete(key);
+        }, delay));
+    }
+
+    async flushQueue(key, strategy) {
+        // Prevent concurrent flushes
+        if (this.flushingQueues.has(key)) {
+            return;
+        }
+
+        this.flushingQueues.add(key);
+
+        try {
+            const queue = this.messageQueues.get(key);
+            if (!queue || queue.length === 0) {
+                return;
+            }
+
+            const messages = [...queue];
+            queue.length = 0;
+
+            // Batch if multiple messages and strategy supports it
+            if (messages.length > 1 && strategy.maxBatchSize) {
+                await this.sendBatch(messages, strategy);
+            } else {
+                // Send individually
+                for (const message of messages) {
+                    await this.sendSingle(message);
+                }
+            }
+
+            this.stats.batched += messages.length;
+
+        } finally {
+            this.flushingQueues.delete(key);
+        }
+    }
+
+    async sendBatch(messages, strategy) {
+        // Split into chunks if needed
+        const chunks = [];
+        for (let i = 0; i < messages.length; i += strategy.maxBatchSize) {
+            chunks.push(messages.slice(i, i + strategy.maxBatchSize));
+        }
+
+        for (const chunk of chunks) {
+            const target = chunk[0].target;
+            const action = `${chunk[0].action}-batch`;
+
+            const batchData = {
+                action: chunk[0].action,
+                items: chunk.map(m => ({
+                    data: m.data,
+                    timestamp: m.timestamp
+                })),
+                count: chunk.length
+            };
+
+            try {
+                const result = await this.sendDirect(target, action, batchData);
+
+                // Resolve all callbacks in this chunk
+                chunk.forEach(msg => {
+                    if (this.pendingCallbacks.has(msg.callbackId)) {
+                        const { resolve } = this.pendingCallbacks.get(msg.callbackId);
+                        resolve(result);
+                        this.pendingCallbacks.delete(msg.callbackId);
+                    }
+                });
+
+            } catch (error) {
+                this.stats.errors.send++;
+
+                // Reject all callbacks in this chunk
+                chunk.forEach(msg => {
+                    if (this.pendingCallbacks.has(msg.callbackId)) {
+                        const { reject } = this.pendingCallbacks.get(msg.callbackId);
+                        reject(error);
+                        this.pendingCallbacks.delete(msg.callbackId);
+                    }
+                });
+
+                throw error; // Re-throw for error handling
+            }
+        }
+    }
+
+    async sendSingle(message) {
+        try {
+            const result = await this.sendDirect(
+                message.target,
+                message.action,
+                message.data
+            );
+
+            if (this.pendingCallbacks.has(message.callbackId)) {
+                const { resolve } = this.pendingCallbacks.get(message.callbackId);
+                resolve(result);
+                this.pendingCallbacks.delete(message.callbackId);
+            }
+
+            return result;
+
+        } catch (error) {
+            this.stats.errors.send++;
+
+            if (this.pendingCallbacks.has(message.callbackId)) {
+                const { reject } = this.pendingCallbacks.get(message.callbackId);
+                reject(error);
+                this.pendingCallbacks.delete(message.callbackId);
+            }
+
+            throw error;
+        }
+    }
+
+    async sendDirect(target, action, data) {
+        const message = {
+            action,
+            data,
+            timestamp: Date.now(),
+            from: 'background'
+        };
+
+        try {
+            if (typeof target === 'number') {
+                // Send to specific tab
+                return await browser.tabs.sendMessage(target, message);
+
+            } else if (target === 'broadcast') {
+                // Broadcast to all tabs
+                return await this.broadcast(message);
+
+            } else if (!target) {
+                // No target means local handling only via subscribers
+                const result = await this.emit(`message-${action}`, data, {
+                    action,
+                    source: 'local',
+                    timestamp: Date.now()
+                });
+
+                if (result && result.successCount > 0) {
+                    return { success: true };
+                }
+
+                throw new Error(`No handler for local action: ${action}`);
+
+            } else {
+                throw new Error(`Invalid target: ${target}`);
+            }
+
+        } catch (error) {
+            this.stats.errors.send++;
+            console.error(`Failed to send ${action} to ${target}:`, error.message);
+            throw error;
+        }
+    }
+
+    // === ROUTING FOR CROSS-TAB COMMUNICATION ===
+    registerRoute(fromTabId, toTabId, relationship = 'hidden-visible') {
+        if (relationship === 'hidden-visible') {
+            // Map hidden tab to visible tab
+            this.tabRelationships.set(fromTabId, toTabId);
+        } else if (relationship === 'visible-hidden') {
+            // Reverse mapping if needed
+            this.tabRelationships.set(toTabId, fromTabId);
+        }
+
+        this.routingTable.set(`tab-${fromTabId}`, toTabId);
+        console.log(`Route registered: ${fromTabId} -> ${toTabId} (${relationship})`);
+    }
+
+    unregisterRoute(tabId) {
+        this.routingTable.delete(`tab-${tabId}`);
+        this.tabRelationships.delete(tabId);
+
+        // Also remove reverse relationships
+        for (const [key, value] of this.tabRelationships.entries()) {
+            if (value === tabId) {
+                this.tabRelationships.delete(key);
+            }
+        }
+    }
+
+    findTargetTab(sender, action) {
+        const senderTabId = sender.tab?.id;
+        if (!senderTabId) return null;
+
+        // Check explicit routes first
+        const explicitRoute = this.routingTable.get(`tab-${senderTabId}`);
+        if (explicitRoute) {
+            return explicitRoute;
+        }
+
+        // Check relationships for specific actions
+        if (action === 'contentExtracted' || action === 'extractionProgress') {
+            // Hidden tab -> Visible tab
+            return this.tabRelationships.get(senderTabId);
+        }
+
+        if (action === 'injectScript' || action === 'startExtraction') {
+            // Visible tab -> Hidden tab (reverse lookup)
+            for (const [hidden, visible] of this.tabRelationships.entries()) {
+                if (visible === senderTabId) {
+                    return hidden;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    trackUnhandled(action, sender) {
+        if (!this.unhandledMessages.has(action)) {
+            this.unhandledMessages.set(action, []);
+        }
+
+        const log = this.unhandledMessages.get(action);
+        const entry = {
+            timestamp: Date.now(),
+            sender: sender.tab?.id || sender.id || 'unknown',
+            url: sender.tab?.url || sender.url || 'unknown'
+        };
+
+        log.push(entry);
+
+        // Limit stored entries to prevent memory leak
+        if (log.length > this.maxUnhandledPerType) {
+            log.shift(); // Remove oldest
+        }
+
+        this.stats.unhandled++;
+
+        // Log warning with details
+        console.warn(`Unhandled message: ${action}`, {
+            from: entry.sender,
+            url: entry.url,
+            totalUnhandled: log.length
+        });
+
+        // Emit event for monitoring
+        this.emit('unhandled-message', {
+            action,
+            sender: entry.sender,
+            count: log.length
+        });
+    }
+
+    // === BROADCAST WITH ERROR HANDLING ===
+    async broadcast(message, options = {}) {
+        const tabs = await browser.tabs.query(options.filter || {});
+
+        if (tabs.length === 0) {
+            return { success: true, results: [], message: 'No tabs to broadcast to' };
+        }
+
+        // Process in parallel with allSettled to handle errors gracefully
+        const results = await Promise.allSettled(
+            tabs.map(tab =>
+                browser.tabs.sendMessage(tab.id, message)
+                    .then(response => ({
+                        tabId: tab.id,
+                        success: true,
+                        response
+                    }))
+                    .catch(error => ({
+                        tabId: tab.id,
+                        success: false,
+                        error: error.message
+                    }))
+            )
+        );
+
+        // Process results
+        const processed = results.map(r => r.value);
+        const succeeded = processed.filter(r => r.success);
+        const failed = processed.filter(r => !r.success);
+
+        if (failed.length > 0 && !options.ignoreErrors) {
+            this.stats.errors.send += failed.length;
+            console.warn(`Broadcast failed for ${failed.length} tabs:`, failed);
+        }
+
+        return {
+            success: succeeded.length > 0,
+            succeeded: succeeded.length,
+            failed: failed.length,
+            results: options.detailed ? processed : succeeded
+        };
+    }
+
+    // === TAB CLEANUP ===
+    cleanupTab(tabId) {
+        console.log(`Cleaning up tab ${tabId}`);
+
+        // Remove from routing tables
+        this.unregisterRoute(tabId);
+
+        // Clear any pending messages for this tab
+        const keysToDelete = [];
+
+        for (const [key, queue] of this.messageQueues.entries()) {
+            if (key.includes(`:${tabId}`)) {
+                // Cancel pending callbacks
+                queue.forEach(msg => {
+                    if (this.pendingCallbacks.has(msg.callbackId)) {
+                        const { reject } = this.pendingCallbacks.get(msg.callbackId);
+                        reject(new Error('Tab closed'));
+                        this.pendingCallbacks.delete(msg.callbackId);
+                    }
+                });
+
+                keysToDelete.push(key);
+            }
+        }
+
+        // Delete queues
+        keysToDelete.forEach(key => {
+            this.messageQueues.delete(key);
+            if (this.queueTimers.has(key)) {
+                clearTimeout(this.queueTimers.get(key));
+                this.queueTimers.delete(key);
+            }
+        });
+    }
+
+    // === PERIODIC CLEANUP ===
+    cleanup() {
+        const now = Date.now();
+        const fiveMinutesAgo = now - 300000;
+
+        // Clear old unhandled messages
+        for (const [action, log] of this.unhandledMessages.entries()) {
+            const filtered = log.filter(entry => entry.timestamp > fiveMinutesAgo);
+
+            if (filtered.length === 0) {
+                this.unhandledMessages.delete(action);
+            } else if (filtered.length < log.length) {
+                this.unhandledMessages.set(action, filtered);
+            }
+        }
+
+        // Clear orphaned callbacks (shouldn't happen, but safety check)
+        for (const [id, callback] of this.pendingCallbacks.entries()) {
+            if (callback.timestamp && callback.timestamp < fiveMinutesAgo) {
+                console.warn(`Cleaning orphaned callback: ${id}`);
+                this.pendingCallbacks.delete(id);
+            }
+        }
+
+        console.log('Cleanup complete:', this.getStats());
+    }
+
+    // === UTILITIES ===
+    mergeData(existing, newData) {
+        // Handle null/undefined
+        if (!existing) return newData;
+        if (!newData) return existing;
+
+        // Handle arrays
+        if (Array.isArray(existing) && Array.isArray(newData)) {
+            return [...existing, ...newData];
+        }
+
+        // Handle objects
+        if (typeof existing === 'object' && typeof newData === 'object') {
+            return { ...existing, ...newData };
+        }
+
+        // Default: replace
+        return newData;
+    }
+
+    // === STATISTICS & DEBUGGING ===
+    getStats() {
+        return {
+            messages: {
+                sent: this.stats.sent,
+                received: this.stats.received,
+                routed: this.stats.routed,
+                batched: this.stats.batched,
+                unhandled: this.stats.unhandled
+            },
+            errors: this.stats.errors,
+            queues: {
+                active: this.messageQueues.size,
+                pending: Array.from(this.messageQueues.values())
+                    .reduce((sum, queue) => sum + queue.length, 0),
+                callbacks: this.pendingCallbacks.size
+            },
+            routing: {
+                routes: this.routingTable.size,
+                relationships: this.tabRelationships.size
+            },
+            unhandled: {
+                types: this.unhandledMessages.size,
+                total: Array.from(this.unhandledMessages.values())
+                    .reduce((sum, log) => sum + log.length, 0)
+            },
+            subscribers: this.getSubscriberStats()
+        };
+    }
+
+    // === CLEANUP ON DESTROY ===
+    destroy() {
+        // Clear all timers
+        for (const timer of this.queueTimers.values()) {
+            clearTimeout(timer);
+        }
+
+        if (this.cleanupInterval) {
+            clearInterval(this.cleanupInterval);
+        }
+
+        // Reject all pending callbacks
+        for (const [id, callback] of this.pendingCallbacks.entries()) {
+            callback.reject(new Error('Broker destroyed'));
+        }
+
+        // Clear all data structures
+        this.messageQueues.clear();
+        this.queueTimers.clear();
+        this.pendingCallbacks.clear();
+        this.routingTable.clear();
+        this.tabRelationships.clear();
+        this.unhandledMessages.clear();
+
+        // Clean up base class
+        super.destroy();
+
+        console.log('MessageBroker destroyed');
+    }
+
+    // === GLOBAL MESSAGE HANDLERS ===
+    setupGlobalHandlers() {
+        console.log('Setting up global handlers in MessageBroker');
+        if (typeof dump !== 'undefined') {
+            dump('Setting up global handlers in MessageBroker\n');
+        }
+        
+        // Settings updates - broadcast to all active tabs
+        this.register('updateSettings', async (request, sender) => {
+            const settings = request.data || request.settings || request;
+            console.log('Broadcasting settings update to all tabs:', settings);
+            dump(`Broadcasting settings update to all tabs\n`);
+            
+            return await this.broadcast({
+                action: 'updateSettings',
+                settings
+            }, { filter: { active: true } });
+        });
+
+        // Debug mode toggle - broadcast to all tabs
+        this.register('toggleVibeDebug', async (request, sender) => {
+            const enabled = request.data?.enabled ?? request.enabled;
+            console.log(`Broadcasting debug mode: ${enabled ? 'enabled' : 'disabled'}`);
+            dump(`Broadcasting debug mode: ${enabled ? 'enabled' : 'disabled'}\n`);
+            
+            return await this.broadcast({
+                action: 'toggleVibeDebug',
+                enabled
+            });
+        });
+
+        // Start extraction - route to hidden tab
+        this.register('start-extraction', async (request, sender) => {
+            const { hiddenTabId, visibleTabId, url } = request.data || request;
+            console.log(`Routing start-extraction to hidden tab ${hiddenTabId}`);
+            
+            return await this.send(hiddenTabId, 'start-extraction', {
+                hiddenTabId,
+                visibleTabId,
+                url
+            });
+        });
+
+        // Content extracted - route from hidden to visible tab
+        this.register('contentExtracted', async (request, sender) => {
+            const senderTabId = sender.tab?.id;
+            
+            // Find the visible tab this hidden tab is associated with
+            const visibleTabId = this.tabRelationships.get(senderTabId);
+            
+            if (visibleTabId) {
+                console.log(`Routing contentExtracted from hidden tab ${senderTabId} to visible tab ${visibleTabId}`);
+                return await this.send(visibleTabId, 'contentExtracted', request.data || request);
+            } else {
+                console.warn(`No visible tab found for hidden tab ${senderTabId}`);
+                return { error: 'No route found for content' };
+            }
+        });
+
+        // Extraction progress - route from hidden to visible tab
+        this.register('extractionProgress', async (request, sender) => {
+            const senderTabId = sender.tab?.id;
+            const visibleTabId = this.tabRelationships.get(senderTabId);
+            
+            if (visibleTabId) {
+                console.log(`Routing extraction progress to visible tab ${visibleTabId}`);
+                return await this.send(visibleTabId, 'extractionProgress', request.data || request);
+            }
+            
+            return { success: true };
+        });
+
+        // Tab status check
+        this.register('getStatus', async (request, sender) => {
+            const tabId = request.data?.tabId || request.tabId;
+            
+            // This will be handled by HiddenTabManager
+            // We just need to forward it
+            if (window.__vibeReaderBackgroundManager) {
+                const isActive = window.__vibeReaderBackgroundManager.tabs.has(tabId) && 
+                                window.__vibeReaderBackgroundManager.tabs.get(tabId).state === 'active';
+                return { active: isActive };
+            }
+            
+            return { active: false };
+        });
+    }
+}
+
+// === MIDDLEWARE CLASSES FOR ENHANCED MESSAGE BROKER ===
+
+class MessageRoutingMiddleware extends SubscriberMiddleware {
+    constructor(broker) {
+        super('MessageRouting');
+        this.broker = broker;
+    }
+
+    async process(eventContext) {
+        const { event, data, context } = eventContext;
+
+        // Check if this message should be routed
+        if (context.sender && context.action) {
+            const targetTab = this.broker.findTargetTab(context.sender, context.action);
+
+            if (targetTab) {
+                eventContext.context.routeTarget = targetTab;
+                eventContext.context.shouldRoute = true;
+            }
+        }
+
+        return true;
+    }
+}
+
+class MessageBatchingMiddleware extends SubscriberMiddleware {
+    constructor(broker) {
+        super('MessageBatching');
+        this.broker = broker;
+    }
+
+    async process(eventContext) {
+        const { event, data, context } = eventContext;
+
+        // Check if this message type has a batching strategy
+        if (context.action) {
+            const strategy = this.broker.queueStrategies.get(context.action);
+
+            if (strategy) {
+                eventContext.context.batchingStrategy = strategy;
+                eventContext.context.supportsBatching = strategy.queue !== 'direct';
+            }
+        }
+
+        return true;
+    }
+}
+
+class MessageStatisticsMiddleware extends SubscriberMiddleware {
+    constructor(broker) {
+        super('MessageStatistics');
+        this.broker = broker;
+    }
+
+    async process(eventContext) {
+        // Update statistics based on routing decisions made by previous middleware
+        if (eventContext.context?.shouldRoute) {
+            this.broker.stats.routed++;
+        }
+
+        // Optionally track processing start time for performance monitoring
+        if (eventContext.context) {
+            eventContext.context.processingStartTime = Date.now();
+        } else {
+            eventContext.context = { processingStartTime: Date.now() };
+    }
+
+        return true; // Continue the middleware chain
+    }
+}
+
+class UnhandledMessageMiddleware extends SubscriberMiddleware {
+    constructor(broker) {
+        super('UnhandledMessage');
+        this.broker = broker;
+    }
+
+    async process(eventContext) {
+        const { event, context } = eventContext;
+
+        // Track if this message type has any handlers
+        const stats = this.broker.getSubscriberStats();
+        const hasHandlers = stats.byEventType[event]?.count > 0;
+
+        if (!hasHandlers && context.action) {
+            // This will be an unhandled message
+            eventContext.context.willBeUnhandled = true;
+        }
+
+        return true;
+    }
+}
+
+// === CREATE GLOBAL SINGLETON ===
+if (!window.__messageBroker) {
+    console.log('🔧 Creating MessageBroker singleton');
+    if (typeof dump !== 'undefined') {
+        dump('🔧 Creating MessageBroker singleton\n');
+    } else {
+        console.warn('dump() not available for MessageBroker creation');
+    }
+    window.__messageBroker = new MessageBroker();
+    window.__messageBroker.setupGlobalHandlers();
+    console.log('✅ MessageBroker global handlers setup complete');
+    if (typeof dump !== 'undefined') {
+        dump('✅ MessageBroker global handlers setup complete\n');
+    }
+}
 
 // Unified Script Injector - eliminates duplicate injection logic
 class ScriptInjector {
@@ -8,6 +1027,7 @@ class ScriptInjector {
       extractor: {
         dependencies: [
           { file: "src/vibe-utils.js" },
+          { file: "src/unified-vibe.js" },
           {
             file: "lib/purify.min.js",
             verify: 'typeof DOMPurify !== "undefined"',
@@ -213,851 +1233,643 @@ class ScriptInjector {
   }
 }
 
-// WaitHelper removed - not used
+// VibeReader v2.0 - Refactored Background Manager with Enhanced Subscriber Architecture
 
-// Consolidated cleanup operations
-class TabCleaner {
-  static cleanup(tabStates, tabRegistry, tabDataCache, tabId) {
-    console.log("🗑️ TabCleaner cleaning up tab:", tabId);
-
-    const state = tabStates.get(tabId);
-    if (state) {
-      // Clear all timers
-      if (state.timers && state.timers.size > 0) {
-        state.timers.forEach((timerId) => {
-          clearTimeout(timerId);
-          clearInterval(timerId);
-        });
-        state.timers.clear();
-      }
-
-      // Close hidden tab
-      if (state.hiddenTabId) {
-        browser.tabs.remove(state.hiddenTabId).catch(() => {});
-      }
+// === TAB LIFECYCLE MIDDLEWARE ===
+class TabLifecycleMiddleware extends SubscriberMiddleware {
+    constructor(tabManager) {
+        super('TabLifecycle');
+        this.tabManager = tabManager;
     }
 
-    // Clean up WeakMap data
-    const tabRef = tabDataCache.get(tabId);
-    if (tabRef) {
-      const tabData = tabRegistry.get(tabRef);
-      if (tabData && tabData.timers) {
-        tabData.timers.forEach((timerId) => {
-          clearTimeout(timerId);
-          clearInterval(timerId);
-        });
-        tabData.timers.clear();
-      }
-      tabDataCache.delete(tabId);
+    async process(eventContext) {
+        const { event, data } = eventContext;
+
+        // Auto-cleanup on tab close events
+        if (event === 'tab-closed' || event === 'tab-removed') {
+            await this.tabManager.cleanupTab(data.tabId);
+        }
+
+        // Auto-register new tabs
+        if (event === 'tab-created' || event === 'tab-ready') {
+            this.tabManager.registerTab(data.tabId, data);
+        }
+
+        return true;
     }
-
-    // Remove from consolidated state
-    tabStates.delete(tabId);
-
-    // Update badge
-    browser.browserAction.setBadgeText({ text: "", tabId });
-  }
 }
 
-class HiddenTabManager {
-  constructor() {
-    // Enhanced WeakMap for automatic memory cleanup when tabs are garbage collected
-    this.tabRegistry = new WeakMap();
-    this.tabDataCache = new Map(); // tab ID -> WeakMap key for reverse lookup
-
-    // CONSOLIDATED STATE MANAGEMENT - single source of truth
-    this.tabStates = new Map(); // tabId -> complete state object
-
-    // Legacy Maps (gradually migrate to tabStates)
-    this.hiddenTabs = new Map(); // visible tab ID -> hidden tab ID
-    this.extractionStatus = new Map(); // hidden tab ID -> extraction info
-    this.activeTabIds = new Set(); // Currently active visible tab IDs
-    this.injectionStatus = new Map(); // tab ID -> injection status
-
-    // DEBUG: Tab creation monitoring (for debugging + future tab manager foundation)
-    this.tabCreationLog = new Map(); // visible tab ID -> array of creation attempts
-    this.debugMode = true; // Enable tab creation debugging
-
-    // Tab creation throttling
-    this.tabCreationQueue = new Map();
-    this.tabCreationCooldown = 1000; // 1 second between tabs
-    this.lastTabCreation = 0;
-
-    // Initialize MessageBroker and register handlers
-    this.broker = new MessageBroker();
-    this.setupMessageHandlers();
-
-    // Initialize ScriptInjector with logging integration
-    this.injector = new ScriptInjector(this.logToVisible.bind(this));
-
-    this.init();
-  }
-  setupMessageHandlers() {
-    // Register all action handlers with the broker
-    this.broker.register("ping", () => ({ type: "background" }));
-    this.broker.register("toggleFromPopup", (request) =>
-      this.handleToggleFromPopup(request),
-    );
-    this.broker.register("contentExtracted", (request, sender) =>
-      this.handleExtractedContent(request, sender),
-    );
-    this.broker.register("extractionProgress", (request, sender) =>
-      this.updateExtractionProgress(request, sender),
-    );
-    this.broker.register("proxyCommand", (request, sender) =>
-      this.routeProxyCommand(request, sender),
-    );
-    this.broker.register("proxyReady", (request, sender) =>
-      this.handleProxyReady(request, sender),
-    );
-  }
-
-  // Consolidated tab state management
-  getTabState(tabId) {
-    if (!this.tabStates.has(tabId)) {
-      this.tabStates.set(tabId, {
-        active: this.activeTabIds.has(tabId),
-        hiddenTabId: this.hiddenTabs.get(tabId) || null,
-        injections: new Set(),
-        timers: new Set(),
-        extractionStatus: this.extractionStatus.get(tabId) || {},
-        createdAt: Date.now(),
-        proxyReady: false,
-        pendingContent: null,
-      });
-    }
-    return this.tabStates.get(tabId);
-  }
-
-  async handleToggleFromPopup(request) {
-    const tab = await browser.tabs.get(request.tabId);
-    await this.toggleVibeMode(tab);
-    return { success: true };
-  }
-  async createHiddenTabThrottled(url, visibleTabId) {
-    // Check if we already have a pending request for this tab
-    if (this.tabCreationQueue.has(visibleTabId)) {
-      console.log("⚠️ Tab creation already queued for:", visibleTabId);
-      return this.tabCreationQueue.get(visibleTabId);
+class TabMemoryMiddleware extends SubscriberMiddleware {
+    constructor(maxTabs = 10) {
+        super('TabMemory');
+        this.maxTabs = maxTabs;
+        this.tabAccessTimes = new Map();
     }
 
-    // Check cooldown
-    const now = Date.now();
-    const timeSinceLastCreation = now - this.lastTabCreation;
+    async process(eventContext) {
+        const { data } = eventContext;
 
-    if (timeSinceLastCreation < this.tabCreationCooldown) {
-      const waitTime = this.tabCreationCooldown - timeSinceLastCreation;
-      console.log(`⏳ Throttling tab creation, waiting ${waitTime}ms`);
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
-    }
+        if (data.tabId) {
+            this.tabAccessTimes.set(data.tabId, Date.now());
 
-    // Create promise for this tab
-    const promise = this.createHiddenTab(url, visibleTabId);
-    this.tabCreationQueue.set(visibleTabId, promise);
+            // Cleanup old tabs if over limit
+            if (this.tabAccessTimes.size > this.maxTabs) {
+                const sortedTabs = Array.from(this.tabAccessTimes.entries())
+                    .sort((a, b) => a[1] - b[1]);
 
-    // Clean up after completion
-    promise.finally(() => {
-      this.tabCreationQueue.delete(visibleTabId);
-      this.lastTabCreation = Date.now();
-    });
-
-    return promise;
-  }
-
-  // eslint-disable-next-line require-await
-  async waitForTabReady(tab, timeout = 10000) {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        browser.tabs.onUpdated.removeListener(listener);
-        reject(new Error("Hidden tab creation timeout"));
-      }, timeout);
-
-      const listener = (tabId, changeInfo) => {
-        if (tabId === tab.id) {
-          this.logToVisible(
-            tab.id,
-            "INFO",
-            `Hidden tab status: ${changeInfo.status}`,
-            "NETWORK",
-          );
-
-          if (changeInfo.status === "complete") {
-            clearTimeout(timer);
-            browser.tabs.onUpdated.removeListener(listener);
-            resolve(tab);
-          }
+                const toRemove = sortedTabs.slice(0, sortedTabs.length - this.maxTabs);
+                for (const [tabId] of toRemove) {
+                    eventContext.subscriber.emit('cleanup-tab', { tabId });
+                    this.tabAccessTimes.delete(tabId);
+                }
+            }
         }
-      };
 
-      browser.tabs.onUpdated.addListener(listener);
-    });
-  }
-
-  // Helper method to get tab-specific settings
-  async getTabSpecificSettings() {
-    try {
-      const result = await browser.storage.sync.get("vibeReaderSettings");
-      return result.vibeReaderSettings || {};
-    } catch (error) {
-      console.warn("Failed to load settings:", error);
-      return {};
+        return true;
     }
-  }
+}
 
-  init() {
-    // Listen for browser action clicks
-    browser.browserAction.onClicked.addListener((tab) => {
-      this.toggleVibeMode(tab).catch((error) =>
-        console.error("Toggle failed:", error),
-      );
-    });
+// === SELF-REPORTING TAB CLASS ===
+class VibeTab extends SubscriberEnabledComponent {
+    constructor(id, config = {}) {
+        super();
 
-    // MessageBroker automatically handles runtime messages
+        this.id = id;
+        this.type = config.type; // 'visible' or 'hidden'
+        this.url = config.url;
+        this.parentId = config.parentId;
+        this.state = 'initializing';
+        this.injections = new Set();
+        this.createdAt = Date.now();
 
-    // Listen for tab updates
-    browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-      if (changeInfo.status === "complete") {
-        this.handleTabUpdate(tabId, tab);
-        this.checkAutoActivate(tabId, tab);
-      }
-    });
+        // Self-reporting status
+        this.statusReporter = null;
+        this.reportInterval = 5000; // Report every 5 seconds
 
-    // Clean up when tabs are closed
-    browser.tabs.onRemoved.addListener((tabId) => {
-      this.cleanupTab(tabId);
-    });
+        this.setupSelfReporting();
+    }
 
-    // Listen for keyboard commands
-    browser.commands.onCommand.addListener((command) => {
-      if (command === "toggle-vibe-mode") {
-        browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]) {
-            this.toggleVibeMode(tabs[0]).catch((error) =>
-              console.error("Keyboard toggle failed:", error),
+    setupSelfReporting() {
+        // Report creation immediately
+        this.emit('tab-created', {
+            tabId: this.id,
+            type: this.type,
+            url: this.url,
+            parentId: this.parentId,
+            timestamp: Date.now()
+        });
+
+        // Setup periodic status reporting
+        this.statusReporter = setInterval(() => {
+            this.reportStatus();
+        }, this.reportInterval);
+
+        // Subscribe to injection confirmations
+        this.subscribe(`injection-confirmed-${this.id}`, (eventType, data) => {
+            this.injections.add(data.script);
+            this.state = 'active';
+
+            this.emit('tab-injection-confirmed', {
+                tabId: this.id,
+                script: data.script,
+                injections: Array.from(this.injections)
+            });
+        });
+    }
+
+    reportStatus() {
+        const status = {
+            tabId: this.id,
+            type: this.type,
+            state: this.state,
+            injections: Array.from(this.injections),
+            parentId: this.parentId,
+            uptime: Date.now() - this.createdAt,
+            memoryEstimate: this.estimateMemoryUsage()
+        };
+
+        this.emit('tab-status', status);
+    }
+
+    estimateMemoryUsage() {
+        // Rough estimate based on injections and uptime
+        const baseMemory = 5; // MB
+        const perInjection = 2; // MB
+        const timeMemory = Math.min(10, this.uptime / 60000); // Up to 10MB over time
+
+        return baseMemory + (this.injections.size * perInjection) + timeMemory;
+    }
+
+    async inject(scriptType) {
+        // Request injection through event
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error(`Injection timeout for ${scriptType}`));
+            }, 5000);
+
+            const unsubscribe = this.subscribe(`injection-result-${this.id}-${scriptType}`,
+                (eventType, result) => {
+                    clearTimeout(timeout);
+                    unsubscribe();
+
+                    if (result.success) {
+                        this.injections.add(scriptType);
+                        resolve(result);
+                    } else {
+                        reject(new Error(result.error));
+                    }
+                }
             );
-          }
+
+            this.emit('inject-script', {
+                tabId: this.id,
+                scriptType,
+                timestamp: Date.now()
+            });
         });
-      }
-    });
-
-    console.log("🔥 HiddenTabManager initialized with WeakMap registry");
-  }
-
-  async logToVisible(tabId, level, message, category = "SYSTEM") {
-    // Direct logging to console and proxy-controller
-    console.log(`[BG-${category}] ${level}: ${message}`);
-
-    // Check if proxy is actually ready before sending
-    const tabState = this.tabStates.get(tabId);
-    if (!tabState?.injections?.has("proxy")) {
-      // Proxy not ready yet, skip remote logging
-      return;
     }
 
-    try {
-      await this.broker.send(tabId, "logFromBackground", {
-        level,
-        message,
-        category,
-        source: "background",
-      });
-    } catch (error) {
-      // Proxy controller not ready yet, continue silently
-    }
-  }
+    destroy() {
+        if (this.statusReporter) {
+            clearInterval(this.statusReporter);
+        }
 
-  async toggleVibeMode(tab) {
-    const isActive = this.activeTabIds.has(tab.id);
-
-    if (isActive) {
-      await this.deactivateVibeMode(tab.id);
-    } else {
-      await this.activateVibeMode(tab);
-    }
-  }
-
-  async activateVibeMode(tab) {
-    const activationStart = performance.now();
-    const state = this.getTabState(tab.id);
-
-    if (state.active) {
-      console.log("⚠️ Already active for tab:", tab.id);
-      return;
-    }
-
-    // Enhanced WeakMap storage for comprehensive tab data tracking
-    const tabData = {
-      activatedAt: Date.now(),
-      url: tab.url,
-      title: tab.title,
-      hiddenTabId: null,
-      extractionAttempts: 0,
-      performanceMetrics: {
-        activationStart,
-        injectionTimes: {},
-        extractionTime: null,
-      },
-      settings: await this.getTabSpecificSettings(),
-      timers: new Set(), // Store timer IDs for cleanup
-    };
-
-    this.tabRegistry.set(tab, tabData);
-    this.tabDataCache.set(tab.id, tab); // For reverse lookup
-
-    try {
-      console.log("🔥 Activating Vibe Mode for tab:", tab.id);
-
-      // Prevent activation on restricted URLs
-      if (!this.isValidUrl(tab.url)) {
-        throw new Error("Cannot activate on restricted URL");
-      }
-
-      // Check if already processing (using consolidated state)
-      if (state.injections.has("processing")) {
-        console.log("⚠️ Activation already in progress for tab:", tab.id);
-        return;
-      }
-
-      // Mark as processing in consolidated state
-      state.injections.add("processing");
-
-      // Step 1: Inject proxy controller into visible tab (includes CSS)
-      await this.injector.inject(tab.id, "proxy", tab.id);
-      state.injections.add("proxy");
-
-      // Step 2: Create hidden tab
-      const hiddenTab = await this.createHiddenTabThrottled(tab.url, tab.id);
-      state.hiddenTabId = hiddenTab.id;
-      this.hiddenTabs.set(tab.id, hiddenTab.id); // Legacy compatibility
-
-      // Store extraction status (legacy compatibility)
-      this.extractionStatus.set(hiddenTab.id, {
-        status: "initializing",
-        visibleTabId: tab.id,
-        originalUrl: tab.url,
-        startTime: Date.now(),
-      });
-
-      // Step 3: Inject stealth extractor into hidden tab
-      await this.injector.inject(hiddenTab.id, "extractor");
-      state.injections.add("extractor");
-
-      // Step 4: Mark as active
-      state.active = true;
-      this.activeTabIds.add(tab.id); // Legacy compatibility
-      this.updateBadge(tab.id, true);
-
-      // Step 5: Start extraction immediately
-      try {
-        await this.broker.send(hiddenTab.id, "extractContent", {
-          waitForFramework: true,
-          simulateScroll: true,
-          extractDelay: 500,
+        this.emit('tab-destroyed', {
+            tabId: this.id,
+            lifetime: Date.now() - this.createdAt
         });
-      } catch (error) {
-        console.error("❌ Failed to start extraction:", error);
-        this.handleExtractionError(tab.id, error);
-      }
 
-      // Update WeakMap tab data
-      const registryData = this.tabRegistry.get(tab);
-      if (registryData) {
-        registryData.hiddenTabId = hiddenTab.id;
-      }
-
-      console.log(
-        `✅ Activation complete in ${(performance.now() - activationStart).toFixed(1)}ms`,
-      );
-    } catch (error) {
-      console.error("❌ Activation failed:", error);
-      TabCleaner.cleanup(
-        this.tabStates,
-        this.tabRegistry,
-        this.tabDataCache,
-        tab.id,
-      );
-      this.sendErrorToUser(tab.id, error.message);
-      throw error;
-    } finally {
-      // Clean up processing flag
-      state.injections.delete("processing");
+        super.destroy();
     }
-  }
+}
 
-  async deactivateVibeMode(tabId) {
-    console.log("🔌 Deactivating Vibe Mode for tab:", tabId);
+// === REFACTORED HIDDEN TAB MANAGER ===
+class HiddenTabManager extends SubscriberEnabledComponent {
+    constructor() {
+        super();
 
-    try {
-      // Notify visible tab to clean up before removing state
-      await this.broker
-        .send(tabId, "deactivate")
-        .catch((_e) =>
-          console.log("Tab already closed or script not injected"),
+        // Use global MessageBroker singleton
+        this.broker = window.__messageBroker;
+
+        // Simple state management
+        this.tabs = new Map(); // tabId -> VibeTab instance
+
+        // Shared ScriptInjector (unchanged - it works well)
+        this.injector = new ScriptInjector(this.logEvent.bind(this));
+
+        // Setup middleware pipeline
+        this.setupMiddleware();
+
+        // Setup subscriptions
+        this.setupSubscriptions();
+
+        // Initialize browser listeners (async but we don't await in constructor)
+        this.init().catch(error => {
+            console.error('Failed to initialize HiddenTabManager:', error);
+        });
+    }
+
+    setupMiddleware() {
+        // Add lifecycle management middleware
+        this.subscriberManager.addGlobalMiddleware(
+            new TabLifecycleMiddleware(this)
         );
 
-      // Use unified cleanup
-      TabCleaner.cleanup(
-        this.tabStates,
-        this.tabRegistry,
-        this.tabDataCache,
-        tabId,
-      );
-
-      // Legacy cleanup for compatibility
-      const hiddenTabId = this.hiddenTabs.get(tabId);
-      if (hiddenTabId) {
-        this.extractionStatus.delete(hiddenTabId);
-      }
-      this.hiddenTabs.delete(tabId);
-      this.activeTabIds.delete(tabId);
-      this.injectionStatus.delete(tabId);
-
-      console.log("✅ Deactivation complete with unified cleanup");
-    } catch (error) {
-      console.error("❌ Deactivation error:", error);
-    }
-  }
-
-  async createHiddenTab(url, visibleTabId = "unknown") {
-    // Get stack trace for debugging
-    const stack = new Error().stack;
-    const caller = stack.split("\n")[2]?.trim() || "unknown";
-
-    console.log("🔧 Creating hidden tab for:", url);
-    console.log("📍 Called from:", caller);
-
-    // Log tab creation attempt for debugging + future tab manager
-    if (!this.tabCreationLog.has(visibleTabId)) {
-      this.tabCreationLog.set(visibleTabId, []);
-    }
-
-    const creationAttempt = {
-      timestamp: Date.now(),
-      url,
-      caller,
-      visibleTabId,
-    };
-
-    this.tabCreationLog.get(visibleTabId).push(creationAttempt);
-
-    // DEBUG: Block additional tabs while debugging (temporary safeguard)
-    if (this.debugMode && this.hiddenTabs.has(visibleTabId)) {
-      const existingAttempts = this.tabCreationLog.get(visibleTabId).length;
-      console.warn(
-        `🚨 BLOCKED: Tab ${visibleTabId} trying to create ${existingAttempts} hidden tabs!`,
-      );
-      console.warn(
-        "📋 Creation attempts:",
-        this.tabCreationLog.get(visibleTabId),
-      );
-
-      if (typeof dump !== "undefined") {
-        dump(
-          `[TAB-DEBUG] BLOCKED: ${visibleTabId} -> ${url} | Attempts: ${existingAttempts} | Caller: ${caller.substring(0, 30)}\n`,
+        // Add memory management middleware
+        this.subscriberManager.addGlobalMiddleware(
+            new TabMemoryMiddleware(10) // Max 10 tabs
         );
-      }
 
-      // Return existing hidden tab instead of creating new one
-      const existingHiddenTabId = this.hiddenTabs.get(visibleTabId);
-      try {
-        const existingTab = await browser.tabs.get(existingHiddenTabId);
-        console.log("↩️ Returning existing hidden tab:", existingHiddenTabId);
-        return existingTab;
-      } catch (e) {
-        console.warn("Existing hidden tab not found, allowing creation");
-      }
+        // Add validation middleware for tab operations
+        this.subscriberManager.addGlobalMiddleware(
+            new TabValidationMiddleware()
+        );
     }
 
-    const hiddenTab = await browser.tabs.create({
-      url,
-      active: false,
-      pinned: true,
-      index: 9999, // Move to end
-    });
+    setupSubscriptions() {
+        // === ACTIVATION FLOW ===
+        this.subscribe('activate-vibe-mode',  async (eventType, data) => {
+            const { tab } = data;
 
-    console.log("✅ Hidden tab created:", hiddenTab.id);
+            await this.activate(tab);
 
-    if (typeof dump !== "undefined") {
-      dump(
-        `[TAB-CREATE] ${visibleTabId} -> ${hiddenTab.id} | URL: ${url.substring(0, 50)} | Caller: ${caller.substring(0, 30)}\n`,
-      );
+        }, {
+            id: 'activation-handler',
+            maxRetries: 2,
+            fallbackBehavior: 'fallback',
+            fallbackCallback: async (eventType, data, error) => {
+                // Cleanup on failure
+                await this.cleanupTab(data.tab.id);
+                return { success: false, error: error.message };
+            }
+        });
+
+        // === DEACTIVATION FLOW ===
+        this.subscribe('deactivate-vibe-mode', async (eventType, data) => {
+            const { tabId } = data;
+            await this.cleanupTab(tabId);
+            return { success: true };
+        }, {
+            id: 'deactivation-handler'
+        });
+
+        // === INJECTION CONFIRMATIONS ===
+        this.subscribe('css-injected', (eventType, data) => {
+            const tab = this.tabs.get(data.tabId);
+            if (tab) {
+                tab.injections.add('css');
+                this.emit(`injection-confirmed-${data.tabId}`, {
+                    script: 'css',
+                    status: 'confirmed'
+                });
+            }
+        }, {
+            id: 'css-confirmation',
+            rateLimitMs: 100
+        });
+
+        // === TAB STATUS MONITORING ===
+        this.subscribe('tab-status', (eventType, status) => {
+            // Process status reports from tabs
+            if (status.memoryEstimate > 50) {
+                this.emit('memory-warning', {
+                    tabId: status.tabId,
+                    memory: status.memoryEstimate
+                });
+            }
+        }, {
+            id: 'status-monitor',
+            debounceMs: 1000,
+            transformations: [
+                // Enrich status with additional context
+                (data) => ({
+                    data: {
+                        ...data,
+                        isHidden: this.tabs.get(data.tabId)?.type === 'hidden',
+                        hasParent: !!this.tabs.get(data.tabId)?.parentId
+                    }
+                })
+            ]
+        });
+
+        // === CONTENT FLOW ===
+        this.subscribe('content-extracted', async (eventType, data) => {
+            const { hiddenTabId, content, metadata } = data;
+
+            // Find parent visible tab
+            const hiddenTab = this.tabs.get(hiddenTabId);
+            if (!hiddenTab) return;
+
+            const visibleTabId = hiddenTab.parentId;
+            if (!visibleTabId) return;
+
+            // Send to visible tab
+            this.emit('display-content', {
+                tabId: visibleTabId,
+                content,
+                metadata,
+                source: hiddenTabId
+            });
+        }, {
+            id: 'content-router',
+            priority: 10
+        });
+
+        // === SCRIPT INJECTION REQUESTS ===
+        this.subscribe('inject-script', async (eventType, data) => {
+            const { tabId, scriptType } = data;
+
+            try {
+                const _result = await this.injector.inject(tabId, scriptType);
+
+                this.emit(`injection-result-${tabId}-${scriptType}`, {
+                    success: true,
+                    scriptType
+                });
+
+            } catch (error) {
+                this.emit(`injection-result-${tabId}-${scriptType}`, {
+                    success: false,
+                    error: error.message
+                });
+            }
+        }, {
+            id: 'injection-handler',
+            maxRetries: 3
+        });
+
+        // === MESSAGE HANDLERS (Only popup toggle remains) ===
+        this.subscribe('message-toggleFromPopup', async (eventType, data) => {
+            const { tabId } = data;
+            
+            console.log(`🔄 Toggle request from popup for tab ${tabId}`);
+            dump(`🔄 Toggle request from popup for tab ${tabId}\n`);
+
+            try {
+                const tab = await browser.tabs.get(tabId);
+                const isActive = this.tabs.has(tabId) && this.tabs.get(tabId).state === 'active';
+
+                if (isActive) {
+                    this.emit('deactivate-vibe-mode', { tabId });
+                } else {
+                    this.emit('activate-vibe-mode', { tab });
+                }
+            } catch (error) {
+                console.error('Toggle from popup failed:', error);
+                dump(`❌ Toggle from popup failed: ${error.message}\n`);
+            }
+        }, {
+            id: 'popup-toggle-handler'
+        });
+
+        // Settings, debug, and status handlers moved to MessageBroker
+
+        // === AUTO-ACTIVATION ===
+        this.subscribe('tab-updated', async (eventType, data) => {
+            const { tabId, tab } = data;
+            console.log(`Auto-activation check for tab ${tabId}`);
+            if (typeof dump !== 'undefined') {
+                dump(`Auto-activation check for tab ${tabId}\n`);
+            }
+
+            try {
+                const settings = await browser.storage.sync.get('vibeReaderSettings');
+                // Default to true if not set (matching popup.js default)
+                const autoActivate = settings.vibeReaderSettings?.autoActivate ?? true;
+                console.log(`Auto-activate setting: ${autoActivate}`);
+                if (typeof dump !== 'undefined') {
+                    dump(`Auto-activate setting: ${autoActivate}\n`);
+                }
+
+                if (autoActivate && this.isValidUrl(tab.url)) {
+                    console.log(`🔥 Auto-activating on ${tab.url}`);
+                    if (typeof dump !== 'undefined') {
+                        dump(`🔥 Auto-activating on ${tab.url}\n`);
+                    }
+                    await this.activate(tab)
+                }
+            } catch (error) {
+                console.warn('Auto-activation check failed:', error);
+            }
+        }, {
+            id: 'auto-activation-handler'
+        });
     }
 
-    // Tab exists and is ready to use - no need to wait for "complete" status
-    // executeScript with runAt: "document_end" will handle DOM readiness
-    return hiddenTab;
-  }
-
-  // Legacy injection methods removed - now handled by ScriptInjector class
-
-  async handleProxyReady(request, sender) {
-    console.log("📡 Proxy ready signal received from tab:", sender.tab.id);
-    
-    // Mark the tab as proxy-ready
-    const state = this.getTabState(sender.tab.id);
-    state.proxyReady = true;
-    
-    // Check if we have pending content to send
-    if (state.pendingContent) {
-      console.log("📤 Sending pending content to now-ready proxy");
-      try {
-        await this.broker.send(sender.tab.id, "displayContent", state.pendingContent);
-        delete state.pendingContent; // Clear pending content after sending
-        console.log("✅ Pending content sent successfully");
-      } catch (error) {
-        console.error("Failed to send pending content:", error);
-      }
-    }
-    
-    return { success: true };
-  }
-
-  async handleExtractedContent(request, sender) {
-    const extractionInfo = this.extractionStatus.get(sender.tab.id);
-
-    if (!extractionInfo) {
-      console.error("No extraction info found for tab:", sender.tab.id);
-      return { success: false, error: "No extraction info" };
-    }
-
-    try {
-      const visibleTabState = this.getTabState(extractionInfo.visibleTabId);
-      const contentData = {
-        content: request.content,
-        metadata: request.metadata,
-        source: "hiddenTab",
-      };
-      
-      // Check if proxy is ready
-      if (visibleTabState.proxyReady) {
-        // Proxy is ready, send immediately
-        await this.broker.send(extractionInfo.visibleTabId, "displayContent", contentData);
-      } else {
-        // Proxy not ready yet, store content for later
-        console.log("⏳ Proxy not ready yet, storing content for later delivery");
-        visibleTabState.pendingContent = contentData;
-      }
-
-      // Update extraction status
-      this.extractionStatus.set(sender.tab.id, {
-        ...extractionInfo,
-        status: "complete",
-        extractedAt: Date.now(),
-      });
-
-      // Don't automatically cleanup hidden tab - let it stay for future interactions
-      // Only cleanup when user manually deactivates or tab is actually closed
-      console.log("💫 Hidden tab kept alive for future interactions");
-
-      return { success: true };
-    } catch (error) {
-      console.error("Failed to send content to visible tab:", error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  async routeProxyCommand(request, sender) {
-    const hiddenTabId = this.hiddenTabs.get(sender.tab.id);
-
-    if (!hiddenTabId) {
-      return { success: false, error: "No hidden tab found" };
-    }
-
-    try {
-      const response = await this.broker.send(
-        hiddenTabId,
-        "executeProxyCommand",
-        {
-          command: request.command,
-          data: request.data,
-        },
-      );
-
-      return response;
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  }
-
-  updateExtractionProgress(request, sender) {
-    const extractionInfo = this.extractionStatus.get(sender.tab.id);
-
-    if (extractionInfo) {
-      this.extractionStatus.set(sender.tab.id, {
-        ...extractionInfo,
-        status: request.status,
-        progress: request.progress,
-      });
-
-      // Send progress update to visible tab if proxy is ready
-      const visibleTabState = this.getTabState(extractionInfo.visibleTabId);
-      if (visibleTabState.proxyReady) {
-        this.broker
-          .send(extractionInfo.visibleTabId, "extractionProgress", {
-            status: request.status,
-            progress: request.progress,
-          })
-          .catch(() => {
-            // Proxy controller might have disconnected
-          });
-      }
-    }
-  }
-
-  handleTabUpdate(tabId, _tab) {
-    // Re-inject if page was refreshed
-    if (this.activeTabIds.has(tabId)) {
-      console.log("📄 Page refreshed, re-injecting proxy controller");
-      setTimeout(() => {
-        this.injector
-          .inject(tabId, "proxy", tabId)
-          .catch((error) => console.error("Reinjection failed:", error));
-      }, 1000);
-    }
-  }
-
-  async verifyCSSLoadingWithRetry(tabId, maxAttempts = 5, delay = 500) {
-    await this.logToVisible(
-      tabId,
-      "INFO",
-      "🔍 Verifying CSS loading...",
-      "CSS",
-    );
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const cssVerifyResult = await browser.tabs.executeScript(tabId, {
-          code: `(() => {
-                    const rootStyles = getComputedStyle(document.documentElement);
-                    const primary500 = rootStyles.getPropertyValue('--primary-500').trim();
-                    const twShadowColor = rootStyles.getPropertyValue('--tw-shadow-color').trim();
+    async init() {
+        console.log('HiddenTabManager.init() called - setting up listeners');
+        if (typeof dump !== 'undefined') {
+            dump('HiddenTabManager.init() called - setting up listeners\n');
+        }
+        
+        // Check existing tabs after a short delay to let them load
+        setTimeout(async () => {
+            const existingTabs = await browser.tabs.query({});
+            console.log(`Found ${existingTabs.length} existing tabs at startup`);
+            if (typeof dump !== 'undefined') {
+                dump(`Found ${existingTabs.length} existing tabs at startup\n`);
+                existingTabs.forEach(tab => {
+                    dump(`  Tab ${tab.id}: ${tab.url} (status: ${tab.status})\n`);
                     
-                    // Check for link element as fallback
-                    const cssLink = document.querySelector('link[href*="generated.css"]');
-                    const linkFound = !!cssLink;
-                    
-                    // Check stylesheets
-                    const styleSheets = Array.from(document.styleSheets);
-                    let generatedCSSFound = false;
-                    let generatedCSSRules = 0;
-                    
-                    styleSheets.forEach(sheet => {
-                        try {
-                            const href = sheet.href || '';
-                            if (href.includes('generated.css') || 
-                                href.includes('styles/generated') ||
-                                href.includes(chrome.runtime.id)) {  // Check for extension URL
-                                generatedCSSFound = true;
-                                generatedCSSRules = sheet.cssRules?.length || 0;
-                            }
-                        } catch(e) {
-                            // Some sheets may be inaccessible
+                    // If tab is already complete, trigger tab-updated event
+                    if (tab.status === 'complete' && tab.url && !tab.url.startsWith('about:')) {
+                        console.log(`Triggering auto-activation check for already-loaded tab ${tab.id}: ${tab.url}`);
+                        if (typeof dump !== 'undefined') {
+                            dump(`Triggering auto-activation check for already-loaded tab ${tab.id}: ${tab.url}\n`);
                         }
-                    });
-                    
-                    // Success if variables are set OR link exists
-                    const success = (!!primary500 && !!twShadowColor) || linkFound || generatedCSSFound;
-                    
-                    return {
-                        success,
-                        cssLoaded: generatedCSSFound || linkFound,
-                        cssRules: generatedCSSRules,
-                        primary500Available: !!primary500,
-                        twShadowColorAvailable: !!twShadowColor,
-                        primary500Value: primary500,
-                        linkFound,
-                        totalStyleSheets: styleSheets.length
-                    };
-                })();`,
+                        this.emit('tab-updated', { tabId: tab.id, tab });
+                    }
+                });
+            }
+        }, 3000); // Wait 3 seconds for tabs to load
+        
+        // Browser action clicks
+        browser.browserAction.onClicked.addListener((tab) => {
+            const visibleTab = this.tabs.get(tab.id);
+            const isActive = visibleTab?.state === 'active';
+
+            if (isActive) {
+                this.emit('deactivate-vibe-mode', { tabId: tab.id });
+            } else {
+                this.emit('activate-vibe-mode', { tab });
+            }
         });
 
-        const cssResult = cssVerifyResult[0];
-        if (cssResult.success) {
-          await this.logToVisible(
-            tabId,
-            "INFO",
-            `✅ CSS verified on attempt ${attempt} - Variables: ${cssResult.primary500Available}, Link: ${cssResult.linkFound}`,
-            "CSS",
-          );
-          return true;
+        // Tab removal
+        browser.tabs.onRemoved.addListener((tabId) => {
+            this.emit('tab-removed', { tabId });
+        });
+
+        // Tab updates
+        browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+            if (changeInfo.status === 'complete') {
+                console.log(`Tab ${tabId} loaded: ${tab.url}`);
+                if (typeof dump !== 'undefined') {
+                    dump(`Tab ${tabId} loaded: ${tab.url}\n`);
+                }
+                this.emit('tab-updated', { tabId, tab });
+            }
+        });
+
+        // Message routing
+        browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+            const eventType = `message-${request.action}`;
+            
+            // Check for unhandled messages
+            if (!this.subscriberManager.subscribers.has(eventType)) {
+                console.warn(`⚠️ Unhandled message: ${request.action}`, request);
+                if (typeof dump !== "undefined") {
+                    dump(`⚠️ Unhandled message: ${request.action}\n`);
+                }
+            }
+            
+            this.emit(eventType, {
+                ...request,
+                sender,
+                sendResponse
+            });
+            return true; // Keep channel open
+        });
+    }
+
+    async activate(tab ) {
+        // Check if already active
+        if (this.tabs.has(tab.id) && this.tabs.get(tab.id).state === 'active') {
+            return {success: true, already_active: true};
         }
-        await this.logToVisible(
-          tabId,
-          "WARN",
-          `⚠️ CSS verification attempt ${attempt}/${maxAttempts} - Still loading...`,
-          "CSS",
-        );
 
-        if (attempt < maxAttempts) {
-          await new Promise((resolve) => setTimeout(resolve, delay));
+        try {
+            // Create visible tab wrapper
+            const visibleTab = new VibeTab(tab.id, {
+                type: 'visible',
+                url: tab.url
+            });
+            this.tabs.set(tab.id, visibleTab);
+
+            // Inject proxy controller
+            await this.injector.inject(tab.id, 'proxy', tab.id);
+            visibleTab.injections.add('proxy');
+
+            // Create hidden tab
+            const hiddenTabId = await this.createHiddenTab(tab.url, tab.id);
+            const hiddenTab = new VibeTab(hiddenTabId, {
+                type: 'hidden',
+                url: tab.url,
+                parentId: tab.id
+            });
+            this.tabs.set(hiddenTabId, hiddenTab);
+
+            // Inject extractor
+            await this.injector.inject(hiddenTabId, 'extractor');
+            hiddenTab.injections.add('extractor');
+
+            // Register the relationship with the broker
+            this.broker.registerRoute(hiddenTabId, tab.id, 'hidden-visible');
+
+            // Start extraction via broker (will be routed to hidden tab)
+            await this.broker.send(hiddenTabId, 'start-extraction', {
+                hiddenTabId,
+                visibleTabId: tab.id,
+                url: tab.url
+            });
+
+            return {success: true, hiddenTabId};
+
+        } catch (error) {
+            this.emit('activation-error', {tabId: tab.id, error: error.message});
+            throw error;
         }
-      } catch (error) {
-        await this.logToVisible(
-          tabId,
-          "ERR",
-          `❌ CSS verification error: ${error.message}`,
-          "CSS",
-        );
-        if (attempt >= maxAttempts) throw error;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
+    }
+    async createHiddenTab(url, _parentId) {
+        const tab = await browser.tabs.create({
+            url,
+            active: false,
+            pinned: true,
+            index: 9999
+        });
+
+        return tab.id;
     }
 
-    // If we get here, verification failed - but allow to continue with warning
-    await this.logToVisible(
-      tabId,
-      "WARN",
-      "⚠️ CSS verification inconclusive - proceeding anyway",
-      "CSS",
-    );
-    return false; // Don't throw, just return false
-  }
-  cleanupTab(tabId) {
-    console.log("🗑️ Cleaning up tab:", tabId);
-
-    // Check if this is actually a tab close (not refresh) by verifying tab still exists
-    browser.tabs
-      .get(tabId)
-      .then((_tab) => {
-        // Tab still exists - this might be a refresh, don't cleanup hidden tab
-        console.log("Tab still exists, skipping cleanup for refresh");
-      })
-      .catch(() => {
-        // Tab doesn't exist - this is a real tab close, proceed with cleanup
-        console.log("Tab actually closed, proceeding with cleanup");
-        this.performActualCleanup(tabId);
-      });
-  }
-
-  performActualCleanup(tabId) {
-    // Use unified cleanup for visible tabs
-    if (this.activeTabIds.has(tabId)) {
-      TabCleaner.cleanup(
-        this.tabStates,
-        this.tabRegistry,
-        this.tabDataCache,
-        tabId,
-      );
-
-      // Legacy cleanup for compatibility
-      const hiddenTabId = this.hiddenTabs.get(tabId);
-      if (hiddenTabId) {
-        this.extractionStatus.delete(hiddenTabId);
-      }
-      this.hiddenTabs.delete(tabId);
-      this.activeTabIds.delete(tabId);
-      this.injectionStatus.delete(tabId);
+    registerTab(tabId, data) {
+        if (!this.tabs.has(tabId)) {
+            const tab = new VibeTab(tabId, data);
+            this.tabs.set(tabId, tab);
+        }
     }
 
-    // Clean up if this was a hidden tab
-    const extractionInfo = this.extractionStatus.get(tabId);
-    if (extractionInfo) {
-      this.extractionStatus.delete(tabId);
-      // Notify visible tab
-      this.broker
-        .send(extractionInfo.visibleTabId, "hiddenTabClosed", {
-          error: "Hidden tab was closed unexpectedly",
-        })
-        .catch(() => {});
-    }
-  }
-
-  updateBadge(tabId, isActive) {
-    const text = isActive ? "ON" : "";
-    const color = isActive ? "#f92672" : "#000000";
-    const title = isActive
-      ? "VibeReader Active - Click to deactivate"
-      : "VibeReader - Click to activate";
-
-    browser.browserAction.setBadgeText({ text, tabId });
-    browser.browserAction.setBadgeBackgroundColor({ color, tabId });
-    browser.browserAction.setTitle({ title, tabId });
-  }
-
-  async sendErrorToUser(tabId, errorMessage) {
-    try {
-      await this.broker.send(tabId, "showError", {
-        error: errorMessage,
-      });
-    } catch (error) {
-      console.error("Could not notify user of error:", errorMessage);
-    }
-  }
-
-  cleanupFailedActivation(tabId) {
-    console.log("🧹 TabCleaner handling failed activation for tab:", tabId);
-
-    // Use unified cleanup
-    TabCleaner.cleanup(
-      this.tabStates,
-      this.tabRegistry,
-      this.tabDataCache,
-      tabId,
-    );
-
-    // Legacy cleanup for compatibility
-    const hiddenTabId = this.hiddenTabs.get(tabId);
-    if (hiddenTabId) {
-      this.extractionStatus.delete(hiddenTabId);
-    }
-    this.hiddenTabs.delete(tabId);
-    this.activeTabIds.delete(tabId);
-    this.injectionStatus.delete(tabId);
-  }
-
-  handleExtractionError(tabId, error) {
-    console.error("Extraction error for tab:", tabId, error);
-    this.sendErrorToUser(tabId, "Content extraction failed. Please try again.");
-    this.deactivateVibeMode(tabId);
-  }
-
-  isValidUrl(url) {
-    if (!url) return false;
-
-    const restrictedPrefixes = [
-      "chrome://",
-      "chrome-extension://",
-      "moz-extension://",
-      "about:",
-      "file://",
-      "edge://",
-      "opera://",
-      "vivaldi://",
-      "brave://",
-    ];
-
-    return !restrictedPrefixes.some((prefix) => url.startsWith(prefix));
-  }
-
-  async checkAutoActivate(tabId, tab) {
-    // Check to prevent multiple activations
-    if (
-      this.activeTabIds.has(tabId) ||
-      this.injectionStatus.has(tabId) || // Already processing
-      !this.isValidUrl(tab.url)
-    ) {
-      return;
+    isValidUrl(url) {
+        if (!url) return false;
+        
+        const restricted = [
+            'chrome://', 'chrome-extension://', 'about:',
+            'edge://', 'opera://', 'vivaldi://', 'brave://',
+            'moz-extension://'
+        ];
+        
+        return !restricted.some(prefix => url.startsWith(prefix));
     }
 
-    try {
-      const result = await browser.storage.sync.get("vibeReaderSettings");
-      const settings = result.vibeReaderSettings || {};
+    async cleanupTab(tabId) {
+        const tab = this.tabs.get(tabId);
+        if (!tab) return;
 
-      if (settings.autoActivate) {
-        console.log("🚀 Auto-activating for tab:", tabId);
-        setTimeout(() => {
-          this.activateVibeMode(tab).catch((error) =>
-            console.error("Auto-activate failed:", error),
-          );
-        }, 1000);
-      }
-    } catch (error) {
-      console.error("Auto-activate check failed:", error);
+        // Destroy VibeTab (stops self-reporting)
+        tab.destroy();
+
+        // Remove relationships
+        if (tab.type === 'visible') {
+            const hiddenTabId = this.relationships.get(tabId);
+            if (hiddenTabId) {
+                const hiddenTab = this.tabs.get(hiddenTabId);
+                if (hiddenTab) {
+                    hiddenTab.destroy();
+                    await browser.tabs.remove(hiddenTabId);
+                    this.tabs.delete(hiddenTabId);
+                }
+
+                this.tabs.delete(tabId);
+                browser.browserAction.setBadgeText({ text: '', tabId });
+            }
+        }
+
+        // Remove from registry
+        this.tabs.delete(tabId);
+
+        // Update badge
+        browser.browserAction.setBadgeText({ text: '', tabId });
     }
-  }
+
+    logEvent(level, message, category) {
+        this.emit('log-event', { level, message, category });
+    }
+
+    getStatus() {
+        const visibleTabs = Array.from(this.tabs.values())
+            .filter(t => t.type === 'visible');
+
+        const hiddenTabs = Array.from(this.tabs.values())
+            .filter(t => t.type === 'hidden');
+
+        // Build relationships array from VibeTab data
+        const relationships = hiddenTabs.map(hidden => [
+            hidden.parentId,  // visible tab ID
+            hidden.id         // hidden tab ID
+        ]);
+
+        return {
+            totalTabs: this.tabs.size,
+            visibleTabs: visibleTabs.length,
+            hiddenTabs: hiddenTabs.length,
+            relationships,  // Computed, not stored
+            memoryUsage: Array.from(this.tabs.values())
+                .reduce((sum, tab) => sum + tab.estimateMemoryUsage(), 0)
+        };
+    }
+}
+
+// === VALIDATION MIDDLEWARE ===
+class TabValidationMiddleware extends SubscriberMiddleware {
+    constructor() {
+        super('TabValidation');
+    }
+
+    async process(eventContext) {
+        const { event, data } = eventContext;
+
+        // Validate URLs before tab creation
+        if (event === 'activate-vibe-mode') {
+            const url = data.tab?.url;
+            if (!this.isValidUrl(url)) {
+                console.warn('Invalid URL for activation:', url);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    isValidUrl(url) {
+        if (!url) return false;
+
+        const restricted = [
+            'chrome://', 'chrome-extension://', 'about:',
+            'edge://', 'opera://', 'vivaldi://', 'brave://'
+        ];
+
+        return !restricted.some(prefix => url.startsWith(prefix));
+    }
 }
 
 // Initialize with singleton pattern
 if (!window.__vibeReaderBackgroundManager) {
-  window.__vibeReaderBackgroundManager = new HiddenTabManager();
+    console.log('🚀 VibeReader Background Manager Starting...');
+    if (typeof dump !== 'undefined') {
+        dump('🚀 VibeReader Background Manager Starting...\n');
+    }
+    window.__vibeReaderBackgroundManager = new HiddenTabManager();
+    console.log('✅ VibeReader Background Manager Initialized');
+    if (typeof dump !== 'undefined') {
+        dump('✅ VibeReader Background Manager Initialized\n');
+    }
 }

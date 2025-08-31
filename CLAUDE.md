@@ -60,10 +60,10 @@ zip -r vibe-reader.xpi * -x "*.DS_Store" "*.git*" "*.md" "test-exports/*" "node_
 - **Hidden Tab Proxy Architecture**: Creates invisible tab for clean content extraction without page interference
 - **Middleware-Driven Event System**: All components use SubscriberEnabledComponent with intelligent subscription management, automatic error recovery, rate limiting, and data transformation pipelines
 - **WeakMap Memory Management**: Automatic cleanup with comprehensive tab data tracking and timer management
-- **Production Subscriber Architecture**: EventBus, MessageBroker, ThrottledEmitter, and VibeLogger enhanced with middleware for validation, serialization, timing, and category-aware routing
+- **Production Subscriber Architecture**: EventBus, MessageBridge, ThrottledEmitter, and VibeLogger enhanced with middleware for validation, serialization, timing, and category-aware routing
 - **Framework Detection**: Automatic detection and waiting for React/Vue/Angular/Next.js/Svelte hydration with subscriber-based monitoring
 - **Maximum Z-Index Isolation**: Uses `z-index: 2147483647` with CSS isolation for bulletproof overlay layering
-- **Cross-Context Message Validation**: MessageBroker with middleware for structure validation, object serialization, and performance tracking
+- **Cross-Context Message Validation**: MessageBridge with middleware for structure validation, object serialization, and performance tracking
 - **Terminal Category System**: SYSADMIN/NETMON panels with category-specific subscriptions (ERRORS=50ms, CSS=200ms rate limiting)
 - **CSP Font Handling**: System font fallbacks to prevent Content-Security-Policy violations
 - **Intelligent Media Pipeline**: Three-way display (emoji/ascii/normal) with transformation-based processing using subscriber middleware for quality filtering and format conversion
@@ -206,7 +206,7 @@ vibe-reader-extension/
 
 3. **Enhanced Core Utilities** - Middleware-powered infrastructure
    - **EventBus** - Automatic categorization, isolated error handling, transformation pipelines
-   - **MessageBroker** - Cross-context validation, serialization, performance monitoring
+   - **MessageBridge** - Cross-context validation, serialization, performance monitoring
    - **ThrottledEmitter** - Target-aware behavior with middleware integration
    - **VibeLogger** - Category-specific subscriptions with rate limiting per terminal type
 
@@ -223,7 +223,7 @@ vibe-reader-extension/
 - **HiddenTabManager** - Message handler subscriptions with validation ✅
 - **VibeLogger** - Category-specific terminal subscriptions ✅
 - **EventBus** - Enhanced with automatic categorization ✅
-- **MessageBroker** - Cross-context message routing ✅
+- **MessageBridge** - Cross-context message routing ✅
 
 ### **🔧 Middleware Integration Benefits:**
 
@@ -357,7 +357,7 @@ vibe-reader-extension/
 1. **Complete ESLint Setup** - Modern JavaScript linting with browser extension support
    - **ESLint 9 flat config** with security plugins (no-unsanitized, security)
    - **Mozilla WebExtensions plugin** with proper flat config integration
-   - **Custom globals** for VibeReader utility classes (MessageBroker, VibeLogger, etc.)
+   - **Custom globals** for VibeReader utility classes (MessageBridge, VibeLogger, etc.)
    - **98 linting issues identified** for code quality improvements
 
 2. **Comprehensive Web-ext Configuration** - Professional extension development setup
@@ -372,7 +372,7 @@ vibe-reader-extension/
    - **npm run test** - Combined linting pipeline (ESLint + Web-ext)
    - **npm run build:extension** - Production package building
 
-4. **MessageBroker Bug Fix** - Resolved popup toggle functionality
+4. **MessageBridge Bug Fix** - Resolved popup toggle functionality
    - **Fixed request.data handling** to support both nested and direct property formats
    - **Eliminated "tabId undefined" errors** in popup activation
    - **Backward compatibility** maintained for different message formats

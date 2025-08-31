@@ -1,389 +1,1217 @@
-// VibeReader v2.0 - Stealth Content Extractor
-// Simple singleton pattern without IIFE wrapper
+// VibeReader v2.0 - Production StealthExtractor with Enhanced Subscriber Architecture
 
-// Prevent multiple injections with simple guard
 if (window.__vibeReaderStealthExtractor) {
-    console.log('⚠️ StealthExtractor already exists, skipping');
+    console.log('StealthExtractor already exists, skipping');
 } else {
     try {
-        class StealthExtractor {
+        // === CUSTOM MIDDLEWARE FOR EXTRACTION ===
+        class ExtractionPipelineMiddleware extends SubscriberMiddleware {
+            constructor(extractor) {
+                super('ExtractionPipeline');
+                this.extractor = extractor;
+            }
+
+            process(eventContext) {
+                const { event, _data } = eventContext;
+
+                // Track pipeline progress
+                if (event.startsWith('pipeline-')) {
+                    const step = event.replace('pipeline-', '');
+                    this.extractor.emit('pipeline-step-complete', {
+                        step,
+                        duration: eventContext.context.performance?.duration || 0,
+                        extractionId: this.extractor.extractionId
+                    });
+                }
+
+                return true;
+            }
+        }
+
+        class StealthExtractor extends SubscriberEnabledComponent {
             constructor() {
-                this.extractionAttempts = 0;
-                this.maxAttempts = 5;
-                this.scrollProgress = 0;
-                this.frameworkDetected = null;
-                this.mutationObserver = null;
-                this.contentStabilityResolver = null;
-                this.lastContentHash = null;
+                super();
+
+                // Core messaging systems
+                this.bridge = new MessageBridge();
+                this.eventBus = new EventBus();
+                this.progressEmitter = new ThrottledEmitter(this.bridge, 100);
+                this.events = new ThrottledEmitter(this.eventBus, 50);
+
+                // State management
+                this.isActive = false;
                 this.extractionInProgress = false;
-                this.broker = new MessageBroker();
+                this.extractionId = null;
+                this.frameworkDetected = 'unknown';
 
-                // Register all handlers
-                this.broker.register('extractContent', (config) => this.startExtraction(config));
-                this.broker.register('executeProxyCommand', (data) => this.executeCommand(data));
+                // Pipeline configuration
+                this.extractionPipeline = [];
+                this.defaultSteps = [
+                    'detectFramework',
+                    'immediateExtraction',
+                    'backgroundProcessing',
+                    'contentOptimization',
+                    'mediaProcessing'
+                ];
 
+                // DOM monitoring
+                this.mutationObserver = null;
+                this.mutationCount = 0;
+                this.contentStabilityTimer = null;
+                this.lastContentHash = null;
 
+                // Scrolling and content discovery
+                this.scrollingEnabled = true;
+                this.proxyScrollEnabled = true;
+                this.discoveryHeuristics = {
+                    minImageSize: 10000,
+                    minQualityThreshold: 0.3,
+                    lazyLoadingPatterns: [
+                        'data-src', 'data-lazy-src', 'data-original',
+                        'data-srcset', 'loading="lazy"'
+                    ]
+                };
+
+                // Extraction metrics
+                this.extractionMetrics = {
+                    attempts: 0,
+                    successes: 0,
+                    failures: 0,
+                    averageTime: 0,
+                    totalMutations: 0
+                };
+
+                // Media processing
+                this.mediaStats = { images: 0, videos: 0, iframes: 0, tables: 0 };
+
+                // Add custom middleware
+                this.subscriberManager.addGlobalMiddleware(
+                    new ExtractionPipelineMiddleware(this)
+                );
+
+                // Setup enhanced systems
+                this.setupEnhancedSubscriptions();
+                this.setupMessageHandlers();
+                this.setupPipelineMiddleware();
+
+                // Initialize immediately
                 this.init();
             }
 
-            init() {
-                console.log('🕵️ StealthExtractor initializing:', {
-                    url: window.location.href,
-                    timestamp: new Date().toISOString()
+            // === ENHANCED SUBSCRIPTION MANAGEMENT ===
+            setupEnhancedSubscriptions() {
+                // Terminal logging subscription
+                if (window.VibeLogger) {
+                    this.subscribe('terminal-log', (eventType, data) => {
+                        this.logExtraction(data.category, data.level, data.message);
+                    }, {
+                        id: 'vibe-logger-terminal',
+                        eventTypes: ['terminal-log'],
+                        rateLimitMs: 100,
+                        transformations: [
+                            (data) => ({
+                                data: {
+                                    category: data.category || 'system',
+                                    level: data.level || 'INFO',
+                                    message: data.message || 'Unknown message'
+                                }
+                            })
+                        ]
+                    });
+
+                    const loggerUnsubscribe = window.VibeLogger.subscribeToTerminal((event) => {
+                        this.emit('terminal-log', event);
+                    });
+                    this.subscriptions.push(loggerUnsubscribe);
+                }
+
+                // Pipeline step completion
+                this.subscribe('pipeline-step-complete', (eventType, data) => {
+                    this.handlePipelineStepComplete(data);
+                }, {
+                    id: 'pipeline-coordinator',
+                    priority: 10,
+                    debounceMs: 50,
+                    transformations: [
+                        (data, context) => ({
+                            data: {
+                                ...data,
+                                timestamp: Date.now(),
+                                extractionId: this.extractionId
+                            },
+                            context: { ...context, source: 'pipeline' }
+                        })
+                    ]
                 });
 
-                this.detectFramework();
-                this.broker.send(null, 'extractionProgress', { status: 'initialized', progress: 0 });
+                // Media discovery aggregation
+                this.subscribe('media-discovered', (eventType, data) => {
+                    this.handleMediaDiscovery(data);
+                }, {
+                    id: 'media-aggregator',
+                    debounceMs: 200,
+                    transformations: [
+                        (data, _context, _eventContext) => {
+                            const aggregated = { ...this.mediaStats };
+                            if (data.images) aggregated.images += data.images;
+                            if (data.videos) aggregated.videos += data.videos;
+                            if (data.iframes) aggregated.iframes += data.iframes;
+                            if (data.tables) aggregated.tables += data.tables;
+                            return { data: aggregated };
+                        }
+                    ]
+                });
 
-                console.log('✅ StealthExtractor ready');
+                // Content updates with quality filtering
+                this.subscribe('content-updated', (eventType, data) => {
+                    this.handleContentUpdate(data);
+                }, {
+                    id: 'content-processor',
+                    rateLimitMs: 500,
+                    transformations: [
+                        (data) => {
+                            if (data.scoreImprovement && data.scoreImprovement < 5) {
+                                return null;
+                            }
+                            return { data };
+                        }
+                    ]
+                });
+
+                // DOM mutations with heuristic analysis
+                this.subscribe('dom-mutations', (eventType, data) => {
+                    this.analyzeMutationImpact(data);
+                }, {
+                    id: 'mutation-analyzer',
+                    debounceMs: 100,
+                    eventTypes: ['dom-mutations'],
+                    transformations: [
+                        (data) => ({
+                            data: {
+                                ...data,
+                                impact: this.calculateMutationImpact(data),
+                                suggestions: this.generateMutationSuggestions(data)
+                            }
+                        })
+                    ]
+                });
+
+                // Scroll events with proxy filtering
+                this.subscribe('scroll-event', (eventType, data) => {
+                    this.handleScrollEvent(data);
+                }, {
+                    id: 'scroll-handler',
+                    rateLimitMs: 50,
+                    eventTypes: ['scroll-event'],
+                    transformations: [
+                        (data, context) => {
+                            if (!this.proxyScrollEnabled && context.source === 'proxy') {
+                                return null;
+                            }
+                            return { data };
+                        }
+                    ]
+                });
+
+                console.log('Enhanced subscriptions setup complete');
             }
 
+            setupPipelineMiddleware() {
+                if (this.subscriberManager && window.ContentTransformer) {
+                    this.subscriberManager.addPipelineTransform(
+                        (tree, options, context) => {
+                            if (context.data && typeof context.data === 'string' && context.data.includes('<')) {
+                                context.messages.push('HTML content detected for processing');
+                            }
+                            return tree;
+                        }
+                    );
+
+                    this.subscriberManager.addPipelineTransform(
+                        (tree, options, context) => {
+                            if (tree && tree.children) {
+                                let mediaCount = 0;
+                                const traverse = (node) => {
+                                    if (node.type === 'element' && ['img', 'video', 'audio'].includes(node.tagName)) {
+                                        mediaCount++;
+                                    }
+                                    if (node.children) {
+                                        node.children.forEach(traverse);
+                                    }
+                                };
+                                traverse(tree);
+
+                                if (mediaCount > 0) {
+                                    context.data = { ...context.data, mediaElementsFound: mediaCount };
+                                }
+                            }
+                            return tree;
+                        }
+                    );
+                }
+            }
+
+            // === SUBSCRIBER EVENT HANDLERS ===
+            handlePipelineStepComplete(data) {
+                const { step, duration, extractionId } = data;
+
+                if (extractionId === this.extractionId) {
+                    console.log(`Pipeline step '${step}' completed in ${duration}ms`);
+
+                    if (!this.extractionMetrics.stepDurations) {
+                        this.extractionMetrics.stepDurations = {};
+                    }
+                    this.extractionMetrics.stepDurations[step] = duration;
+
+                    this.progressEmitter.emit('extractionProgress', {
+                        status: `completed_${step}`,
+                        progress: this.calculateProgressFromStep(step),
+                        stepDuration: duration
+                    }, { action: 'extractionProgress' });
+                }
+            }
+
+            handleMediaDiscovery(aggregatedStats) {
+                this.mediaStats = aggregatedStats;
+                console.log('Media discovery update:', aggregatedStats);
+
+                const totalMedia = Object.values(aggregatedStats).reduce((sum, count) => sum + count, 0);
+                if (totalMedia > 0) {
+                    this.logExtraction('media', 'INFO',
+                        `Media discovered: ${aggregatedStats.images} images, ${aggregatedStats.videos} videos`);
+                }
+            }
+
+            handleContentUpdate(data) {
+                const { impact, scoreImprovement, suggestions } = data;
+
+                if (impact === 'high' || scoreImprovement > 20) {
+                    console.log('Significant content update detected, triggering re-extraction');
+                    this.scheduleReExtraction();
+                }
+
+                if (suggestions && suggestions.length) {
+                    this.applySuggestions(suggestions);
+                }
+            }
+
+            analyzeMutationImpact(mutationData) {
+                console.log('Mutation impact analysis:', mutationData.impact);
+
+                if (mutationData.impact === 'high') {
+                    this.emit('content-updated', {
+                        ...mutationData,
+                        source: 'mutation-analysis'
+                    });
+                }
+            }
+
+            handleScrollEvent(data) {
+                const { scrollY, _scrollX, _source = 'unknown' } = data;
+                const scrollProgress = scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+
+                if (scrollProgress > 0.5 && this.shouldTriggerLazyLoading()) {
+                    this.triggerLazyContentDiscovery();
+                }
+            }
+
+            // === PIPELINE SUBSCRIBER MANAGEMENT ===
+            subscribeToPipeline(callback, options = {}) {
+                return this.subscribe('pipeline-step-complete', callback, {
+                    id: options.id || `pipeline-sub-${Date.now()}`,
+                    priority: options.priority || 0,
+                    eventTypes: ['pipeline-step-complete'],
+                    ...options
+                });
+            }
+
+            subscribeToScrolling(callback, options = {}) {
+                return this.subscribe('scroll-event', callback, {
+                    id: options.id || `scroll-sub-${Date.now()}`,
+                    rateLimitMs: options.rateLimitMs || 100,
+                    eventTypes: ['scroll-event'],
+                    ...options
+                });
+            }
+
+            subscribeToMediaDiscovery(callback, options = {}) {
+                return this.subscribe('media-discovered', callback, {
+                    id: options.id || `media-sub-${Date.now()}`,
+                    debounceMs: options.debounceMs || 200,
+                    eventTypes: ['media-discovered'],
+                    ...options
+                });
+            }
+
+            // === UTILITY METHODS FOR ENHANCED SUBSCRIPTIONS ===
+            calculateMutationImpact(data) {
+                const { newImages, newVideos, newTextContent, lazyLoadTriggers } = data;
+
+                let impactScore = 0;
+                impactScore += newImages * 2;
+                impactScore += newVideos * 5;
+                impactScore += Math.min(newTextContent / 100, 10);
+                impactScore += lazyLoadTriggers;
+
+                if (impactScore > 20) return 'high';
+                if (impactScore > 5) return 'medium';
+                return 'low';
+            }
+
+            generateMutationSuggestions(data) {
+                const suggestions = [];
+
+                if (data.lazyLoadTriggers > 5) {
+                    suggestions.push({
+                        type: 'lazy-loading',
+                        action: 'trigger-scroll',
+                        reason: 'High lazy loading activity detected'
+                    });
+                }
+
+                if (data.newImages > 3) {
+                    suggestions.push({
+                        type: 'media-processing',
+                        action: 're-extract',
+                        reason: 'Significant new media content'
+                    });
+                }
+
+                return suggestions;
+            }
+
+            applySuggestions(suggestions) {
+                suggestions.forEach(suggestion => {
+                    switch (suggestion.action) {
+                        case 'trigger-scroll':
+                            if (this.scrollingEnabled) {
+                                this.simulateContentDiscovery();
+                            }
+                            break;
+                        case 're-extract':
+                            this.scheduleReExtraction();
+                            break;
+                        default:
+                            console.log('Unknown suggestion action:', suggestion.action);
+                    }
+                });
+            }
+
+            calculateProgressFromStep(step) {
+                const stepProgress = {
+                    'detectFramework': 10,
+                    'immediateExtraction': 30,
+                    'backgroundProcessing': 60,
+                    'contentOptimization': 80,
+                    'mediaProcessing': 95
+                };
+                return stepProgress[step] || 0;
+            }
+
+            // === INITIALIZATION AND ACTIVATION ===
+            init() {
+                console.log('StealthExtractor.init() starting immediate activation');
+                this.isActive = true;
+
+                this.detectFramework();
+                this.setupMutationObserver();
+                this.startExtractionPipeline();
+                this.setupScrollingDiscovery();
+                this.signalReady();
+
+                console.log('StealthExtractor activated and extracting');
+            }
+
+            activate() {
+                if (this.isActive) return;
+                this.init();
+            }
+
+            deactivate() {
+                console.log('StealthExtractor deactivating...');
+
+                this.isActive = false;
+                this.extractionInProgress = false;
+
+                this.teardownMutationObserver();
+                this.clearAllTimers();
+
+                if (typeof DOMPurify !== 'undefined') {
+                    DOMPurify.removeAllHooks();
+                }
+
+                super.deactivate();
+
+                if (this.progressEmitter) {
+                    this.progressEmitter.destroy();
+                }
+                if (this.events) {
+                    this.events.destroy();
+                }
+
+                console.log('StealthExtractor deactivated with enhanced cleanup');
+            }
+
+            destroy() {
+                console.log('StealthExtractor destroying...');
+
+                this.deactivate();
+                super.destroy();
+
+                this.bridge = null;
+                this.eventBus = null;
+                this.progressEmitter = null;
+                this.events = null;
+                this.extractionPipeline = [];
+
+                delete window.__vibeReaderStealthExtractor;
+
+                console.log('StealthExtractor destroyed');
+            }
+
+            // === ENHANCED SUBSCRIBER MANAGEMENT METHODS ===
+            updateSubscriberPreferences(data) {
+                const { subscriberId, eventType, preferences } = data;
+                return this.subscriberManager.updateSubscriber(eventType, subscriberId, { preferences });
+            }
+
+            pauseSubscriber(eventType, subscriberId) {
+                return this.subscriberManager.updateSubscriber(eventType, subscriberId, { state: 'paused' });
+            }
+
+            resumeSubscriber(eventType, subscriberId) {
+                return this.subscriberManager.updateSubscriber(eventType, subscriberId, { state: 'active' });
+            }
+
+            disableSubscriber(eventType, subscriberId) {
+                return this.subscriberManager.updateSubscriber(eventType, subscriberId, { state: 'disabled' });
+            }
+
+            clearAllTimers() {
+                if (this.contentStabilityTimer) {
+                    clearTimeout(this.contentStabilityTimer);
+                    this.contentStabilityTimer = null;
+                }
+
+                if (this.extractionTimer) {
+                    clearTimeout(this.extractionTimer);
+                    this.extractionTimer = null;
+                }
+            }
+
+            // === MESSAGE AND EVENT HANDLING ===
+            setupMessageHandlers() {
+                // Handle start-extraction message from background
+                this.bridge.register('start-extraction', (data) => {
+                    console.log('Received start-extraction command:', data);
+                    dump(`Received start-extraction command for ${data.url}\n`);
+                    
+                    // Store tab IDs for later routing
+                    this.hiddenTabId = data.hiddenTabId;
+                    this.visibleTabId = data.visibleTabId;
+                    
+                    // Start the extraction pipeline
+                    this.startExtractionPipeline();
+                    return { success: true, message: 'Extraction started' };
+                });
+                
+                this.bridge.register('extractContent', (config) => this.handleExtractionRequest(config));
+                this.bridge.register('executeProxyCommand', (data) => this.executeProxyCommand(data));
+                this.bridge.register('configurePipeline', (config) => this.configurePipeline(config));
+                this.bridge.register('toggleScrolling', (options) => this.toggleScrolling(options));
+                this.bridge.register('getMetrics', () => this.getMetrics());
+                this.bridge.register('getState', () => this.getState());
+                this.bridge.register('deactivate', () => this.deactivate());
+                this.bridge.register('getSubscriberStats', () => this.getSubscriberStats());
+                this.bridge.register('updateSubscriber', (data) => this.updateSubscriberPreferences(data));
+            }
+
+            // === FRAMEWORK DETECTION ===
             detectFramework() {
-                if (window.React || document.querySelector('[data-reactroot]') || document.querySelector('#root')) {
-                    this.frameworkDetected = 'react';
-                } else if (window.Vue || document.querySelector('#app[data-v-]') || document.querySelector('[data-server-rendered]')) {
-                    this.frameworkDetected = 'vue';
-                } else if (window.angular || document.querySelector('[ng-app]') || document.querySelector('[ng-version]')) {
-                    this.frameworkDetected = 'angular';
-                } else if (document.querySelector('[data-svelte]')) {
-                    this.frameworkDetected = 'svelte';
-                } else if (document.querySelector('#__next')) {
-                    this.frameworkDetected = 'nextjs';
-                } else {
+                const detectors = [
+                    { name: 'react', check: () => window.React || document.querySelector('[data-reactroot], #root, #__next') },
+                    { name: 'vue', check: () => window.Vue || document.querySelector('#app[data-v-], [data-server-rendered]') },
+                    { name: 'angular', check: () => window.angular || document.querySelector('[ng-app], [ng-version]') },
+                    { name: 'svelte', check: () => document.querySelector('[data-svelte]') },
+                    { name: 'nextjs', check: () => document.querySelector('#__next') }
+                ];
+
+                for (const detector of detectors) {
+                    if (detector.check()) {
+                        this.frameworkDetected = detector.name;
+                        break;
+                    }
+                }
+
+                if (this.frameworkDetected === 'unknown') {
                     this.frameworkDetected = 'vanilla';
                 }
 
-                console.log('🔍 Framework detected:', this.frameworkDetected);
+                console.log(`Framework detected: ${this.frameworkDetected}`);
+                this.logExtraction('framework', 'INFO', `Framework: ${this.frameworkDetected}`);
+
+                this.events.emitNow('framework-detected', {
+                    framework: this.frameworkDetected
+                });
             }
 
-            async startExtraction(config) {
-                const startTime = performance.now();
+            // === EXTRACTION PIPELINE ===
+            startExtractionPipeline() {
+                this.extractionInProgress = true;
+                this.extractionId = `extraction-${Date.now()}`;
+                this.extractionMetrics.attempts++;
 
+                console.log('Starting immediate extraction pipeline');
+
+                this.progressEmitter.emitNow('extractionProgress', {
+                    status: 'starting',
+                    progress: 0,
+                    framework: this.frameworkDetected,
+                    extractionId: this.extractionId
+                }, { action: 'extractionProgress' });
+
+                this.runPipelineAsync();
+            }
+
+            async runPipelineAsync() {
                 try {
-                    this.extractionInProgress = true;
-                    console.log('🕵️ Starting extraction:', config);
+                    const immediateResult = await this.extractImmediate();
 
-                    this.broker.send(null, 'extractionProgress', { status: 'waiting_for_framework', progress: 10 });
-
-                    if (config.waitForFramework) {
-                        await this.waitForFramework();
+                    if (immediateResult.content) {
+                        this.sendExtractionResult(immediateResult, 'immediate');
                     }
 
-                    this.broker.send(null, 'extractionProgress', { status: 'extracting', progress: 40 });
-
-                    const content = await this.extractWithReadability();
-
-                    if (!content || !content.content) {
-                        throw new Error('No content extracted');
-                    }
-
-                    this.broker.send(null, 'extractionProgress', { status: 'complete', progress: 90 });
-
-                    this.reportExtraction(content);
-
-                    if (config.simulateScroll) {
-                        this.backgroundScrollAndUpdate();
-                    }
-
-                    console.log(`✅ Extraction complete in ${(performance.now() - startTime).toFixed(1)}ms`);
-
-                    return {
-                        success: true,
-                        extractionTime: performance.now() - startTime
-                    };
+                    this.runBackgroundProcessing();
+                    this.extractionMetrics.successes++;
 
                 } catch (error) {
-                    console.error('❌ Extraction failed:', error);
-                    this.broker.send(null, 'extractionProgress', { status: 'error', progress: 0 });
-
-                    return {
-                        success: false,
-                        error: error.message,
-                        extractionTime: performance.now() - startTime
-                    };
-
+                    console.error('Extraction pipeline error:', error);
+                    this.extractionMetrics.failures++;
+                    this.handleExtractionError(error);
                 } finally {
                     this.extractionInProgress = false;
                 }
             }
 
-            // eslint-disable-next-line require-await
-            async waitForFramework() {
-                const startTime = Date.now();
-                const waitTime = this.getFrameworkWaitTime();
+            async extractImmediate() {
+                const startTime = performance.now();
 
-                console.log(`🔍 Waiting for ${this.frameworkDetected} framework (max ${waitTime}ms)`);
+                try {
+                    const documentClone = document.cloneNode(true);
+                    this.mediaStats = { images: 0, videos: 0, iframes: 0, tables: 0 };
 
-                return new Promise((resolve) => {
-                    const checkReady = () => {
-                        let isReady = false;
+                    const processedDoc = await this.preprocessDocument(documentClone);
+                    const content = await this.extractWithReadability(processedDoc);
+                    const finalContent = await this.postProcessContent(content);
 
-                        switch (this.frameworkDetected) {
-                            case 'react':
-                            case 'nextjs': {
-                                const reactRoot = document.querySelector('[data-reactroot], #root, #__next');
-                                isReady = reactRoot && !!reactRoot.children.length;
-                                if (!isReady) {
-                                    console.log('⏳ React/Next not hydrated yet...');
-                                }
-                                break;
-                            }
+                    const duration = performance.now() - startTime;
 
-                            case 'vue': {
-                                const vueApp = document.querySelector('#app');
-                                isReady = vueApp && (vueApp.hasAttribute('data-v-') || !!vueApp.children.length);
-                                if (!isReady) {
-                                    console.log('⏳ Vue not mounted yet...');
-                                }
-                                break;
-                            }
-
-                            default:
-                                isReady = !!document.body.children.length;
-                        }
-
-                        const elapsed = Date.now() - startTime;
-
-                        if (isReady || elapsed > waitTime) {
-                            console.log(`✅ Framework ready after ${elapsed}ms`);
-
-                            // Log framework readiness
-                            console.log(`✅ Framework ${this.frameworkDetected} ready in ${elapsed}ms`);
-
-                            resolve();
-                        } else {
-                            requestAnimationFrame(checkReady);
+                    return {
+                        content: finalContent.content,
+                        metadata: {
+                            ...finalContent.metadata,
+                            extractionType: 'immediate',
+                            duration,
+                            framework: this.frameworkDetected,
+                            mediaStats: { ...this.mediaStats }
                         }
                     };
 
-                    checkReady();
-                });
-            }
-
-            getFrameworkWaitTime() {
-                const waitTimes = {
-                    'react': 800,
-                    'nextjs': 1000,
-                    'vue': 600,
-                    'angular': 1000,
-                    'svelte': 500,
-                    'vanilla': 300
-                };
-                return waitTimes[this.frameworkDetected] || 500;
-            }
-
-            // eslint-disable-next-line require-await
-            async extractWithReadability() {
-                try {
-                    const extractedContent = this.extractContent();
-
-                    if (extractedContent && extractedContent.content) {
-                        console.log('✅ Content extracted:', {
-                            length: extractedContent.content.length,
-                            title: extractedContent.title
-                        });
-                        return extractedContent;
-                    }
-
-                    return this.fallbackExtraction();
-
                 } catch (error) {
-                    console.error('Extraction error:', error);
-                    return this.fallbackExtraction();
+                    console.warn('Immediate extraction failed, using fallback:', error);
+                    return this.createFallbackContent();
                 }
             }
 
-            extractContent() {
+            createFallbackContent() {
+                const title = document.title || 'Untitled';
+                const url = window.location.href;
+                const framework = this.frameworkDetected;
+
+                return {
+                    content: `
+                        <div class="extraction-fallback">
+                            <h1>${this.escapeHtml(title)}</h1>
+                            <p>Content extraction in progress...</p>
+                            <div class="extraction-details">
+                                <p>Framework: ${framework}</p>
+                                <p>URL: ${this.escapeHtml(url)}</p>
+                            </div>
+                        </div>
+                    `,
+                    metadata: {
+                        title,
+                        url,
+                        framework,
+                        extractionType: 'fallback',
+                        length: 0,
+                        mediaStats: { images: 0, videos: 0, iframes: 0, tables: 0 }
+                    }
+                };
+            }
+
+            runBackgroundProcessing() {
+                setTimeout(() => {
+                    this.runEnhancedExtraction();
+                }, 100);
+            }
+
+            async runEnhancedExtraction() {
                 try {
-                    if (typeof Readability === 'undefined') {
-                        const error = 'Readability.js library not available';
-                        console.error('❌', error);
-                        throw new Error(error);
+                    console.log('Running enhanced extraction with DOM monitoring');
+
+                    await this.waitForInitialStability(1000);
+
+                    if (this.scrollingEnabled) {
+                        await this.simulateContentDiscovery();
                     }
 
-                    console.log('📖 Starting Readability extraction');
-                    const documentClone = document.cloneNode(true);
+                    const enhancedResult = await this.extractImmediate();
+                    enhancedResult.metadata.extractionType = 'enhanced';
 
-                    this.preprocessDocument(documentClone);
+                    if (this.isSignificantlyBetter(enhancedResult)) {
+                        this.sendExtractionResult(enhancedResult, 'enhanced');
+                    }
 
-                    const serialized = new XMLSerializer().serializeToString(documentClone);
-                    const cleanClone = DOMPurify.sanitize(serialized, {
+                } catch (error) {
+                    console.warn('Enhanced extraction failed:', error);
+                }
+            }
+
+            isSignificantlyBetter(newResult) {
+                const _newContentLength = newResult.content?.length || 0;
+                const _newMediaCount = Object.values(newResult.metadata.mediaStats || {})
+                    .reduce((sum, count) => sum + count, 0);
+
+                return newResult.metadata.extractionType === 'enhanced';
+            }
+
+            // === MUTATION OBSERVER ===
+            setupMutationObserver() {
+                if (this.mutationObserver) {
+                    this.mutationObserver.disconnect();
+                }
+
+                this.mutationObserver = new MutationObserver((mutations) => {
+                    this.handleMutations(mutations);
+                });
+
+                const config = {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['src', 'data-src', 'class', 'style', 'hidden'],
+                    characterData: false
+                };
+
+                this.mutationObserver.observe(document.body, config);
+
+                const domSub = () => {
+                    if (this.mutationObserver) {
+                        this.mutationObserver.disconnect();
+                        this.mutationObserver = null;
+                    }
+                };
+                this.subscribe('dom', domSub);
+
+                console.log('MutationObserver setup with heuristic DOM traversal');
+            }
+
+            teardownMutationObserver() {
+                if (this.mutationObserver) {
+                    this.mutationObserver.disconnect();
+                    this.mutationObserver = null;
+                }
+            }
+
+            handleMutations(mutations) {
+                if (!this.isActive) return;
+
+                this.mutationCount += mutations.length;
+
+                const meaningfulMutations = mutations.filter(this.isMeaningfulMutation);
+
+                if (meaningfulMutations.length === 0) return;
+
+                const analysis = this.analyzeMutationsWithHeuristics(meaningfulMutations);
+
+                this.emit('dom-mutations', analysis, {
+                    source: 'mutation-observer',
+                    useUnifiedPipeline: true
+                });
+
+                this.resetStabilityTimer();
+
+                if (analysis.highValueContent) {
+                    console.log('High-value content detected via mutations');
+                    this.emit('content-updated', {
+                        ...analysis,
+                        trigger: 'high-value-mutation'
+                    });
+                }
+            }
+
+            isMeaningfulMutation(mutation) {
+                if (mutation.target?.tagName?.match(/^(SCRIPT|STYLE|NOSCRIPT)$/)) {
+                    return false;
+                }
+
+                if (mutation.type === 'childList' && mutation.addedNodes.length) {
+                    return Array.from(mutation.addedNodes).some(node =>
+                        node.nodeType === 1 &&
+                        !node.tagName?.match(/^(SCRIPT|STYLE)$/)
+                    );
+                }
+
+                if (mutation.type === 'attributes' &&
+                    ['src', 'data-src'].includes(mutation.attributeName)) {
+                    return true;
+                }
+
+                return false;
+            }
+
+            analyzeMutationsWithHeuristics(mutations) {
+                const analysis = {
+                    newImages: 0,
+                    newVideos: 0,
+                    newTextContent: 0,
+                    lazyLoadTriggers: 0,
+                    highValueContent: false,
+                    scoreImprovement: 0,
+                    timestamp: Date.now()
+                };
+
+                mutations.forEach(mutation => {
+                    if (mutation.type === 'childList') {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeType === 1) {
+                                analysis.newImages += node.querySelectorAll('img').length;
+                                analysis.newVideos += node.querySelectorAll('video').length;
+
+                                const textLength = node.textContent?.length || 0;
+                                analysis.newTextContent += textLength;
+
+                                this.discoveryHeuristics.lazyLoadingPatterns.forEach(pattern => {
+                                    if (node.hasAttribute?.(pattern) ||
+                                        node.querySelector?.(`[${pattern}]`)) {
+                                        analysis.lazyLoadTriggers++;
+                                    }
+                                });
+                            }
+                        });
+                    } else if (mutation.type === 'attributes') {
+                        if (['src', 'data-src'].includes(mutation.attributeName)) {
+                            analysis.lazyLoadTriggers++;
+                        }
+                    }
+                });
+
+                analysis.highValueContent = (
+                    analysis.newImages >= 3 ||
+                    analysis.newVideos >= 1 ||
+                    analysis.newTextContent >= 1000 ||
+                    analysis.lazyLoadTriggers >= 5
+                );
+
+                analysis.scoreImprovement =
+                    (analysis.newImages * 2) +
+                    (analysis.newVideos * 5) +
+                    (analysis.newTextContent * 0.01) +
+                    (analysis.lazyLoadTriggers * 1);
+
+                return analysis;
+            }
+
+            resetStabilityTimer() {
+                if (this.contentStabilityTimer) {
+                    clearTimeout(this.contentStabilityTimer);
+                }
+
+                this.contentStabilityTimer = setTimeout(() => {
+                    this.handleContentStability();
+                }, 500);
+            }
+
+            handleContentStability() {
+                console.log('Content stability detected');
+                this.events.emit('content-stable', {
+                    mutationCount: this.mutationCount,
+                    timestamp: Date.now()
+                });
+
+                this.contentStabilityTimer = null;
+            }
+
+            scheduleReExtraction() {
+                if (this.extractionTimer) {
+                    clearTimeout(this.extractionTimer);
+                }
+
+                this.extractionTimer = setTimeout(() => {
+                    this.runEnhancedExtraction();
+                }, 1000);
+            }
+
+            // === SCROLLING AND CONTENT DISCOVERY ===
+            setupScrollingDiscovery() {
+                if (!this.scrollingEnabled) return;
+
+                const scrollHandler = this.throttledScrollHandler.bind(this);
+                document.addEventListener('scroll', scrollHandler, { passive: true });
+
+                this.subscriptions.push(() => {
+                    document.removeEventListener('scroll', scrollHandler);
+                });
+            }
+
+            throttledScrollHandler(_event) {
+                if (!this.proxyScrollEnabled) return;
+
+                this.emit('scroll-event', {
+                    type: 'scroll',
+                    scrollY: window.scrollY,
+                    scrollX: window.scrollX,
+                    timestamp: Date.now(),
+                    source: 'user'
+                }, {
+                    source: 'dom-listener'
+                });
+            }
+
+            async simulateContentDiscovery() {
+                console.log('Starting simulated content discovery');
+
+                const scrollHeight = document.documentElement.scrollHeight;
+                const viewportHeight = window.innerHeight;
+
+                if (scrollHeight <= viewportHeight) {
+                    console.log('Content fits in viewport, skipping scroll simulation');
+                    return;
+                }
+
+                try {
+                    await this.simulateScrollDown();
+                    await this.waitForInitialStability(1000);
+                    await this.simulateScrollUp();
+
+                    console.log('Content discovery simulation complete');
+
+                } catch (error) {
+                    console.warn('Content discovery failed:', error);
+                }
+            }
+
+            async simulateScrollDown() {
+                return new Promise((resolve) => {
+                    const scrollHeight = document.documentElement.scrollHeight;
+                    const viewportHeight = window.innerHeight;
+                    let currentScroll = 0;
+
+                    const scrollStep = () => {
+                        const remaining = scrollHeight - viewportHeight - currentScroll;
+                        if (remaining <= 0) {
+                            resolve();
+                            return;
+                        }
+
+                        const scrollAmount = Math.min(200, remaining);
+                        window.scrollBy(0, scrollAmount);
+                        currentScroll += scrollAmount;
+
+                        const progress = (currentScroll / (scrollHeight - viewportHeight)) * 100;
+                        this.progressEmitter.emit('extractionProgress', {
+                            status: 'discovering_content',
+                            progress: Math.min(progress, 90)
+                        }, { action: 'extractionProgress' });
+
+                        setTimeout(scrollStep, 50);
+                    };
+
+                    scrollStep();
+                });
+            }
+
+            async simulateScrollUp() {
+                return new Promise((resolve) => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setTimeout(resolve, 500);
+                });
+            }
+
+            toggleScrolling(options = {}) {
+                if (options.scrolling !== undefined) {
+                    this.scrollingEnabled = options.scrolling;
+                }
+                if (options.proxyScroll !== undefined) {
+                    this.proxyScrollEnabled = options.proxyScroll;
+                }
+
+                console.log(`Scrolling: ${this.scrollingEnabled}, Proxy: ${this.proxyScrollEnabled}`);
+                return { scrolling: this.scrollingEnabled, proxyScroll: this.proxyScrollEnabled };
+            }
+
+            // === DOMPURIFY INTEGRATION ===
+            async preprocessDocument(documentClone) {
+                console.log('Preprocessing document with DOMPurify');
+
+                try {
+                    this.setupPreprocessingHooks();
+
+                    const frameworkConfig = this.getFrameworkConfig();
+
+                    const purifyConfig = {
                         WHOLE_DOCUMENT: true,
                         RETURN_DOM: true,
-                        KEEP_CONTENT: true
-                    });
+                        KEEP_CONTENT: true,
+                        FORBID_TAGS: [
+                            'script', 'style', 'noscript',
+                            'aside', 'nav', 'footer', 'header'
+                        ],
+                        FORBID_ATTR: [
+                            'onclick', 'onload', 'onerror', 'onmouseover',
+                            'onfocus', 'onblur', 'onchange', 'onsubmit',
+                            'onkeydown', 'onkeyup', 'onkeypress'
+                        ],
+                        KEEP_CLASSES: true,
+                        ...frameworkConfig
+                    };
 
-                    this.loadLazies(cleanClone)
+                    const cleanedDoc = DOMPurify.sanitize(documentClone, purifyConfig);
 
-                    const reader = new Readability(cleanClone, {
+                    return cleanedDoc;
+
+                } catch (error) {
+                    DOMPurify.removeAllHooks();
+                    throw error;
+                } finally {
+                    DOMPurify.removeAllHooks();
+                }
+            }
+
+            setupPreprocessingHooks() {
+                DOMPurify.addHook('uponSanitizeElement', (node, data) => {
+                    if (node.nodeType !== 1) return;
+
+                    const tagName = data.tagName;
+                    const className = node.className || '';
+                    const id = node.id || '';
+
+                    const removePatterns = [
+                        /\bad[\s\-_]/i, /advertisement/i, /sponsor/i,
+                        /cookie[\s\-_]?banner/i, /popup/i, /modal/i,
+                        /newsletter/i, /subscribe/i, /social[\s\-_]?share/i,
+                        /comments?[\s\-_]?section/i, /related[\s\-_]?posts?/i,
+                        /sidebar/i
+                    ];
+
+                    if (removePatterns.some(p => p.test(className) || p.test(id))) {
+                        node.remove();
+                        return;
+                    }
+
+                    if (tagName === 'header' || tagName === 'footer') {
+                        if (!node.closest('article, main, [role="main"]')) {
+                            node.remove();
+                            return;
+                        }
+                    }
+
+                    switch (tagName) {
+                        case 'img':
+                            this.mediaStats.images++;
+                            this.processMediaElement(node, 'image');
+                            break;
+                        case 'video':
+                            this.mediaStats.videos++;
+                            this.processMediaElement(node, 'video');
+                            break;
+                        case 'iframe': {
+                            const src = node.src || '';
+                            if (src.match(/youtube|vimeo|dailymotion/i)) {
+                                this.mediaStats.iframes++;
+                            } else {
+                                node.remove();
+                            }
+                            break;
+                        }
+                        case 'table':
+                            this.mediaStats.tables++;
+                            break;
+                    }
+                });
+
+                DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
+                    if (node.tagName === 'IMG') {
+                        this.processLazyImage(node);
+                    }
+
+                    if ((data.attrName === 'href' || data.attrName === 'src') &&
+                        data.attrValue && data.attrValue.startsWith('javascript:')) {
+                        data.forceRemoveAttr = true;
+                    }
+
+                    if ((data.attrName === 'href' || data.attrName === 'src') &&
+                        data.attrValue && !data.attrValue.match(/^(https?:|data:|#)/)) {
+                        try {
+                            data.attrValue = new URL(data.attrValue, window.location.href).href;
+                        } catch (e) {
+                            // Invalid URL handled by DOMPurify
+                        }
+                    }
+                });
+
+                DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+                    if (node.nodeType !== 1) return;
+
+                    if (node.hasAttribute('hidden')) {
+                        node.removeAttribute('hidden');
+                    }
+
+                    if (node.style) {
+                        if (node.style.display === 'none' || node.style.visibility === 'hidden') {
+                            const text = node.textContent || '';
+                            if (text.length > 50 && !text.match(/cookie|advertisement|subscribe/i)) {
+                                node.style.display = '';
+                                node.style.visibility = '';
+                            }
+                        }
+                    }
+
+                    if (node.tagName === 'TABLE' && !node.querySelector('tbody')) {
+                        const tbody = document.createElement('tbody');
+                        node.querySelectorAll('tr').forEach(tr => tbody.appendChild(tr));
+                        node.appendChild(tbody);
+                    }
+                });
+            }
+
+            // === MEDIA PROCESSING ===
+            processMediaElement(element, type) {
+                const width = parseInt(element.getAttribute('width')) || 0;
+                const height = parseInt(element.getAttribute('height')) || 0;
+                const area = width * height;
+
+                if (type === 'image' && area >= this.discoveryHeuristics.minImageSize) {
+                    element.setAttribute('data-vibe-display', 'ascii');
+                    element.classList.add('vibe-ascii-candidate');
+                } else {
+                    element.setAttribute('data-vibe-display', 'passthrough');
+                    element.classList.add('vibe-passthrough');
+                }
+            }
+
+            processLazyImage(img) {
+                const lazyAttrs = this.discoveryHeuristics.lazyLoadingPatterns;
+
+                for (const attr of lazyAttrs) {
+                    const value = img.getAttribute(attr);
+                    if (value && value.match(/\.(jpg|jpeg|png|gif|webp|svg)/i)) {
+                        img.setAttribute('src', value);
+
+                        const srcset = img.getAttribute('data-srcset') ||
+                            img.getAttribute('data-lazy-srcset');
+                        if (srcset) {
+                            img.setAttribute('srcset', srcset);
+                        }
+
+                        img.setAttribute('loading', 'lazy');
+                        break;
+                    }
+                }
+            }
+
+            getFrameworkConfig() {
+                const configs = {
+                    react: {
+                        ALLOWED_ATTR: ['data-reactroot', 'data-react-*'],
+                        CUSTOM_ELEMENT_HANDLING: {
+                            tagNameCheck: /^[a-z]+-[a-z]+$/,
+                            attributeNameCheck: /^(data-|aria-)/,
+                            allowCustomizedBuiltInElements: true
+                        }
+                    },
+                    vue: {
+                        ALLOWED_ATTR: ['v-*', ':*', '@*', 'data-v-*'],
+                        ADD_TAGS: ['transition', 'transition-group']
+                    },
+                    angular: {
+                        ALLOWED_ATTR: ['ng-*', '[*]', '(*)', '*ngFor', '*ngIf'],
+                        SANITIZE_DOM: false
+                    },
+                    nextjs: {
+                        ALLOWED_ATTR: ['data-reactroot', 'data-react-*'],
+                        ADD_TAGS: ['next-route-announcer']
+                    }
+                };
+
+                return configs[this.frameworkDetected] || {};
+            }
+
+            async extractWithReadability(processedDocument) {
+                try {
+                    if (typeof Readability === 'undefined') {
+                        throw new Error('Readability.js not available');
+                    }
+
+                    const reader = new Readability(processedDocument, {
                         debug: false,
                         maxElemsToParse: 0,
                         nbTopCandidates: 5,
                         charThreshold: 500,
-                        classesToPreserve: ['caption', 'emoji'],
+                        classesToPreserve: ['caption', 'emoji', 'code', 'pre', 'vibe-ascii-candidate', 'vibe-passthrough'],
                         keepClasses: true
                     });
 
-                    const article = reader.parse();
+                    let article = reader.parse();
 
-                    if (!article) {
-                        throw new Error('Readability failed to parse document');
+                    if (!article || !article.content) {
+                        console.warn('Readability failed, trying fallback');
+                        article = this.fallbackExtraction(processedDocument);
                     }
 
-                    if (!article.content || article.content.trim().length === 0) {
-                        throw new Error('No readable content found on page');
+                    if (!article || !article.content) {
+                        throw new Error('No readable content found');
                     }
 
-                    article.content = this.postprocessContent(article.content);
-                    console.log('✅ Content extracted successfully:', {
-                        title: article.title,
-                        length: article.content.length
-                    });
                     return article;
 
                 } catch (error) {
-                    console.error('❌ Content extraction failed:', error.message);
-                    throw error; // Re-throw with specific error message
+                    console.error('Readability extraction failed:', error);
+                    throw error;
                 }
             }
 
-            preprocessDocument(doc) {
-                const selectorsToRemove = [
-                    'script',
-                    'style',
-                    'noscript',
-                    //'iframe:not([src*="youtube"]):not([src*="vimeo"])',
-                    '.advertisement',
-                    '.ads',
-                    '[class*="ad-"]',
-                    '[id*="ad-"]',
-                    '.social-share',
-                    '.cookie-banner',
-                    '.popup',
-                    '.modal',
-                    '.overlay:not(.vibe-reader-overlay)',
-                    '[class*="subscribe"]',
-                    '[class*="newsletter"]',
-                    '.comments',
-                    '#comments',
-                    '.related-posts',
-                    'aside.sidebar',
-                    'nav',
-                    'header:not(article header)',
-                    'footer:not(article footer)',
-                ];
-
-                selectorsToRemove.forEach(selector => {
-                    try {
-                        doc.querySelectorAll(selector).forEach(el => el.remove());
-                    } catch (e) {
-                        // Invalid selector, skip
-                    }
-                });
-
-                doc.querySelectorAll('*').forEach(el => {
-                    Array.from(el.attributes).forEach(attr => {
-                        if (attr.name.startsWith('on')) {
-                            el.removeAttribute(attr.name);
-                        }
-                        });
-                });
-
-                doc.querySelectorAll('[style*="display: none"], [style*="display:none"]').forEach(el => {
-                    el.style.display = '';
-                });
-
-                doc.querySelectorAll('[hidden]').forEach(el => {
-                    el.removeAttribute('hidden');
-                });
-
-                // Also check for javascript: protocol
-                doc.querySelectorAll('[href^="javascript:"], [src^="javascript:"]').forEach(el => {
-                    el.removeAttribute(el.hasAttribute('href') ? 'href' : 'src');
-                });
-            }
-
-            loadLazies(doc) {
-                doc.querySelectorAll('img[data-src], img[data-lazy-src]').forEach(img => {
-                    const src = img.getAttribute('data-src') ||
-                        img.getAttribute('data-lazy-src') ||
-                        img.getAttribute('data-original');
-                    if (src) {
-                        img.setAttribute('src', src);
-                    }
-                });
-            }
-            postprocessContent(content) {
-                const tempDiv = document.createElement('div');
-                // eslint-disable-next-line no-unsanitized/property
-                tempDiv.innerHTML = content; // Content from Readability.js is already sanitized
-
-                tempDiv.querySelectorAll('p').forEach(p => {
-                    if (!p.textContent.trim()) {
-                        p.remove();
-                    }
-                });
-
-                tempDiv.querySelectorAll('img, a').forEach(el => {
-                    const attr = el.tagName === 'IMG' ? 'src' : 'href';
-                    const url = el.getAttribute(attr);
-
-                    if (url && !url.startsWith('http') && !url.startsWith('data:')) {
-                        try {
-                            el.setAttribute(attr, new URL(url, window.location.href).href);
-                        } catch (e) {
-                            // Invalid URL
-                        }
-                    }
-                });
-
-                return tempDiv.innerHTML;
-            }
-
-            fallbackExtraction() {
-                console.log('🔍 Attempting fallback extraction');
+            fallbackExtraction(doc) {
+                console.log('Attempting fallback extraction');
 
                 const selectors = [
-                    'main',
-                    'article',
-                    '[role="main"]',
-                    '.main-content',
-                    '#main-content',
-                    '.content',
-                    '#content',
-                    '.post-content',
-                    '.entry-content',
-                    '.article-content',
-                    '.story-body'
+                    'main', 'article', '[role="main"]',
+                    '.main-content', '#main-content',
+                    '.content', '#content',
+                    '.post-content', '.entry-content',
+                    '.article-content', '.story-body'
                 ];
 
                 let contentEl = null;
+                let maxScore = 0;
 
                 for (const selector of selectors) {
-                    const el = document.querySelector(selector);
-                    if (el && el.textContent.trim().length > 200) {
-                        contentEl = el;
-                        break;
-                    }
-                }
-
-                if (!contentEl) {
-                    let maxLength = 0;
-                    document.querySelectorAll('div, section, article').forEach(el => {
-                        const length = el.textContent.trim().length;
-                        if (length > maxLength && length > 500) {
-                            maxLength = length;
+                    const elements = doc.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        const score = this.scoreContentElement(el);
+                        if (score > maxScore) {
+                            maxScore = score;
                             contentEl = el;
                         }
                     });
                 }
 
-                if (contentEl) {
+                if (contentEl && maxScore > 100) {
                     const textContent = contentEl.textContent.trim();
-
                     return {
                         title: document.title || 'Untitled',
-                        byline: this.extractByline(),
+                        byline: this.extractByline(doc),
                         content: contentEl.innerHTML,
                         excerpt: textContent.substring(0, 300),
                         length: textContent.split(/\s+/).length,
@@ -394,18 +1222,324 @@ if (window.__vibeReaderStealthExtractor) {
                 return null;
             }
 
-            extractByline() {
+            scoreContentElement(el) {
+                let score = 0;
+                const textContent = el.textContent || '';
+                const htmlContent = el.innerHTML || '';
+                const textLength = textContent.length;
+                const contentLength = htmlContent.length;
+
+                if (contentLength > 0) {
+                    const textDensity = textLength / contentLength;
+                    score += Math.min(40, textDensity * 50);
+                }
+
+                const wordCount = Math.ceil(textLength / 5);
+                if (wordCount >= 1000 && wordCount <= 3000) {
+                    score += 20;
+                } else if (wordCount >= 500 && wordCount < 1000) {
+                    score += 15;
+                } else if (wordCount >= 200 && wordCount < 500) {
+                    score += 10;
+                } else if (wordCount >= 100) {
+                    score += 5;
+                }
+
+                const headings = (htmlContent.match(/<h[1-6]/gi) || []).length;
+                const paragraphs = (htmlContent.match(/<p>/gi) || []).length;
+                const lists = (htmlContent.match(/<[uo]l>/gi) || []).length;
+
+                const structureScore = Math.min(20,
+                    (headings * 3) + (paragraphs * 0.3) + (lists * 2)
+                );
+                score += structureScore;
+
+                const images = (htmlContent.match(/<img/gi) || []).length;
+                const videos = (htmlContent.match(/<video/gi) || []).length;
+                const tables = (htmlContent.match(/<table/gi) || []).length;
+
+                const mediaScore = Math.min(10,
+                    (images * 0.5) + (videos * 3) + (tables * 1.5)
+                );
+                score += mediaScore;
+
+                return Math.round(Math.min(100, score));
+            }
+
+            async postProcessContent(content) {
+                console.log('Post-processing content');
+
+                const finalContent = DOMPurify.sanitize(content.content, {
+                    ALLOWED_TAGS: [
+                        'p', 'div', 'span', 'a', 'img', 'video', 'audio',
+                        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                        'blockquote', 'pre', 'code', 'em', 'strong', 'b', 'i', 'u',
+                        'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'td', 'th',
+                        'figure', 'figcaption', 'picture', 'source', 'br', 'hr',
+                        'time', 'mark', 'section', 'article'
+                    ],
+                    ALLOWED_ATTR: [
+                        'href', 'src', 'srcset', 'alt', 'title', 'width', 'height',
+                        'loading', 'class', 'id', 'data-*', 'rel', 'target',
+                        'type', 'media', 'sizes', 'datetime', 'cite', 'controls'
+                    ],
+                    ALLOW_DATA_ATTR: true,
+                    KEEP_CONTENT: true
+                });
+
+                const tempDiv = document.createElement('div');
+                // eslint-disable-next-line no-unsanitized/property
+                tempDiv.innerHTML = finalContent;
+
+                tempDiv.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h => {
+                    h.classList.add('cyber-heading');
+                });
+
+                tempDiv.querySelectorAll('a').forEach(link => {
+                    link.classList.add('cyber-link');
+                    link.setAttribute('target', '_blank');
+                    link.setAttribute('rel', 'noopener noreferrer');
+                });
+
+                tempDiv.querySelectorAll('pre,code').forEach(code => {
+                    code.classList.add('cyber-code');
+                });
+
+                tempDiv.querySelectorAll('table').forEach(table => {
+                    table.classList.add('cyber-table');
+                });
+
+                return {
+                    content: tempDiv.innerHTML,
+                    metadata: {
+                        title: content.title || document.title,
+                        byline: content.byline,
+                        excerpt: content.excerpt,
+                        length: content.length,
+                        dir: content.dir,
+                        lang: content.lang,
+                        siteName: content.siteName || this.extractSiteName(),
+                        framework: this.frameworkDetected,
+                        url: window.location.href,
+                        extractedAt: Date.now()
+                    }
+                };
+            }
+
+            // === UTILITY METHODS ===
+            waitForInitialStability(timeout) {
+                return new Promise((resolve) => {
+                    const timer = setTimeout(resolve, timeout);
+
+                    const stabilityHandler = this.eventBus.on('content-stable', () => {
+                        clearTimeout(timer);
+                        stabilityHandler();
+                        resolve();
+                    });
+                });
+            }
+
+            signalReady() {
+                this.progressEmitter.emitNow('extractionProgress', {
+                    status: 'initialized',
+                    progress: 0,
+                    framework: this.frameworkDetected
+                }, { action: 'extractionProgress' });
+            }
+
+            sendExtractionResult(result, type) {
+                console.log(`Sending ${type} extraction result`);
+                dump(`Sending ${type} extraction result\n`);
+
+                this.progressEmitter.emitNow('extractionProgress', {
+                    status: 'complete',
+                    progress: 100,
+                    extractionType: type
+                }, { action: 'extractionProgress' });
+
+                // Send via MessageBridge to background (will be routed to visible tab)
+                this.bridge.send(null, 'contentExtracted', {
+                    content: result.content,
+                    metadata: result.metadata
+                });
+
+                // Also emit event for HiddenTabManager subscriber
+                this.emit('content-extracted', {
+                    hiddenTabId: this.hiddenTabId || null,
+                    content: result.content,
+                    metadata: result.metadata,
+                    extractionType: type
+                });
+            }
+
+            handleExtractionError(error) {
+                console.error('Extraction error:', error);
+
+                this.progressEmitter.emitNow('extractionProgress', {
+                    status: 'error',
+                    progress: 0,
+                    error: error.message
+                }, { action: 'extractionProgress' });
+            }
+
+            handleExtractionRequest(config) {
+                if (config.scrolling !== undefined) {
+                    this.scrollingEnabled = config.scrolling;
+                }
+                if (config.proxyScroll !== undefined) {
+                    this.proxyScrollEnabled = config.proxyScroll;
+                }
+
+                return { success: true, extractionId: this.extractionId };
+            }
+
+            executeProxyCommand(data) {
+                const { command, params } = data;
+
+                try {
+                    switch (command) {
+                        case 'scroll':
+                            window.scrollTo(0, params.scrollPosition);
+                            return { success: true };
+
+                        case 'click': {
+                            const el = document.querySelector(params.selector);
+                            if (el) {
+                                el.click();
+                                return { success: true };
+                            }
+                            return { success: false, error: 'Element not found' };
+                        }
+
+                        case 'getState':
+                            return {
+                                success: true,
+                                state: this.getState()
+                            };
+
+                        case 'reextract':
+                            this.runEnhancedExtraction();
+                            return { success: true };
+
+                        default:
+                            return { success: false, error: 'Unknown command' };
+                    }
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            configurePipeline(config) {
+                if (config.steps) {
+                    this.extractionPipeline = [...config.steps];
+                }
+                if (config.heuristics) {
+                    Object.assign(this.discoveryHeuristics, config.heuristics);
+                }
+
+                return { success: true, pipeline: this.extractionPipeline };
+            }
+
+            // === ENHANCED UTILITY METHODS ===
+            shouldTriggerLazyLoading() {
+                return this.mutationCount < 10 &&
+                    this.mediaStats.images < 5 &&
+                    !!document.querySelectorAll('[data-src], [loading="lazy"]').length;
+            }
+
+            triggerLazyContentDiscovery() {
+                this.emit('lazy-loading-trigger', {
+                    timestamp: Date.now(),
+                    lazyElements: document.querySelectorAll('[data-src], [loading="lazy"]').length
+                });
+
+                if (this.scrollingEnabled) {
+                    this.simulateContentDiscovery();
+                }
+            }
+
+            getMetrics() {
+                return {
+                    extraction: this.extractionMetrics,
+                    media: this.mediaStats,
+                    framework: this.frameworkDetected,
+                    mutations: this.mutationCount,
+                    scrolling: {
+                        enabled: this.scrollingEnabled,
+                        proxyEnabled: this.proxyScrollEnabled
+                    },
+                    subscribers: this.getSubscriberStats(),
+                    events: this.getEventStats()
+                };
+            }
+
+            getState() {
+                return {
+                    isActive: this.isActive,
+                    extractionInProgress: this.extractionInProgress,
+                    extractionId: this.extractionId,
+                    framework: this.frameworkDetected,
+                    scrollPosition: window.scrollY,
+                    documentHeight: document.documentElement.scrollHeight,
+                    viewportHeight: window.innerHeight,
+                    url: window.location.href,
+                    metrics: this.getMetrics(),
+                    subscriberHealth: this.getSubscriberHealth()
+                };
+            }
+
+            getSubscriberHealth() {
+                const stats = this.getSubscriberStats();
+                return {
+                    total: stats.totalSubscribers,
+                    active: stats.byState.active || 0,
+                    quarantined: stats.quarantined || 0,
+                    healthScore: this.calculateHealthScore(stats)
+                };
+            }
+
+            calculateHealthScore(stats) {
+                if (stats.totalSubscribers === 0) return 100;
+
+                const activeRatio = (stats.byState.active || 0) / stats.totalSubscribers;
+                const quarantineRatio = (stats.quarantined || 0) / stats.totalSubscribers;
+
+                return Math.max(0, Math.min(100,
+                    (activeRatio * 100) - (quarantineRatio * 50)
+                ));
+            }
+
+            // === TESTING AND DEBUGGING HELPERS ===
+            emitTestEvent(eventType, data = {}) {
+                this.emit(`test-${eventType}`, {
+                    ...data,
+                    testTimestamp: Date.now(),
+                    extractionId: this.extractionId
+                });
+            }
+
+            getSubscriberDiagnostics() {
+                return {
+                    stats: this.getSubscriberStats(),
+                    eventStats: this.getEventStats(),
+                    health: this.getSubscriberHealth(),
+                    recentErrors: this.getRecentSubscriberErrors()
+                };
+            }
+
+            getRecentSubscriberErrors() {
+                // Placeholder for error tracking
+                return [];
+            }
+
+            extractByline(doc) {
                 const selectors = [
-                    '[rel="author"]',
-                    '.author',
-                    '.byline',
-                    '.by-line',
-                    '.writer',
-                    'meta[name="author"]'
+                    '[rel="author"]', '.author', '.byline', '.by-line',
+                    '.writer', 'meta[name="author"]'
                 ];
 
                 for (const selector of selectors) {
-                    const el = document.querySelector(selector);
+                    const el = (doc || document).querySelector(selector);
                     if (el) {
                         const content = el.textContent || el.getAttribute('content');
                         if (content) return content.trim();
@@ -433,353 +1567,15 @@ if (window.__vibeReaderStealthExtractor) {
                 return window.location.hostname;
             }
 
-            reportExtraction(extractedContent) {
-                console.log('📤 Sending extracted content to background');
-
-                // Gather enhanced metadata for terminal displays
-                const domStats = this.gatherDOMStats();
-
-                this.broker.send(null, 'contentExtracted', {
-                    content: extractedContent.content,
-                    metadata: {
-                        title: extractedContent.title || document.title,
-                        byline: extractedContent.byline,
-                        excerpt: extractedContent.excerpt,
-                        length: extractedContent.length,
-                        siteName: extractedContent.siteName,
-                        url: window.location.href,
-                        extractedAt: Date.now(),
-                        framework: this.frameworkDetected,
-                        // Enhanced metadata for terminal displays
-                        readabilityScore: this.getReadabilityScore(extractedContent),
-                        hiddenTabElements: domStats.totalElements,
-                        mutations: domStats.mutations,
-                        jsFrameworks: domStats.frameworks,
-                        performanceMetrics: domStats.performance,
-                        // Additional Readability.js data
-                        textLength: extractedContent.textContent?.length || 0,
-                        publishedTime: extractedContent.publishedTime,
-                        direction: extractedContent.dir,
-                        language: extractedContent.lang
-                    }
-                }).catch(error => {
-                    console.error('Failed to send content:', error);
-                });
+            logExtraction(category, level, message) {
+                console.log(`[${category}] ${level}: ${message}`);
             }
 
-            async backgroundScrollAndUpdate() {
-                try {
-                    console.log('📜 Starting background scroll for lazy content');
-
-                    await this.simulateHumanScroll();
-                    await this.waitForContentStability();
-
-                    const newContent = await this.extractWithReadability();
-
-                    if (newContent && newContent.content) {
-                        const newLength = newContent.content.length;
-                        const oldLength = this.lastContentLength || 0;
-
-                        if (newLength > oldLength * 1.2) {
-                            console.log('📤 Sending updated content after scroll');
-                            this.reportExtraction(newContent);
-                        }
-
-                        this.lastContentLength = newLength;
-                    }
-
-                } catch (error) {
-                    console.log('Background scroll update failed:', error);
-                }
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text || '';
+                return div.innerHTML;
             }
-
-            // eslint-disable-next-line require-await
-            async simulateHumanScroll() {
-                return new Promise((resolve) => {
-                    const scrollHeight = document.documentElement.scrollHeight;
-                    const viewportHeight = window.innerHeight;
-                    const scrollDistance = scrollHeight - viewportHeight;
-
-                    if (scrollDistance <= 0) {
-                        resolve();
-                        return;
-                    }
-
-                    let currentScroll = 0;
-                    const scrollStep = () => {
-                        if (currentScroll < scrollDistance) {
-                            const scrollAmount = 50 + Math.random() * 150;
-                            window.scrollBy(0, scrollAmount);
-                            currentScroll += scrollAmount;
-                            this.scrollProgress = Math.min(100, (currentScroll / scrollDistance) * 100);
-
-                            this.broker.send(null, 'extractionProgress', {
-                                status: 'simulating_scroll',
-                                progress: Math.floor(this.scrollProgress)
-                            });
-
-                            setTimeout(scrollStep, 50 + Math.random() * 100);
-                        } else {
-                            window.scrollTo({top: 0, behavior: 'smooth'});
-                            setTimeout(resolve, 300);
-                        }
-                    };
-
-                    scrollStep();
-                });
-            }
-
-            // eslint-disable-next-line require-await
-            async waitForContentStability() {
-                return new Promise((resolve) => {
-                    let stabilityTimer = null;
-                    let lastHash = this.getContentHash();
-
-                    const checkStability = () => {
-                        const currentHash = this.getContentHash();
-
-                        if (currentHash === lastHash) {
-                            resolve();
-                        } else {
-                            lastHash = currentHash;
-                            clearTimeout(stabilityTimer);
-                            stabilityTimer = setTimeout(checkStability, 500);
-                        }
-                    };
-
-                    stabilityTimer = setTimeout(checkStability, 500);
-                    setTimeout(resolve, 3000);
-                });
-            }
-
-            getContentHash() {
-                const content = document.body.textContent || '';
-                let hash = 0;
-
-                for (let i = 0; i < Math.min(content.length, 1000); i++) {
-                    const char = content.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash = hash & hash;
-                }
-
-                return hash;
-            }
-
-            // eslint-disable-next-line require-await
-            async executeProxyCommand(command, data) {
-                try {
-                    switch (command) {
-                        case 'scroll':
-                            window.scrollTo(0, data.scrollPosition);
-                            return {success: true};
-
-                        case 'click': {
-                            const clickEl = document.querySelector(data.selector);
-                            if (clickEl) {
-                                clickEl.click();
-                                return {success: true};
-                            }
-                            return {success: false, error: 'Element not found'};
-                        }
-
-                        case 'getState':
-                            return {
-                                success: true,
-                                scrollPosition: window.scrollY,
-                                documentHeight: document.documentElement.scrollHeight,
-                                viewportHeight: window.innerHeight,
-                                url: window.location.href
-                            };
-
-                        default:
-                            return {success: false, error: 'Unknown command'};
-                    }
-                } catch (error) {
-                    return {success: false, error: error.message};
-                }
-            }
-
-
-            gatherDOMStats() {
-                return {
-                    totalElements: document.querySelectorAll('*').length,
-                    mutations: this.mutationCount || 0,
-                    frameworks: this.detectFrameworks(),
-                    performance: {
-                        domContentLoaded: performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart,
-                        loadComplete: performance.timing.loadEventEnd - performance.timing.navigationStart
-                    }
-                };
-            }
-
-            detectFrameworks() {
-                const frameworks = [];
-                if (window.React) frameworks.push('React');
-                if (window.Vue) frameworks.push('Vue');
-                if (window.angular) frameworks.push('Angular');
-                if (window.jQuery || window.$) frameworks.push('jQuery');
-                if (document.querySelector('#__next')) frameworks.push('Next.js');
-                if (document.querySelector('[data-svelte]')) frameworks.push('Svelte');
-                return frameworks.join(', ') || 'Vanilla';
-            }
-
-            getReadabilityScore(content) {
-                if (!content) return 'N/A (0/100)';
-
-                const numericalScore = this.calculateNumericalScore(content);
-                const qualitativeScore = this.getQualitativeScore(numericalScore);
-
-                return `${qualitativeScore} (${numericalScore}/100)`;
-            }
-
-            calculateNumericalScore(content) {
-                if (!content) return 0;
-
-                let score = 0;
-                const textContent = content.textContent || '';
-                const htmlContent = content.content || '';
-                const textLength = textContent.length;
-                const contentLength = htmlContent.length;
-
-                // 1. Text Density (0-40 points) - How much readable text vs markup
-                if (contentLength > 0) {
-                    const textDensity = textLength / contentLength;
-                    score += Math.min(40, textDensity * 50); // Boost density scoring
-                }
-
-                // 2. Content Length (0-20 points) - Optimal content volume
-                const wordCount = Math.ceil(textLength / 5); // Rough word estimate
-                if (wordCount >= 1000 && wordCount <= 3000) {
-                    score += 20; // Sweet spot for articles
-                } else if (wordCount >= 500 && wordCount < 1000) {
-                    score += 15; // Good length
-                } else if (wordCount >= 200 && wordCount < 500) {
-                    score += 10; // Acceptable length
-                } else if (wordCount >= 100) {
-                    score += 5; // Short but usable
-                }
-
-                // 3. Structure Quality (0-20 points) - HTML structure indicators
-                const headings = (htmlContent.match(/<h[1-6]/gi) || []).length;
-                const paragraphs = (htmlContent.match(/<p>/gi) || []).length;
-                const lists = (htmlContent.match(/<[uo]l>/gi) || []).length;
-
-                const structureScore = Math.min(20,
-                    (headings * 3) + // Headings are important
-                    (paragraphs * 0.3) + // Paragraphs show organization
-                    (lists * 2) // Lists show structured content
-                );
-                score += structureScore;
-
-                // 4. Enhanced Media Quality (0-10 points) - Size and quality-based scoring
-                let mediaScore = 0;
-
-                // Parse images from HTML and check their dimensions
-                const imgRegex = /<img[^>]*>/gi;
-                const imgMatches = htmlContent.match(imgRegex) || [];
-                let qualityImages = 0;
-                let greatImages = 0;
-
-                imgMatches.forEach(imgTag => {
-                    const widthMatch = imgTag.match(/width\s*=\s*["']?(\d+)/i);
-                    const heightMatch = imgTag.match(/height\s*=\s*["']?(\d+)/i);
-
-                    if (widthMatch && heightMatch) {
-                        const width = parseInt(widthMatch[1]);
-                        const height = parseInt(heightMatch[1]);
-                        const pixels = width * height;
-
-                        // Great size range: 600x400 to 1920x1080 (240K to 2M pixels)
-                        if (pixels >= 240000 && pixels <= 2073600 && width >= 600 && height >= 400) {
-                            greatImages++;
-                        }
-                        // OK size range: 300x200 to 1200x800 (60K to 960K pixels)
-                        else if (pixels >= 60000 && pixels <= 960000 && width >= 300 && height >= 200) {
-                            qualityImages++;
-                        }
-                    }
-                });
-
-                // Parse videos and check dimensions
-                const videoRegex = /<video[^>]*>/gi;
-                const videoMatches = htmlContent.match(videoRegex) || [];
-                let qualityVideos = 0;
-                let greatVideos = 0;
-
-                videoMatches.forEach(videoTag => {
-                    const widthMatch = videoTag.match(/width\s*=\s*["']?(\d+)/i);
-                    const heightMatch = videoTag.match(/height\s*=\s*["']?(\d+)/i);
-
-                    if (widthMatch && heightMatch) {
-                        const width = parseInt(widthMatch[1]);
-                        const height = parseInt(heightMatch[1]);
-
-                        // Great video size: 720p+ (1280x720 or larger)
-                        if (width >= 1280 && height >= 720) {
-                            greatVideos++;
-                        }
-                        // OK video size: 480p+ (854x480 or larger)
-                        else if (width >= 854 && height >= 480) {
-                            qualityVideos++;
-                        }
-                    }
-                });
-
-                // Tables still count as structured data
-                const tables = (htmlContent.match(/<table/gi) || []).length;
-
-                mediaScore = Math.min(10,
-                    (greatImages * 1.5) + // High-quality images
-                    (qualityImages * 0.8) + // OK quality images
-                    (greatVideos * 3) + // High-quality videos
-                    (qualityVideos * 2) + // OK quality videos
-                    (tables * 1.5) // Tables show structured data
-                );
-
-                score += mediaScore;
-
-                // 5. Enhanced Text Quality (0-10 points) - Favor proper sentences over script leakage
-                let textQualityScore = 0;
-
-                // Find proper sentences: start with capital, end with punctuation, reasonable internal punctuation
-                const properSentences = textContent.match(/[A-Z][^.!?]*[,.;:\-–—'']*[^.!?]*[.!?]/g) || [];
-                const totalTextInSentences = properSentences.join('').length;
-                const sentenceTextRatio = totalTextInSentences / Math.max(textContent.length, 1);
-
-                // Score based on how much text is in proper sentences (weighted heavily)
-                textQualityScore += sentenceTextRatio * 6; // Up to 6 points for sentence structure
-
-                if (properSentences.length) {
-                    // Check sentence length distribution (20-300 characters)
-                    const validLengthSentences = properSentences.filter(s => s.length >= 20 && s.length <= 300);
-                    const validLengthRatio = validLengthSentences.length / properSentences.length;
-                    textQualityScore += validLengthRatio * 2; // Up to 2 points for proper length
-
-                    // Check average word length in sentences (3-5 chars = English-like)
-                    const wordsInSentences = properSentences.join(' ').split(/\s+/).filter(w => !!w.length);
-                    if (wordsInSentences.length) {
-                        const avgWordLength = wordsInSentences.reduce((sum, word) => sum + word.replace(/[^\w]/g, '').length, 0) / wordsInSentences.length;
-                        if (avgWordLength >= 3 && avgWordLength <= 5) {
-                            textQualityScore += 2; // 2 points for English-like word length
-                        } else if (avgWordLength >= 2.5 && avgWordLength <= 6) {
-                            textQualityScore += 1; // 1 point for reasonable word length
-                        }
-                    }
-                }
-
-                score += Math.min(10, textQualityScore);
-
-                return Math.round(Math.min(100, score));
-            }
-
-            getQualitativeScore(numericalScore) {
-                if (numericalScore >= 90) return 'EXCELLENT';
-                if (numericalScore >= 75) return 'GOOD';
-                if (numericalScore >= 60) return 'FAIR';
-                if (numericalScore >= 40) return 'POOR';
-                return 'VERY_POOR';
-            }
-
         }
 
         // Create singleton instance
@@ -787,7 +1583,7 @@ if (window.__vibeReaderStealthExtractor) {
 
         true;
     } catch (error) {
-        delete window.__vibeReaderStealthExtractor; // Clean up on failure
+        delete window.__vibeReaderStealthExtractor;
         throw error;
     }
 }

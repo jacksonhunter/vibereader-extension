@@ -23,6 +23,7 @@ module.exports = {
         return `${prefix} ${selector}`;
       }
     },
-    cssnano: process.env.NODE_ENV === "production" ? {} : false,
+    // eslint-disable-next-line no-undef
+    cssnano: typeof process !== 'undefined' && process.env.NODE_ENV === "production" ? {} : false,
   },
 };

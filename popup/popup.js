@@ -11,7 +11,7 @@ class VibeReaderPopup {
       mediaMode: "emoji", // 'emoji', 'ascii', 'normal'
       sideScrolls: true,
       vibeRain: false,
-      autoActivate: false,
+      autoActivate: true,
     };
 
     // Popup-specific settings (saved separately)
@@ -19,7 +19,7 @@ class VibeReaderPopup {
       lastCheckedTab: null,
       settingsPanelOpen: false,
       compactView: false,
-      closeOnActivate: false,
+      closeOnActivate: true,
       showAdvanced: false,
     };
 
@@ -79,7 +79,8 @@ class VibeReaderPopup {
       // Load debug mode state
       const debugState = await browser.storage.local.get("vibeDebugEnabled");
       const debugCheckbox = document.getElementById("vibe-debug");
-      if (debugCheckbox && debugState.vibeDebugEnabled) {
+      // TODO: Change default to false once web-ext persistent settings work properly
+      if (debugCheckbox && (debugState.vibeDebugEnabled !== undefined ? debugState.vibeDebugEnabled : true)) {
         debugCheckbox.checked = true;
       }
 
@@ -381,11 +382,6 @@ class VibeReaderPopup {
         }
       }
 
-      // Ctrl/Cmd + E to export
-      if ((e.ctrlKey || e.metaKey) && e.key === "e") {
-        e.preventDefault();
-        this.exportSettings();
-      }
     });
   }
 
@@ -502,9 +498,14 @@ class VibeReaderPopup {
       }
 
       // Let the background script handle the activation
+      console.log(`Sending toggleFromPopup for tab ${this.currentTab.id}`);
       browser.runtime.sendMessage({
         action: "toggleFromPopup",
         tabId: this.currentTab.id,
+      }).then(response => {
+        console.log('Toggle response:', response);
+      }).catch(error => {
+        console.error('Toggle error:', error);
       });
 
       // If not closing, update status after a delay

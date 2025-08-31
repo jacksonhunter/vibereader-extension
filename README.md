@@ -22,7 +22,7 @@ VibeReader is a Firefox browser extension that provides an immersive reading exp
 - **Production Middleware System**: Event-driven architecture with SubscriberEnabledComponent base
 - **Memory Management**: WeakMap-based resource tracking with automatic cleanup
 - **Error Recovery**: Quarantine system with exponential backoff for failed subscribers
-- **Cross-Context Validation**: MessageBroker with comprehensive serialization and validation
+- **Cross-Context Validation**: MessageBridge with comprehensive serialization and validation
 - **Performance Monitoring**: Built-in timing middleware and rate limiting (ERRORS=50ms, CSS=200ms)
 
 ### Development Infrastructure
@@ -80,7 +80,7 @@ vibe-reader-extension/
 │   ├── proxy-controller.js      # UI overlay with terminal system
 │   ├── unified-vibe.js          # ContentTransformer & PipelineProcessor
 │   ├── vibe-subscribe.js        # SubscriberEnabledComponent middleware architecture
-│   └── vibe-utils.js            # Core utilities (MessageBroker, EventBus, VibeLogger)
+│   └── vibe-utils.js            # Core utilities (MessageBridge, EventBus, VibeLogger)
 ├── popup/
 │   ├── popup.html               # Settings interface
 │   ├── popup.js                 # Settings controller with persistence

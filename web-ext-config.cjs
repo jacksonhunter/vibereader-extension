@@ -76,7 +76,7 @@ module.exports = {
     
     // Start URLs for testing
     startUrl: [
-      'https://example.com',
+      'https://en.wikipedia.org/wiki/Cyberpunk',
       'about:debugging'
     ],
     

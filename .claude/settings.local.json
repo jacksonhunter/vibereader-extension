@@ -15,7 +15,10 @@
       "Bash(web-ext lint:*)",
       "Bash(npx eslint:*)",
       "Bash(npm run lint:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(npm run dev:extension:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(.run-extension.ps1)"
     ],
     "deny": [],
     "ask": []

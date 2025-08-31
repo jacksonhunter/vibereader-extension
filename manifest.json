@@ -19,7 +19,7 @@
   ],
 
   "background": {
-    "scripts": ["src/vibe-utils.js", "src/background-enhanced.js"],
+    "scripts": ["src/vibe-subscribe.js", "src/vibe-utils.js", "src/background-enhanced.js"],
     "persistent": true
   },
 
@@ -51,6 +51,8 @@
     "lib/readability.js",
     "lib/rxjs.min.js",
     "lib/aalib.js",
+    "src/vibe-subscribe.js",
+    "src/vibe-utils.js",
     "src/stealth-extractor.js",
     "src/proxy-controller.js"
   ],
