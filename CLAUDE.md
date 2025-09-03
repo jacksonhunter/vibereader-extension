@@ -37,6 +37,9 @@ VibeReader is a Firefox browser extension that transforms any webpage into a **9
 
 ### Extension Commands  
 ```bash
+##PRIMARY COMMANDS##
+
+Bash(cd "C:\Users\jacks\experiments\WebStormProjects\vibe-reader-extension" && powershell.exe -ExecutionPolicy Bypass -File run-extension.ps1)  #this launches extension in Firefox with no auto-reload, outputs console to terminal, captures terminal and errors to file, then deduplicates with count to dump-sorted.log and displays the sorted log on the terminal THIS IS HOW USER WANTS YOU TO RUN THE EXTENSION EVERY TIME FOR NOW
 # Modern Development Workflow (v2.2)
 npm run dev:extension     # Launch extension in Firefox Developer Edition (no auto-reload)
 npm run build:extension   # Build distribution package
@@ -88,28 +91,39 @@ zip -r vibe-reader.xpi * -x "*.DS_Store" "*.git*" "*.md" "test-exports/*" "node_
 ### File Structure
 ```
 vibe-reader-extension/
-├── manifest.json                 # Extension configuration
-├── background-enhanced.js        # Hidden tab manager & message router  
-├── stealth-extractor.js         # Hidden tab content extraction
-├── proxy-controller.js          # Visible tab UI management
+├── manifest.json                 # Extension configuration (loads background scripts)
+├── src/                         # Core JavaScript modules (Manifest V2 loading order)
+│   ├── vibe-subscribe.js        # Subscriber architecture & middleware system
+│   ├── vibe-utils.js            # EventBus & Cross-context MessageBridge  
+│   ├── background-enhanced.js   # BackgroundOrchestrator & SmartTab manager
+│   ├── stealth-extractor.js     # Content extraction with pipeline middleware
+│   ├── proxy-controller.js      # UI overlay with terminal integration
+│   ├── unified-vibe.js          # Content processing pipeline (unified.js)
+│   └── unified-entry.js         # Entry point for unified processing
 ├── lib/                         # External libraries
-├── styles/                      # CSS themes (retrofuture + matrix + generated)
+│   ├── unified-bundle.js        # Unified.js processing library
+│   ├── readability.js           # Mozilla Readability extraction
+│   ├── aalib.js                 # ASCII art conversion
+│   └── purify.min.js            # DOM sanitization
+├── styles/                      # CSS themes & build output
 │   ├── generated.css            # Compiled Tailwind output (production)
 │   ├── matrix-theme.css         # Legacy matrix theme (deprecated)
 │   └── retrofuture-theme.css    # Legacy retrofuture theme (deprecated)
 ├── src/styles/                  # Tailwind source files
 │   └── tailwind.css             # Complete Tailwind component system
-├── tailwind.config.js           # Tailwind configuration with themes
-├── postcss.config.js            # PostCSS build configuration
-├── package.json                 # NPM build pipeline
 ├── popup/                       # Settings interface
-└── icons/                       # Extension icons
+├── icons/                       # Extension icons
+├── package.json                 # NPM build pipeline & dependencies
+├── tailwind.config.js           # Tailwind configuration with themes
+└── postcss.config.js            # PostCSS build configuration
 ```
 
 ### Key Components
-- **HiddenTabManager** (`background-enhanced.js`): Tab lifecycle, memory management, message routing with SubscriberEnabledComponent architecture
-- **StealthExtractor** (`stealth-extractor.js`): Content extraction with framework detection using pipeline subscriptions and middleware-driven processing  
-- **ProxyController** (`proxy-controller.js`): UI overlay with dual terminal system powered by category-specific subscriber architecture
+- **BackgroundOrchestrator** (`background-enhanced.js`): Core session management, SmartTab lifecycle, ScriptInjector, cross-context message routing with SubscriberEnabledComponent architecture
+- **StealthExtractor** (`stealth-extractor.js`): Content extraction with ExtractionPipelineMiddleware, DOM observers, media discovery, and structure analysis using subscriber patterns  
+- **ProxyController** (`proxy-controller.js`): UI management with MediaAggregationMiddleware, TerminalRoutingMiddleware, SmartTerminal integration, and content display pipeline
+- **LocalEventBus** (`vibe-utils.js`): Local context event management with filtering, batching, and performance tracking
+- **MessageBridge** (`vibe-utils.js`): Cross-context communication with routing strategies, delivery confirmation, and retry mechanisms
 
 ### Terminal Diagnostic System - Middleware Enhanced
 - **SYSADMIN (Left)**: Extraction status, content stats, critical events with ERRORS category (50ms rate limit, priority 10)
@@ -178,16 +192,14 @@ vibe-reader-extension/
 
 ---
 
-## ⚠️ **ACTIVE DEVELOPMENT STATUS**
+## ⚠️ **ACTIVE DEVELOPMENT STATUS - CRITICAL ISSUES RESOLVED**
 
-**🚧 Current Phase**: Production Middleware Architecture - Deployment Ready ✅  
-**📋 Next Phase**: Feature Development & CSS Pipeline Integration  
-**🎯 Focus Areas**: Extension stability hardening, debugging infrastructure, production deployment readiness  
-**CRITICAL**: Middleware system must be production-ready before feature additions  
-**IMPORTANT**: All new components must extend SubscriberEnabledComponent  
-**IMPORTANT**: Legacy event listeners must be migrated to subscription patterns
+**🚧 Current Phase**: Middleware Architecture Implementation - Partially Functional  
+**📋 Critical Issue**: ~~Extension activation broken~~ **FIXED: Syntax error resolved**  
+**🎯 Focus Areas**: Missing base class dependencies, script loading order, subscriber initialization  
+**STATUS**: Major syntax error in `vibe-subscribe.js` line 648 has been resolved (invalid regex literal `/` → comment `//`). Extension can now load scripts but still requires missing `SubscriberEnabledComponent` base class definition.
 
-## 🔄 **MIDDLEWARE ARCHITECTURE IMPLEMENTATION (v2.3 - Production Foundation)**
+## 🔄 **MIDDLEWARE ARCHITECTURE IMPLEMENTATION (v2.3 - Under Development)**
 
 ### ✅ **Core Middleware System Complete:**
 
@@ -216,22 +228,194 @@ vibe-reader-extension/
    - **Exponential backoff** from 1 minute to 64 minutes maximum
    - **Fallback callback system** for critical operations
 
-### ✅ **Component Migration Status:**
+### ⚠️ **Component Migration Status - Critical Dependency Issue:**
 
-- **StealthExtractor** - Full pipeline subscriptions with transformation middleware ✅
-- **ProxyController** - Terminal event subscriptions with category filtering ✅
-- **HiddenTabManager** - Message handler subscriptions with validation ✅
-- **VibeLogger** - Category-specific terminal subscriptions ✅
-- **EventBus** - Enhanced with automatic categorization ✅
-- **MessageBridge** - Cross-context message routing ✅
+- **StealthExtractor** - ✅ IMPLEMENTED: Full pipeline with ExtractionPipelineMiddleware, content observers, media discovery (BLOCKED: Missing SubscriberEnabledComponent)
+- **ProxyController** - ✅ IMPLEMENTED: MediaAggregationMiddleware, TerminalRoutingMiddleware, SmartTerminal integration (BLOCKED: Missing SubscriberEnabledComponent)
+- **BackgroundOrchestrator** - ✅ IMPLEMENTED: SmartTab management, ScriptInjector, session lifecycle (BLOCKED: Missing SubscriberEnabledComponent)
+- **LocalEventBus** - ✅ IMPLEMENTED: Event categorization, filtering, batching, throttling (BLOCKED: Missing SubscriberEnabledComponent)
+- **MessageBridge** - ✅ IMPLEMENTED: Cross-context routing, validation, serialization, retry logic (BLOCKED: Missing SubscriberEnabledComponent)
+- **SmartTerminal** - ✅ IMPLEMENTED: Category filtering, log management, cleanup (BLOCKED: Missing SubscriberEnabledComponent)
 
-### **🔧 Middleware Integration Benefits:**
+**🔴 CRITICAL BLOCKER**: `SubscriberEnabledComponent` base class not defined in any loaded script. All middleware classes extend `SubscriberMiddleware` which is also undefined.
 
-- **Error Isolation**: Failed subscribers don't crash other components
-- **Performance Control**: Built-in rate limiting (ERRORS=50ms, CSS=200ms)
-- **Data Transformation**: Centralized processing pipelines for all events
-- **Memory Management**: Automatic cleanup prevents memory leaks
-- **Debugging Enhancement**: Comprehensive statistics and monitoring
+## 🔧 **SCRIPT LOADING DEPENDENCIES & RESOLUTION (v2.5)**
+
+### 📋 **Current Loading Order (Manifest V2):**
+```json
+"background": {
+  "scripts": ["src/vibe-subscribe.js", "src/vibe-utils.js", "src/background-enhanced.js"],
+  "persistent": true
+}
+```
+
+### ⚠️ **Dependency Chain Issues:**
+
+1. **Missing Base Classes** - Scripts reference undefined classes:
+   - `SubscriberEnabledComponent` (extended by all main components)
+   - `SubscriberMiddleware` (extended by all middleware classes) 
+   - These need to be defined in `vibe-subscribe.js` or loaded separately
+
+2. **Extension Context Detection** - Components determine context via:
+   ```javascript
+   getOrigin() {
+     if (typeof window === "undefined") return "background";
+     if (window.__vibeReaderProxyController) return "proxy";
+     if (window.__vibeReaderStealthExtractor) return "extractor";
+     if (window.location?.href?.includes("popup.html")) return "popup";
+     return "unknown";
+   }
+   ```
+
+3. **Cross-Context Script Injection** - Background loads scripts into tabs:
+   ```javascript
+   'proxy': ['src/vibe-subscribe.js', 'src/vibe-utils.js', 'src/proxy-controller.js']
+   'extractor': ['src/vibe-subscribe.js', 'src/vibe-utils.js', 'src/unified-vibe.js', 'src/stealth-extractor.js']
+   ```
+
+### ✅ **RESOLVED ISSUES:**
+- **Syntax Error Fixed**: `vibe-subscribe.js:648` invalid regex literal `/` → comment `//`
+
+### 🔴 **REMAINING BLOCKERS:**
+- **Missing Base Class Definitions**: Need to implement or import `SubscriberEnabledComponent` and `SubscriberMiddleware`
+- **Global Subscriber Manager**: References to `window.__globalSubscriberManager` but initialization unclear
+- **Script Order Dependencies**: Some scripts may need base classes loaded first
+
+### 🎯 **IMMEDIATE FIXES NEEDED (v2.5.1):**
+
+#### 1. Fix Context Detection (6 locations in vibe-subscribe.js)
+**Lines: 52, 1124, 1707, 2210, 3410**
+
+Replace all `getOrigin()` methods with:
+```javascript
+getOrigin() {
+    // Check for background context FIRST using API availability
+    if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getManifest) {
+        try {
+            // Background has tabs API but content scripts don't
+            if (browser.tabs && browser.tabs.query) {
+                return "background";
+            }
+        } catch(e) {}
+    }
+    
+    // Then check for specific component markers
+    if (window.__vibeReaderProxyController) return "proxy";
+    if (window.__vibeReaderStealthExtractor) return "extractor";
+    if (window.location?.href?.includes("popup.html")) return "popup";
+    
+    // Fallback for Node.js style background (shouldn't happen in Firefox)
+    if (typeof window === "undefined") return "background";
+    
+    return "unknown";
+}
+```
+
+#### 2. Add Missing Methods to CrossContextRoutingMiddleware
+**File: vibe-subscribe.js (after line 1196)**
+
+Add these methods:
+```javascript
+async announceViaRuntime(action, data) {
+    // Content scripts use runtime to send to background
+    if (this.origin === 'background') {
+        return { success: false, error: 'Background cannot use runtime.sendMessage to itself' };
+    }
+    
+    try {
+        await browser.runtime.sendMessage({
+            action,
+            data,
+            method: 'runtime',
+            sourceContext: this.origin
+        });
+        return { success: true, method: 'runtime' };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+async announceViaTabs(action, data) {
+    // Only background can use tabs API
+    if (this.origin !== 'background') {
+        return { success: false, error: 'Only background can use tabs API' };
+    }
+    
+    try {
+        const tabs = await browser.tabs.query({});
+        let successCount = 0;
+        
+        for (const tab of tabs) {
+            try {
+                await browser.tabs.sendMessage(tab.id, {
+                    action,
+                    data,
+                    method: 'tabs',
+                    sourceContext: this.origin
+                });
+                successCount++;
+            } catch (e) {
+                // Tab might not have content script, skip silently
+            }
+        }
+        
+        return { 
+            success: successCount > 0, 
+            method: 'tabs',
+            sentTo: successCount 
+        };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+```
+
+#### 3. Fix BackgroundOrchestrator Initialization
+**File: background-enhanced.js (line 1582)**
+
+Replace:
+```javascript
+// OLD:
+if (typeof window === "undefined" || window.__globalSubscriberManager?.origin === "background") {
+
+// NEW:
+const isBackground = (typeof browser !== "undefined" && browser.runtime && browser.runtime.getManifest && browser.tabs && browser.tabs.query) || 
+                     typeof window === "undefined" ||
+                     window.__globalSubscriberManager?.origin === "background";
+
+if (isBackground) {
+```
+
+#### 4. Add Storage Listener
+**File: vibe-subscribe.js (CrossContextRoutingMiddleware constructor ~line 1120)**
+
+Add in constructor:
+```javascript
+this.setupStorageListener();
+```
+
+Add new method:
+```javascript
+setupStorageListener() {
+    if (browser.storage && browser.storage.onChanged) {
+        browser.storage.onChanged.addListener((changes, area) => {
+            if (area !== 'local') return;
+            
+            Object.keys(changes).forEach(key => {
+                if (key.startsWith('context-announcement-')) {
+                    const { newValue } = changes[key];
+                    if (newValue && newValue.context !== this.origin) {
+                        this.handleRemoteSubscriptionAnnouncement(newValue, {
+                            storage: true,
+                            context: newValue.context
+                        });
+                    }
+                }
+            });
+        });
+    }
+}
+```
 
 ---
 
@@ -434,23 +618,23 @@ cd "C:\Users\jacks\PycharmProjects\NightDrive theme\theme_exports\synthwave-them
 - currently we are calling > dump.log 2>&1 to dump to log and then deduplicating with count before reading to limit context leaks
 ### **🎯 Current Development Priorities:**
 
-**Phase 1: Middleware Foundation Stabilization** (CRITICAL)
-1. **Complete subscriber migration** for all remaining legacy event listeners
-2. **Implement production error handling** with comprehensive fallback systems
-3. **Establish performance benchmarks** for middleware pipeline latency
-4. **Create debugging dashboard** for subscriber statistics and quarantine monitoring
+**Phase 1: Base Class Resolution** (CRITICAL - IMMEDIATE)
+1. **Define missing base classes** in `vibe-subscribe.js`: `SubscriberEnabledComponent` and `SubscriberMiddleware`
+2. **Initialize global subscriber manager** properly in background context
+3. **Test extension loading** after base class definitions are complete
+4. **Verify cross-context script injection** works with proper dependencies
 
-**Phase 2: CSS Integration Pipeline** 
-1. **Replace legacy CSS injection** with Tailwind utilities in middleware-enabled components
-2. **Integrate generated.css** into extension architecture with proper CSP handling
-3. **Implement theme-aware components** using data attributes and utility classes
-4. **Establish CSS build pipeline** integration with middleware system
+**Phase 2: Middleware System Activation** (HIGH PRIORITY)
+1. **Complete middleware pipeline testing** across all contexts (background, proxy, extractor)
+2. **Verify cross-context message routing** with MessageBridge and LocalEventBus
+3. **Test terminal integration** with SmartTerminal and routing middleware
+4. **Validate content extraction pipeline** with StealthExtractor and ProxyController
 
-**Phase 3: Production Hardening**
-1. **Stress test middleware system** with high-frequency events and error scenarios
-2. **Implement comprehensive logging** for all middleware operations
-3. **Create fallback mechanisms** for middleware failures
-4. **Document subscriber patterns** and best practices
+**Phase 3: Production Hardening** (MEDIUM PRIORITY) 
+1. **Stress test subscriber architecture** with high-frequency events and error scenarios
+2. **Implement comprehensive logging** for all middleware operations and quarantine system
+3. **Create fallback mechanisms** for middleware failures and missing dependencies
+4. **Document subscriber patterns** and debugging tools for future development
 
 ### **⚠️ Critical Requirements:**
 
@@ -481,5 +665,47 @@ The following Tailwind CSS enhancements are deferred until middleware foundation
 - Advanced interactive patterns
 - Clip-path effects and animations
 - Form and input enhancements
+
+## 📋 **EXPECTED LOGS FOR PROXY ARCHITECTURE DEBUGGING**
+
+### 🔴 **CRITICAL - REVIEW ALL ERRORS FIRST**
+
+### 🟡 **PROXY ARCHITECTURE INITIALIZATION LOGS:**
+1. `StealthExtractor.init() starting immediate activation`
+2. `Framework detected: [react|vue|angular|vanilla]`
+3. `ProxyController.init() starting`
+4. `ProxyController linked to hidden tab [id]`
+5. `Sending hiddenTabId [id] to ProxyController in tab [id]`
+
+### 🟢 **MESSAGE ROUTING LOGS:**
+6. `Routing proxy command '[command]' to hidden tab [id]`
+7. `Routing media discovery from hidden tab [id] to visible tab [id]`
+8. `Routing framework detection from hidden tab [id] to visible tab [id]`
+9. `Routing content stability from hidden tab [id] to visible tab [id]`
+
+### 🔵 **PROXY COMMAND EXECUTION LOGS:**
+10. `Sending proxy command '[command]' to hidden tab [id]`
+11. `Starting proxy-triggered content discovery`
+12. `Proxy-triggered re-extraction`
+13. `Synced scroll position [y] to hidden tab`
+
+### 🟣 **MEDIA DISCOVERY LOGS:**
+14. `Media discovered from hidden tab: [type]`
+15. `Found image: [filename]`
+16. `Found video: [filename]`
+17. `Found iframe: youtube|vimeo`
+
+### 🟠 **EXTRACTION PROGRESS LOGS:**
+18. `Starting immediate extraction pipeline`
+19. `Preprocessing document with DOMPurify`
+20. `Starting Readability extraction`
+21. `Content extracted successfully!`
+22. `Received extracted content from hidden tab`
+
+### 🟤 **TERMINAL DIAGNOSTIC LOGS:**
+23. `Connected to hidden tab [id]` (in SYSADMIN terminal)
+24. `Framework: [type]` (in SYSADMIN terminal)
+25. `Content stable after [n] mutations` (in SYSADMIN terminal)
+26. `Triggering lazy content discovery` (in NETMON terminal)
 
 **DO NOT use unicode in console or dump logs.**

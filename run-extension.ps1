@@ -57,9 +57,16 @@ try {
 Write-Host "`nProcessing captured output..." -ForegroundColor Yellow
 
 if (Test-Path "dump.log") {
-    # Get raw lines and aggressively filter out web-ext infrastructure noise
-    $rawLines = Get-Content dump.log | Where-Object {
-        # Keep lines that are NOT web-ext noise
+    # Get raw lines, clean Firefox prefixes FIRST, then filter out web-ext noise
+    $rawLines = Get-Content dump.log | ForEach-Object {
+        # Clean up Firefox stdout/stderr prefixes but keep the actual message
+        if ($_ -match "Firefox (stdout|stderr):\s*(.+)") {
+            $matches[2]
+        } else {
+            $_
+        }
+    } | Where-Object {
+        # Keep lines that are NOT web-ext noise (now applied to cleaned content)
         $_ -notmatch "^\[.*node_modules\\web-ext.*\]" -and  # All web-ext debug/info messages
         $_ -notmatch "Retrying Firefox.*connection error" -and  # Connection retry noise
         $_ -notmatch "Connecting to Firefox on port" -and
@@ -72,13 +79,6 @@ if (Test-Path "dump.log") {
                 $_ -notmatch "Firefox closed" -and
                 $_ -notmatch "^\s*$" -and  # Empty lines
         $_.Trim() -ne ""
-    } | ForEach-Object {
-        # Clean up Firefox stdout/stderr prefixes but keep the actual message
-        if ($_ -match "Firefox (stdout|stderr):\s*(.+)") {
-            $matches[2]
-        } else {
-            $_
-        }
     }
 
     $rawCount = ($rawLines | Measure-Object).Count

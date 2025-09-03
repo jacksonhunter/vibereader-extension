@@ -1,26 +1,26 @@
-// VibeReader v2.0 - Production StealthExtractor with Enhanced Subscriber Architecture
+// VibeReader v2.5 - Refactored StealthExtractor with Enhanced Subscriber Architecture
 
-if (window.__vibeReaderStealthExtractor) {
-    console.log('StealthExtractor already exists, skipping');
+if (window.__vibeReaderStealthExtractor || window.__stealthExtractor) {
+    console.log("⚠️ StealthExtractor already exists, skipping");
 } else {
     try {
         // === CUSTOM MIDDLEWARE FOR EXTRACTION ===
         class ExtractionPipelineMiddleware extends SubscriberMiddleware {
             constructor(extractor) {
-                super('ExtractionPipeline');
+                super("ExtractionPipeline", 7);
                 this.extractor = extractor;
             }
 
             process(eventContext) {
-                const { event, _data } = eventContext;
+                const { event, data } = eventContext;
 
                 // Track pipeline progress
-                if (event.startsWith('pipeline-')) {
-                    const step = event.replace('pipeline-', '');
-                    this.extractor.emit('pipeline-step-complete', {
+                if (event.startsWith("pipeline-")) {
+                    const step = event.replace("pipeline-", "");
+                    this.extractor.emit("pipeline-step-complete", {
                         step,
                         duration: eventContext.context.performance?.duration || 0,
-                        extractionId: this.extractor.extractionId
+                        extractionId: this.extractor.extractionId,
                     });
                 }
 
@@ -28,1562 +28,756 @@ if (window.__vibeReaderStealthExtractor) {
             }
         }
 
+        // ===== ENHANCED STEALTH EXTRACTOR =====
         class StealthExtractor extends SubscriberEnabledComponent {
             constructor() {
                 super();
 
-                // Core messaging systems
-                this.bridge = new MessageBridge();
-                this.eventBus = new EventBus();
-                this.progressEmitter = new ThrottledEmitter(this.bridge, 100);
-                this.events = new ThrottledEmitter(this.eventBus, 50);
-
-                // State management
-                this.isActive = false;
-                this.extractionInProgress = false;
-                this.extractionId = null;
-                this.frameworkDetected = 'unknown';
-
-                // Pipeline configuration
-                this.extractionPipeline = [];
-                this.defaultSteps = [
-                    'detectFramework',
-                    'immediateExtraction',
-                    'backgroundProcessing',
-                    'contentOptimization',
-                    'mediaProcessing'
-                ];
-
-                // DOM monitoring
-                this.mutationObserver = null;
-                this.mutationCount = 0;
-                this.contentStabilityTimer = null;
-                this.lastContentHash = null;
-
-                // Scrolling and content discovery
-                this.scrollingEnabled = true;
-                this.proxyScrollEnabled = true;
-                this.discoveryHeuristics = {
-                    minImageSize: 10000,
-                    minQualityThreshold: 0.3,
-                    lazyLoadingPatterns: [
-                        'data-src', 'data-lazy-src', 'data-original',
-                        'data-srcset', 'loading="lazy"'
-                    ]
+                // Extractor state
+                this.extractionState = {
+                    isActive: false,
+                    currentPhase: 'idle',
+                    extractedContent: new Map(),
+                    discoveredMedia: new Map(),
+                    analysisResults: new Map()
                 };
 
-                // Extraction metrics
+                // Extraction configuration
+                this.extractionConfig = {
+                    scrolling: true,
+                    mediaDiscovery: true,
+                    textExtraction: true,
+                    structureAnalysis: true,
+                    qualityFiltering: true,
+                    batchSize: 10,
+                    scrollDelay: 100,
+                    analysisDepth: 'full'
+                };
+
+                // Performance tracking
                 this.extractionMetrics = {
-                    attempts: 0,
-                    successes: 0,
-                    failures: 0,
-                    averageTime: 0,
-                    totalMutations: 0
+                    contentExtracted: 0,
+                    mediaDiscovered: 0,
+                    analysisPerformed: 0,
+                    scrollEvents: 0,
+                    processingTime: 0
                 };
 
-                // Media processing
-                this.mediaStats = { images: 0, videos: 0, iframes: 0, tables: 0 };
+                // Processing queue
+                this.processingQueue = new Map();
+                this.analysisQueue = new Map();
+
+                // Extraction ID for tracking
+                this.extractionId = `ext-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
                 // Add custom middleware
-                this.subscriberManager.addGlobalMiddleware(
-                    new ExtractionPipelineMiddleware(this)
-                );
+                this.pipelineMiddleware = new ExtractionPipelineMiddleware(this);
 
-                // Setup enhanced systems
-                this.setupEnhancedSubscriptions();
-                this.setupMessageHandlers();
-                this.setupPipelineMiddleware();
-
-                // Initialize immediately
-                this.init();
+                this.initializeStealthExtractor();
             }
 
-            // === ENHANCED SUBSCRIPTION MANAGEMENT ===
-            setupEnhancedSubscriptions() {
-                // Terminal logging subscription
-                if (window.VibeLogger) {
-                    this.subscribe('terminal-log', (eventType, data) => {
-                        this.logExtraction(data.category, data.level, data.message);
-                    }, {
-                        id: 'vibe-logger-terminal',
-                        eventTypes: ['terminal-log'],
-                        rateLimitMs: 100,
-                        transformations: [
-                            (data) => ({
-                                data: {
-                                    category: data.category || 'system',
-                                    level: data.level || 'INFO',
-                                    message: data.message || 'Unknown message'
-                                }
-                            })
-                        ]
-                    });
-
-                    const loggerUnsubscribe = window.VibeLogger.subscribeToTerminal((event) => {
-                        this.emit('terminal-log', event);
-                    });
-                    this.subscriptions.push(loggerUnsubscribe);
+            initializeStealthExtractor() {
+                // Add middleware to subscriber manager
+                if (window.__globalSubscriberManager) {
+                    window.__globalSubscriberManager.addGlobalMiddleware(this.pipelineMiddleware);
                 }
 
-                // Pipeline step completion
-                this.subscribe('pipeline-step-complete', (eventType, data) => {
-                    this.handlePipelineStepComplete(data);
-                }, {
-                    id: 'pipeline-coordinator',
-                    priority: 10,
-                    debounceMs: 50,
-                    transformations: [
-                        (data, context) => ({
-                            data: {
-                                ...data,
-                                timestamp: Date.now(),
-                                extractionId: this.extractionId
-                            },
-                            context: { ...context, source: 'pipeline' }
-                        })
-                    ]
+                this.setupExtractionSubscriptions();
+                this.setupContentObservers();
+                this.setupProcessingPipeline();
+
+                // Mark as extractor for context detection
+                window.__vibeReaderStealthExtractor = this;
+                window.__stealthExtractor = this;
+
+                console.log('🕵️ Enhanced StealthExtractor initialized');
+            }
+
+            setupExtractionSubscriptions() {
+                // Start extraction from background
+                this.subscribe('handle-start-extraction', async (eventType, { data, sender }) => {
+                    return await this.startExtraction(data.config || {});
                 });
 
-                // Media discovery aggregation
-                this.subscribe('media-discovered', (eventType, data) => {
-                    this.handleMediaDiscovery(data);
-                }, {
-                    id: 'media-aggregator',
-                    debounceMs: 200,
-                    transformations: [
-                        (data, _context, _eventContext) => {
-                            const aggregated = { ...this.mediaStats };
-                            if (data.images) aggregated.images += data.images;
-                            if (data.videos) aggregated.videos += data.videos;
-                            if (data.iframes) aggregated.iframes += data.iframes;
-                            if (data.tables) aggregated.tables += data.tables;
-                            return { data: aggregated };
-                        }
-                    ]
+                this.subscribe('handle-extractContent', async (eventType, { data, sender }) => {
+                    return await this.extractContent(data.config || {});
                 });
 
-                // Content updates with quality filtering
-                this.subscribe('content-updated', (eventType, data) => {
-                    this.handleContentUpdate(data);
-                }, {
-                    id: 'content-processor',
-                    rateLimitMs: 500,
-                    transformations: [
-                        (data) => {
-                            if (data.scoreImprovement && data.scoreImprovement < 5) {
-                                return null;
-                            }
-                            return { data };
-                        }
-                    ]
+                // Process proxy commands
+                this.subscribe('handle-executeProxyCommand', async (eventType, { data, sender }) => {
+                    return await this.executeProxyCommand(data);
                 });
 
-                // DOM mutations with heuristic analysis
-                this.subscribe('dom-mutations', (eventType, data) => {
-                    this.analyzeMutationImpact(data);
-                }, {
-                    id: 'mutation-analyzer',
-                    debounceMs: 100,
-                    eventTypes: ['dom-mutations'],
-                    transformations: [
-                        (data) => ({
-                            data: {
-                                ...data,
-                                impact: this.calculateMutationImpact(data),
-                                suggestions: this.generateMutationSuggestions(data)
-                            }
-                        })
-                    ]
+                // Settings updates
+                this.subscribe('handle-update-setting', async (eventType, { data, sender }) => {
+                    return await this.updateExtractionSetting(data.setting, data.value);
                 });
 
-                // Scroll events with proxy filtering
-                this.subscribe('scroll-event', (eventType, data) => {
-                    this.handleScrollEvent(data);
-                }, {
-                    id: 'scroll-handler',
-                    rateLimitMs: 50,
-                    eventTypes: ['scroll-event'],
-                    transformations: [
-                        (data, context) => {
-                            if (!this.proxyScrollEnabled && context.source === 'proxy') {
-                                return null;
-                            }
-                            return { data };
-                        }
-                    ]
+                // Injection ready check
+                this.subscribe('handle-injection-ready-check', (eventType, { data, sender }) => {
+                    return { ready: true, context: this.origin, timestamp: Date.now() };
                 });
 
-                console.log('Enhanced subscriptions setup complete');
-            }
+                // Handle ping
+                this.subscribe('handle-ping', (eventType, { data, sender }) => {
+                    return { pong: true, context: this.origin, timestamp: Date.now() };
+                });
 
-            setupPipelineMiddleware() {
-                if (this.subscriberManager && window.ContentTransformer) {
-                    this.subscriberManager.addPipelineTransform(
-                        (tree, options, context) => {
-                            if (context.data && typeof context.data === 'string' && context.data.includes('<')) {
-                                context.messages.push('HTML content detected for processing');
-                            }
-                            return tree;
-                        }
-                    );
+                // Processing queue management
+                this.subscribe('process-extraction-queue', async (eventType, data) => {
+                    return await this.processExtractionQueue();
+                });
 
-                    this.subscriberManager.addPipelineTransform(
-                        (tree, options, context) => {
-                            if (tree && tree.children) {
-                                let mediaCount = 0;
-                                const traverse = (node) => {
-                                    if (node.type === 'element' && ['img', 'video', 'audio'].includes(node.tagName)) {
-                                        mediaCount++;
-                                    }
-                                    if (node.children) {
-                                        node.children.forEach(traverse);
-                                    }
-                                };
-                                traverse(tree);
-
-                                if (mediaCount > 0) {
-                                    context.data = { ...context.data, mediaElementsFound: mediaCount };
-                                }
-                            }
-                            return tree;
-                        }
-                    );
-                }
-            }
-
-            // === SUBSCRIBER EVENT HANDLERS ===
-            handlePipelineStepComplete(data) {
-                const { step, duration, extractionId } = data;
-
-                if (extractionId === this.extractionId) {
-                    console.log(`Pipeline step '${step}' completed in ${duration}ms`);
-
-                    if (!this.extractionMetrics.stepDurations) {
-                        this.extractionMetrics.stepDurations = {};
-                    }
-                    this.extractionMetrics.stepDurations[step] = duration;
-
-                    this.progressEmitter.emit('extractionProgress', {
-                        status: `completed_${step}`,
-                        progress: this.calculateProgressFromStep(step),
-                        stepDuration: duration
-                    }, { action: 'extractionProgress' });
-                }
-            }
-
-            handleMediaDiscovery(aggregatedStats) {
-                this.mediaStats = aggregatedStats;
-                console.log('Media discovery update:', aggregatedStats);
-
-                const totalMedia = Object.values(aggregatedStats).reduce((sum, count) => sum + count, 0);
-                if (totalMedia > 0) {
-                    this.logExtraction('media', 'INFO',
-                        `Media discovered: ${aggregatedStats.images} images, ${aggregatedStats.videos} videos`);
-                }
-            }
-
-            handleContentUpdate(data) {
-                const { impact, scoreImprovement, suggestions } = data;
-
-                if (impact === 'high' || scoreImprovement > 20) {
-                    console.log('Significant content update detected, triggering re-extraction');
-                    this.scheduleReExtraction();
-                }
-
-                if (suggestions && suggestions.length) {
-                    this.applySuggestions(suggestions);
-                }
-            }
-
-            analyzeMutationImpact(mutationData) {
-                console.log('Mutation impact analysis:', mutationData.impact);
-
-                if (mutationData.impact === 'high') {
-                    this.emit('content-updated', {
-                        ...mutationData,
-                        source: 'mutation-analysis'
-                    });
-                }
-            }
-
-            handleScrollEvent(data) {
-                const { scrollY, _scrollX, _source = 'unknown' } = data;
-                const scrollProgress = scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-
-                if (scrollProgress > 0.5 && this.shouldTriggerLazyLoading()) {
-                    this.triggerLazyContentDiscovery();
-                }
-            }
-
-            // === PIPELINE SUBSCRIBER MANAGEMENT ===
-            subscribeToPipeline(callback, options = {}) {
-                return this.subscribe('pipeline-step-complete', callback, {
-                    id: options.id || `pipeline-sub-${Date.now()}`,
-                    priority: options.priority || 0,
-                    eventTypes: ['pipeline-step-complete'],
-                    ...options
+                this.subscribe('process-analysis-queue', async (eventType, data) => {
+                    return await this.processAnalysisQueue();
                 });
             }
 
-            subscribeToScrolling(callback, options = {}) {
-                return this.subscribe('scroll-event', callback, {
-                    id: options.id || `scroll-sub-${Date.now()}`,
-                    rateLimitMs: options.rateLimitMs || 100,
-                    eventTypes: ['scroll-event'],
-                    ...options
-                });
-            }
-
-            subscribeToMediaDiscovery(callback, options = {}) {
-                return this.subscribe('media-discovered', callback, {
-                    id: options.id || `media-sub-${Date.now()}`,
-                    debounceMs: options.debounceMs || 200,
-                    eventTypes: ['media-discovered'],
-                    ...options
-                });
-            }
-
-            // === UTILITY METHODS FOR ENHANCED SUBSCRIPTIONS ===
-            calculateMutationImpact(data) {
-                const { newImages, newVideos, newTextContent, lazyLoadTriggers } = data;
-
-                let impactScore = 0;
-                impactScore += newImages * 2;
-                impactScore += newVideos * 5;
-                impactScore += Math.min(newTextContent / 100, 10);
-                impactScore += lazyLoadTriggers;
-
-                if (impactScore > 20) return 'high';
-                if (impactScore > 5) return 'medium';
-                return 'low';
-            }
-
-            generateMutationSuggestions(data) {
-                const suggestions = [];
-
-                if (data.lazyLoadTriggers > 5) {
-                    suggestions.push({
-                        type: 'lazy-loading',
-                        action: 'trigger-scroll',
-                        reason: 'High lazy loading activity detected'
-                    });
-                }
-
-                if (data.newImages > 3) {
-                    suggestions.push({
-                        type: 'media-processing',
-                        action: 're-extract',
-                        reason: 'Significant new media content'
-                    });
-                }
-
-                return suggestions;
-            }
-
-            applySuggestions(suggestions) {
-                suggestions.forEach(suggestion => {
-                    switch (suggestion.action) {
-                        case 'trigger-scroll':
-                            if (this.scrollingEnabled) {
-                                this.simulateContentDiscovery();
-                            }
-                            break;
-                        case 're-extract':
-                            this.scheduleReExtraction();
-                            break;
-                        default:
-                            console.log('Unknown suggestion action:', suggestion.action);
-                    }
-                });
-            }
-
-            calculateProgressFromStep(step) {
-                const stepProgress = {
-                    'detectFramework': 10,
-                    'immediateExtraction': 30,
-                    'backgroundProcessing': 60,
-                    'contentOptimization': 80,
-                    'mediaProcessing': 95
-                };
-                return stepProgress[step] || 0;
-            }
-
-            // === INITIALIZATION AND ACTIVATION ===
-            init() {
-                console.log('StealthExtractor.init() starting immediate activation');
-                this.isActive = true;
-
-                this.detectFramework();
-                this.setupMutationObserver();
-                this.startExtractionPipeline();
-                this.setupScrollingDiscovery();
-                this.signalReady();
-
-                console.log('StealthExtractor activated and extracting');
-            }
-
-            activate() {
-                if (this.isActive) return;
-                this.init();
-            }
-
-            deactivate() {
-                console.log('StealthExtractor deactivating...');
-
-                this.isActive = false;
-                this.extractionInProgress = false;
-
-                this.teardownMutationObserver();
-                this.clearAllTimers();
-
-                if (typeof DOMPurify !== 'undefined') {
-                    DOMPurify.removeAllHooks();
-                }
-
-                super.deactivate();
-
-                if (this.progressEmitter) {
-                    this.progressEmitter.destroy();
-                }
-                if (this.events) {
-                    this.events.destroy();
-                }
-
-                console.log('StealthExtractor deactivated with enhanced cleanup');
-            }
-
-            destroy() {
-                console.log('StealthExtractor destroying...');
-
-                this.deactivate();
-                super.destroy();
-
-                this.bridge = null;
-                this.eventBus = null;
-                this.progressEmitter = null;
-                this.events = null;
-                this.extractionPipeline = [];
-
-                delete window.__vibeReaderStealthExtractor;
-
-                console.log('StealthExtractor destroyed');
-            }
-
-            // === ENHANCED SUBSCRIBER MANAGEMENT METHODS ===
-            updateSubscriberPreferences(data) {
-                const { subscriberId, eventType, preferences } = data;
-                return this.subscriberManager.updateSubscriber(eventType, subscriberId, { preferences });
-            }
-
-            pauseSubscriber(eventType, subscriberId) {
-                return this.subscriberManager.updateSubscriber(eventType, subscriberId, { state: 'paused' });
-            }
-
-            resumeSubscriber(eventType, subscriberId) {
-                return this.subscriberManager.updateSubscriber(eventType, subscriberId, { state: 'active' });
-            }
-
-            disableSubscriber(eventType, subscriberId) {
-                return this.subscriberManager.updateSubscriber(eventType, subscriberId, { state: 'disabled' });
-            }
-
-            clearAllTimers() {
-                if (this.contentStabilityTimer) {
-                    clearTimeout(this.contentStabilityTimer);
-                    this.contentStabilityTimer = null;
-                }
-
-                if (this.extractionTimer) {
-                    clearTimeout(this.extractionTimer);
-                    this.extractionTimer = null;
-                }
-            }
-
-            // === MESSAGE AND EVENT HANDLING ===
-            setupMessageHandlers() {
-                // Handle start-extraction message from background
-                this.bridge.register('start-extraction', (data) => {
-                    console.log('Received start-extraction command:', data);
-                    dump(`Received start-extraction command for ${data.url}\n`);
-                    
-                    // Store tab IDs for later routing
-                    this.hiddenTabId = data.hiddenTabId;
-                    this.visibleTabId = data.visibleTabId;
-                    
-                    // Start the extraction pipeline
-                    this.startExtractionPipeline();
-                    return { success: true, message: 'Extraction started' };
-                });
-                
-                this.bridge.register('extractContent', (config) => this.handleExtractionRequest(config));
-                this.bridge.register('executeProxyCommand', (data) => this.executeProxyCommand(data));
-                this.bridge.register('configurePipeline', (config) => this.configurePipeline(config));
-                this.bridge.register('toggleScrolling', (options) => this.toggleScrolling(options));
-                this.bridge.register('getMetrics', () => this.getMetrics());
-                this.bridge.register('getState', () => this.getState());
-                this.bridge.register('deactivate', () => this.deactivate());
-                this.bridge.register('getSubscriberStats', () => this.getSubscriberStats());
-                this.bridge.register('updateSubscriber', (data) => this.updateSubscriberPreferences(data));
-            }
-
-            // === FRAMEWORK DETECTION ===
-            detectFramework() {
-                const detectors = [
-                    { name: 'react', check: () => window.React || document.querySelector('[data-reactroot], #root, #__next') },
-                    { name: 'vue', check: () => window.Vue || document.querySelector('#app[data-v-], [data-server-rendered]') },
-                    { name: 'angular', check: () => window.angular || document.querySelector('[ng-app], [ng-version]') },
-                    { name: 'svelte', check: () => document.querySelector('[data-svelte]') },
-                    { name: 'nextjs', check: () => document.querySelector('#__next') }
-                ];
-
-                for (const detector of detectors) {
-                    if (detector.check()) {
-                        this.frameworkDetected = detector.name;
-                        break;
-                    }
-                }
-
-                if (this.frameworkDetected === 'unknown') {
-                    this.frameworkDetected = 'vanilla';
-                }
-
-                console.log(`Framework detected: ${this.frameworkDetected}`);
-                this.logExtraction('framework', 'INFO', `Framework: ${this.frameworkDetected}`);
-
-                this.events.emitNow('framework-detected', {
-                    framework: this.frameworkDetected
-                });
-            }
-
-            // === EXTRACTION PIPELINE ===
-            startExtractionPipeline() {
-                this.extractionInProgress = true;
-                this.extractionId = `extraction-${Date.now()}`;
-                this.extractionMetrics.attempts++;
-
-                console.log('Starting immediate extraction pipeline');
-
-                this.progressEmitter.emitNow('extractionProgress', {
-                    status: 'starting',
-                    progress: 0,
-                    framework: this.frameworkDetected,
-                    extractionId: this.extractionId
-                }, { action: 'extractionProgress' });
-
-                this.runPipelineAsync();
-            }
-
-            async runPipelineAsync() {
-                try {
-                    const immediateResult = await this.extractImmediate();
-
-                    if (immediateResult.content) {
-                        this.sendExtractionResult(immediateResult, 'immediate');
-                    }
-
-                    this.runBackgroundProcessing();
-                    this.extractionMetrics.successes++;
-
-                } catch (error) {
-                    console.error('Extraction pipeline error:', error);
-                    this.extractionMetrics.failures++;
-                    this.handleExtractionError(error);
-                } finally {
-                    this.extractionInProgress = false;
-                }
-            }
-
-            async extractImmediate() {
-                const startTime = performance.now();
-
-                try {
-                    const documentClone = document.cloneNode(true);
-                    this.mediaStats = { images: 0, videos: 0, iframes: 0, tables: 0 };
-
-                    const processedDoc = await this.preprocessDocument(documentClone);
-                    const content = await this.extractWithReadability(processedDoc);
-                    const finalContent = await this.postProcessContent(content);
-
-                    const duration = performance.now() - startTime;
-
-                    return {
-                        content: finalContent.content,
-                        metadata: {
-                            ...finalContent.metadata,
-                            extractionType: 'immediate',
-                            duration,
-                            framework: this.frameworkDetected,
-                            mediaStats: { ...this.mediaStats }
-                        }
-                    };
-
-                } catch (error) {
-                    console.warn('Immediate extraction failed, using fallback:', error);
-                    return this.createFallbackContent();
-                }
-            }
-
-            createFallbackContent() {
-                const title = document.title || 'Untitled';
-                const url = window.location.href;
-                const framework = this.frameworkDetected;
-
-                return {
-                    content: `
-                        <div class="extraction-fallback">
-                            <h1>${this.escapeHtml(title)}</h1>
-                            <p>Content extraction in progress...</p>
-                            <div class="extraction-details">
-                                <p>Framework: ${framework}</p>
-                                <p>URL: ${this.escapeHtml(url)}</p>
-                            </div>
-                        </div>
-                    `,
-                    metadata: {
-                        title,
-                        url,
-                        framework,
-                        extractionType: 'fallback',
-                        length: 0,
-                        mediaStats: { images: 0, videos: 0, iframes: 0, tables: 0 }
-                    }
-                };
-            }
-
-            runBackgroundProcessing() {
-                setTimeout(() => {
-                    this.runEnhancedExtraction();
-                }, 100);
-            }
-
-            async runEnhancedExtraction() {
-                try {
-                    console.log('Running enhanced extraction with DOM monitoring');
-
-                    await this.waitForInitialStability(1000);
-
-                    if (this.scrollingEnabled) {
-                        await this.simulateContentDiscovery();
-                    }
-
-                    const enhancedResult = await this.extractImmediate();
-                    enhancedResult.metadata.extractionType = 'enhanced';
-
-                    if (this.isSignificantlyBetter(enhancedResult)) {
-                        this.sendExtractionResult(enhancedResult, 'enhanced');
-                    }
-
-                } catch (error) {
-                    console.warn('Enhanced extraction failed:', error);
-                }
-            }
-
-            isSignificantlyBetter(newResult) {
-                const _newContentLength = newResult.content?.length || 0;
-                const _newMediaCount = Object.values(newResult.metadata.mediaStats || {})
-                    .reduce((sum, count) => sum + count, 0);
-
-                return newResult.metadata.extractionType === 'enhanced';
-            }
-
-            // === MUTATION OBSERVER ===
-            setupMutationObserver() {
-                if (this.mutationObserver) {
-                    this.mutationObserver.disconnect();
-                }
-
+            setupContentObservers() {
+                // DOM mutation observer for dynamic content
                 this.mutationObserver = new MutationObserver((mutations) => {
-                    this.handleMutations(mutations);
+                    this.handleDOMMutations(mutations);
                 });
 
-                const config = {
+                this.mutationObserver.observe(document.body, {
                     childList: true,
                     subtree: true,
-                    attributes: true,
-                    attributeFilter: ['src', 'data-src', 'class', 'style', 'hidden'],
-                    characterData: false
-                };
-
-                this.mutationObserver.observe(document.body, config);
-
-                const domSub = () => {
-                    if (this.mutationObserver) {
-                        this.mutationObserver.disconnect();
-                        this.mutationObserver = null;
-                    }
-                };
-                this.subscribe('dom', domSub);
-
-                console.log('MutationObserver setup with heuristic DOM traversal');
-            }
-
-            teardownMutationObserver() {
-                if (this.mutationObserver) {
-                    this.mutationObserver.disconnect();
-                    this.mutationObserver = null;
-                }
-            }
-
-            handleMutations(mutations) {
-                if (!this.isActive) return;
-
-                this.mutationCount += mutations.length;
-
-                const meaningfulMutations = mutations.filter(this.isMeaningfulMutation);
-
-                if (meaningfulMutations.length === 0) return;
-
-                const analysis = this.analyzeMutationsWithHeuristics(meaningfulMutations);
-
-                this.emit('dom-mutations', analysis, {
-                    source: 'mutation-observer',
-                    useUnifiedPipeline: true
+                    attributes: false, // Reduced to improve performance
+                    attributeOldValue: false
                 });
 
-                this.resetStabilityTimer();
+                // Scroll event handler for infinite scroll detection
+                this.scrollHandler = this.throttle(() => {
+                    this.handleScrollEvent();
+                }, this.extractionConfig.scrollDelay);
 
-                if (analysis.highValueContent) {
-                    console.log('High-value content detected via mutations');
-                    this.emit('content-updated', {
-                        ...analysis,
-                        trigger: 'high-value-mutation'
+                window.addEventListener('scroll', this.scrollHandler, { passive: true });
+
+                // Page load completion
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => {
+                        this.handlePageLoadComplete();
                     });
-                }
-            }
-
-            isMeaningfulMutation(mutation) {
-                if (mutation.target?.tagName?.match(/^(SCRIPT|STYLE|NOSCRIPT)$/)) {
-                    return false;
-                }
-
-                if (mutation.type === 'childList' && mutation.addedNodes.length) {
-                    return Array.from(mutation.addedNodes).some(node =>
-                        node.nodeType === 1 &&
-                        !node.tagName?.match(/^(SCRIPT|STYLE)$/)
-                    );
-                }
-
-                if (mutation.type === 'attributes' &&
-                    ['src', 'data-src'].includes(mutation.attributeName)) {
-                    return true;
-                }
-
-                return false;
-            }
-
-            analyzeMutationsWithHeuristics(mutations) {
-                const analysis = {
-                    newImages: 0,
-                    newVideos: 0,
-                    newTextContent: 0,
-                    lazyLoadTriggers: 0,
-                    highValueContent: false,
-                    scoreImprovement: 0,
-                    timestamp: Date.now()
-                };
-
-                mutations.forEach(mutation => {
-                    if (mutation.type === 'childList') {
-                        mutation.addedNodes.forEach(node => {
-                            if (node.nodeType === 1) {
-                                analysis.newImages += node.querySelectorAll('img').length;
-                                analysis.newVideos += node.querySelectorAll('video').length;
-
-                                const textLength = node.textContent?.length || 0;
-                                analysis.newTextContent += textLength;
-
-                                this.discoveryHeuristics.lazyLoadingPatterns.forEach(pattern => {
-                                    if (node.hasAttribute?.(pattern) ||
-                                        node.querySelector?.(`[${pattern}]`)) {
-                                        analysis.lazyLoadTriggers++;
-                                    }
-                                });
-                            }
-                        });
-                    } else if (mutation.type === 'attributes') {
-                        if (['src', 'data-src'].includes(mutation.attributeName)) {
-                            analysis.lazyLoadTriggers++;
-                        }
-                    }
-                });
-
-                analysis.highValueContent = (
-                    analysis.newImages >= 3 ||
-                    analysis.newVideos >= 1 ||
-                    analysis.newTextContent >= 1000 ||
-                    analysis.lazyLoadTriggers >= 5
-                );
-
-                analysis.scoreImprovement =
-                    (analysis.newImages * 2) +
-                    (analysis.newVideos * 5) +
-                    (analysis.newTextContent * 0.01) +
-                    (analysis.lazyLoadTriggers * 1);
-
-                return analysis;
-            }
-
-            resetStabilityTimer() {
-                if (this.contentStabilityTimer) {
-                    clearTimeout(this.contentStabilityTimer);
-                }
-
-                this.contentStabilityTimer = setTimeout(() => {
-                    this.handleContentStability();
-                }, 500);
-            }
-
-            handleContentStability() {
-                console.log('Content stability detected');
-                this.events.emit('content-stable', {
-                    mutationCount: this.mutationCount,
-                    timestamp: Date.now()
-                });
-
-                this.contentStabilityTimer = null;
-            }
-
-            scheduleReExtraction() {
-                if (this.extractionTimer) {
-                    clearTimeout(this.extractionTimer);
-                }
-
-                this.extractionTimer = setTimeout(() => {
-                    this.runEnhancedExtraction();
-                }, 1000);
-            }
-
-            // === SCROLLING AND CONTENT DISCOVERY ===
-            setupScrollingDiscovery() {
-                if (!this.scrollingEnabled) return;
-
-                const scrollHandler = this.throttledScrollHandler.bind(this);
-                document.addEventListener('scroll', scrollHandler, { passive: true });
-
-                this.subscriptions.push(() => {
-                    document.removeEventListener('scroll', scrollHandler);
-                });
-            }
-
-            throttledScrollHandler(_event) {
-                if (!this.proxyScrollEnabled) return;
-
-                this.emit('scroll-event', {
-                    type: 'scroll',
-                    scrollY: window.scrollY,
-                    scrollX: window.scrollX,
-                    timestamp: Date.now(),
-                    source: 'user'
-                }, {
-                    source: 'dom-listener'
-                });
-            }
-
-            async simulateContentDiscovery() {
-                console.log('Starting simulated content discovery');
-
-                const scrollHeight = document.documentElement.scrollHeight;
-                const viewportHeight = window.innerHeight;
-
-                if (scrollHeight <= viewportHeight) {
-                    console.log('Content fits in viewport, skipping scroll simulation');
-                    return;
-                }
-
-                try {
-                    await this.simulateScrollDown();
-                    await this.waitForInitialStability(1000);
-                    await this.simulateScrollUp();
-
-                    console.log('Content discovery simulation complete');
-
-                } catch (error) {
-                    console.warn('Content discovery failed:', error);
-                }
-            }
-
-            async simulateScrollDown() {
-                return new Promise((resolve) => {
-                    const scrollHeight = document.documentElement.scrollHeight;
-                    const viewportHeight = window.innerHeight;
-                    let currentScroll = 0;
-
-                    const scrollStep = () => {
-                        const remaining = scrollHeight - viewportHeight - currentScroll;
-                        if (remaining <= 0) {
-                            resolve();
-                            return;
-                        }
-
-                        const scrollAmount = Math.min(200, remaining);
-                        window.scrollBy(0, scrollAmount);
-                        currentScroll += scrollAmount;
-
-                        const progress = (currentScroll / (scrollHeight - viewportHeight)) * 100;
-                        this.progressEmitter.emit('extractionProgress', {
-                            status: 'discovering_content',
-                            progress: Math.min(progress, 90)
-                        }, { action: 'extractionProgress' });
-
-                        setTimeout(scrollStep, 50);
-                    };
-
-                    scrollStep();
-                });
-            }
-
-            async simulateScrollUp() {
-                return new Promise((resolve) => {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    setTimeout(resolve, 500);
-                });
-            }
-
-            toggleScrolling(options = {}) {
-                if (options.scrolling !== undefined) {
-                    this.scrollingEnabled = options.scrolling;
-                }
-                if (options.proxyScroll !== undefined) {
-                    this.proxyScrollEnabled = options.proxyScroll;
-                }
-
-                console.log(`Scrolling: ${this.scrollingEnabled}, Proxy: ${this.proxyScrollEnabled}`);
-                return { scrolling: this.scrollingEnabled, proxyScroll: this.proxyScrollEnabled };
-            }
-
-            // === DOMPURIFY INTEGRATION ===
-            async preprocessDocument(documentClone) {
-                console.log('Preprocessing document with DOMPurify');
-
-                try {
-                    this.setupPreprocessingHooks();
-
-                    const frameworkConfig = this.getFrameworkConfig();
-
-                    const purifyConfig = {
-                        WHOLE_DOCUMENT: true,
-                        RETURN_DOM: true,
-                        KEEP_CONTENT: true,
-                        FORBID_TAGS: [
-                            'script', 'style', 'noscript',
-                            'aside', 'nav', 'footer', 'header'
-                        ],
-                        FORBID_ATTR: [
-                            'onclick', 'onload', 'onerror', 'onmouseover',
-                            'onfocus', 'onblur', 'onchange', 'onsubmit',
-                            'onkeydown', 'onkeyup', 'onkeypress'
-                        ],
-                        KEEP_CLASSES: true,
-                        ...frameworkConfig
-                    };
-
-                    const cleanedDoc = DOMPurify.sanitize(documentClone, purifyConfig);
-
-                    return cleanedDoc;
-
-                } catch (error) {
-                    DOMPurify.removeAllHooks();
-                    throw error;
-                } finally {
-                    DOMPurify.removeAllHooks();
-                }
-            }
-
-            setupPreprocessingHooks() {
-                DOMPurify.addHook('uponSanitizeElement', (node, data) => {
-                    if (node.nodeType !== 1) return;
-
-                    const tagName = data.tagName;
-                    const className = node.className || '';
-                    const id = node.id || '';
-
-                    const removePatterns = [
-                        /\bad[\s\-_]/i, /advertisement/i, /sponsor/i,
-                        /cookie[\s\-_]?banner/i, /popup/i, /modal/i,
-                        /newsletter/i, /subscribe/i, /social[\s\-_]?share/i,
-                        /comments?[\s\-_]?section/i, /related[\s\-_]?posts?/i,
-                        /sidebar/i
-                    ];
-
-                    if (removePatterns.some(p => p.test(className) || p.test(id))) {
-                        node.remove();
-                        return;
-                    }
-
-                    if (tagName === 'header' || tagName === 'footer') {
-                        if (!node.closest('article, main, [role="main"]')) {
-                            node.remove();
-                            return;
-                        }
-                    }
-
-                    switch (tagName) {
-                        case 'img':
-                            this.mediaStats.images++;
-                            this.processMediaElement(node, 'image');
-                            break;
-                        case 'video':
-                            this.mediaStats.videos++;
-                            this.processMediaElement(node, 'video');
-                            break;
-                        case 'iframe': {
-                            const src = node.src || '';
-                            if (src.match(/youtube|vimeo|dailymotion/i)) {
-                                this.mediaStats.iframes++;
-                            } else {
-                                node.remove();
-                            }
-                            break;
-                        }
-                        case 'table':
-                            this.mediaStats.tables++;
-                            break;
-                    }
-                });
-
-                DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
-                    if (node.tagName === 'IMG') {
-                        this.processLazyImage(node);
-                    }
-
-                    if ((data.attrName === 'href' || data.attrName === 'src') &&
-                        data.attrValue && data.attrValue.startsWith('javascript:')) {
-                        data.forceRemoveAttr = true;
-                    }
-
-                    if ((data.attrName === 'href' || data.attrName === 'src') &&
-                        data.attrValue && !data.attrValue.match(/^(https?:|data:|#)/)) {
-                        try {
-                            data.attrValue = new URL(data.attrValue, window.location.href).href;
-                        } catch (e) {
-                            // Invalid URL handled by DOMPurify
-                        }
-                    }
-                });
-
-                DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-                    if (node.nodeType !== 1) return;
-
-                    if (node.hasAttribute('hidden')) {
-                        node.removeAttribute('hidden');
-                    }
-
-                    if (node.style) {
-                        if (node.style.display === 'none' || node.style.visibility === 'hidden') {
-                            const text = node.textContent || '';
-                            if (text.length > 50 && !text.match(/cookie|advertisement|subscribe/i)) {
-                                node.style.display = '';
-                                node.style.visibility = '';
-                            }
-                        }
-                    }
-
-                    if (node.tagName === 'TABLE' && !node.querySelector('tbody')) {
-                        const tbody = document.createElement('tbody');
-                        node.querySelectorAll('tr').forEach(tr => tbody.appendChild(tr));
-                        node.appendChild(tbody);
-                    }
-                });
-            }
-
-            // === MEDIA PROCESSING ===
-            processMediaElement(element, type) {
-                const width = parseInt(element.getAttribute('width')) || 0;
-                const height = parseInt(element.getAttribute('height')) || 0;
-                const area = width * height;
-
-                if (type === 'image' && area >= this.discoveryHeuristics.minImageSize) {
-                    element.setAttribute('data-vibe-display', 'ascii');
-                    element.classList.add('vibe-ascii-candidate');
                 } else {
-                    element.setAttribute('data-vibe-display', 'passthrough');
-                    element.classList.add('vibe-passthrough');
+                    this.handlePageLoadComplete();
                 }
+
+                console.log('👁️ Content observers active');
             }
 
-            processLazyImage(img) {
-                const lazyAttrs = this.discoveryHeuristics.lazyLoadingPatterns;
-
-                for (const attr of lazyAttrs) {
-                    const value = img.getAttribute(attr);
-                    if (value && value.match(/\.(jpg|jpeg|png|gif|webp|svg)/i)) {
-                        img.setAttribute('src', value);
-
-                        const srcset = img.getAttribute('data-srcset') ||
-                            img.getAttribute('data-lazy-srcset');
-                        if (srcset) {
-                            img.setAttribute('srcset', srcset);
-                        }
-
-                        img.setAttribute('loading', 'lazy');
-                        break;
+            setupProcessingPipeline() {
+                // Process extraction queue every 200ms
+                this.extractionInterval = setInterval(() => {
+                    if (this.processingQueue.size > 0) {
+                        this.emit('process-extraction-queue');
                     }
-                }
+                }, 200);
+
+                // Process analysis queue every 500ms
+                this.analysisInterval = setInterval(() => {
+                    if (this.analysisQueue.size > 0) {
+                        this.emit('process-analysis-queue');
+                    }
+                }, 500);
+
+                // Clean old results every 10 minutes
+                this.cleanupInterval = setInterval(() => {
+                    this.cleanExtractionResults();
+                }, 600000);
             }
 
-            getFrameworkConfig() {
-                const configs = {
-                    react: {
-                        ALLOWED_ATTR: ['data-reactroot', 'data-react-*'],
-                        CUSTOM_ELEMENT_HANDLING: {
-                            tagNameCheck: /^[a-z]+-[a-z]+$/,
-                            attributeNameCheck: /^(data-|aria-)/,
-                            allowCustomizedBuiltInElements: true
-                        }
-                    },
-                    vue: {
-                        ALLOWED_ATTR: ['v-*', ':*', '@*', 'data-v-*'],
-                        ADD_TAGS: ['transition', 'transition-group']
-                    },
-                    angular: {
-                        ALLOWED_ATTR: ['ng-*', '[*]', '(*)', '*ngFor', '*ngIf'],
-                        SANITIZE_DOM: false
-                    },
-                    nextjs: {
-                        ALLOWED_ATTR: ['data-reactroot', 'data-react-*'],
-                        ADD_TAGS: ['next-route-announcer']
-                    }
+            throttle(func, delay) {
+                let lastCall = 0;
+                return function(...args) {
+                    const now = Date.now();
+                    if (now - lastCall < delay) return;
+                    lastCall = now;
+                    return func.apply(this, args);
                 };
-
-                return configs[this.frameworkDetected] || {};
             }
 
-            async extractWithReadability(processedDocument) {
+            // ===== EXTRACTION METHODS =====
+
+            async startExtraction(config = {}) {
+                this.extractionConfig = { ...this.extractionConfig, ...config };
+                this.extractionState.isActive = true;
+                this.extractionState.currentPhase = 'initializing';
+
+                const startTime = Date.now();
+
                 try {
-                    if (typeof Readability === 'undefined') {
-                        throw new Error('Readability.js not available');
+                    console.log('🚀 Starting enhanced content extraction');
+
+                    // Phase 1: Initial content extraction
+                    this.extractionState.currentPhase = 'content-extraction';
+                    const contentResult = await this.performContentExtraction();
+
+                    // Phase 2: Media discovery
+                    if (this.extractionConfig.mediaDiscovery) {
+                        this.extractionState.currentPhase = 'media-discovery';
+                        const mediaResult = await this.performMediaDiscovery();
                     }
 
-                    const reader = new Readability(processedDocument, {
-                        debug: false,
-                        maxElemsToParse: 0,
-                        nbTopCandidates: 5,
-                        charThreshold: 500,
-                        classesToPreserve: ['caption', 'emoji', 'code', 'pre', 'vibe-ascii-candidate', 'vibe-passthrough'],
-                        keepClasses: true
-                    });
-
-                    let article = reader.parse();
-
-                    if (!article || !article.content) {
-                        console.warn('Readability failed, trying fallback');
-                        article = this.fallbackExtraction(processedDocument);
+                    // Phase 3: Structure analysis
+                    if (this.extractionConfig.structureAnalysis) {
+                        this.extractionState.currentPhase = 'structure-analysis';
+                        const structureResult = await this.performStructureAnalysis();
                     }
 
-                    if (!article || !article.content) {
-                        throw new Error('No readable content found');
-                    }
+                    // Phase 4: Dynamic content monitoring
+                    this.extractionState.currentPhase = 'monitoring';
+                    this.startDynamicMonitoring();
 
-                    return article;
+                    const extractionTime = Date.now() - startTime;
+                    this.extractionMetrics.processingTime += extractionTime;
+
+                    // Send results to proxy
+                    await this.sendExtractionResults();
+
+                    console.log(`✅ Extraction completed in ${extractionTime}ms`);
+
+                    return {
+                        success: true,
+                        extractionTime,
+                        phase: this.extractionState.currentPhase,
+                        metrics: { ...this.extractionMetrics }
+                    };
 
                 } catch (error) {
-                    console.error('Readability extraction failed:', error);
-                    throw error;
+                    console.error('❌ Extraction failed:', error);
+                    this.extractionState.currentPhase = 'error';
+
+                    return { success: false, error: error.message };
                 }
             }
 
-            fallbackExtraction(doc) {
-                console.log('Attempting fallback extraction');
-
-                const selectors = [
-                    'main', 'article', '[role="main"]',
-                    '.main-content', '#main-content',
-                    '.content', '#content',
-                    '.post-content', '.entry-content',
-                    '.article-content', '.story-body'
-                ];
-
-                let contentEl = null;
-                let maxScore = 0;
-
-                for (const selector of selectors) {
-                    const elements = doc.querySelectorAll(selector);
-                    elements.forEach(el => {
-                        const score = this.scoreContentElement(el);
-                        if (score > maxScore) {
-                            maxScore = score;
-                            contentEl = el;
-                        }
-                    });
-                }
-
-                if (contentEl && maxScore > 100) {
-                    const textContent = contentEl.textContent.trim();
-                    return {
-                        title: document.title || 'Untitled',
-                        byline: this.extractByline(doc),
-                        content: contentEl.innerHTML,
-                        excerpt: textContent.substring(0, 300),
-                        length: textContent.split(/\s+/).length,
-                        siteName: this.extractSiteName()
-                    };
-                }
-
-                return null;
+            async extractContent(config = {}) {
+                // Alias for startExtraction with backwards compatibility
+                return await this.startExtraction(config);
             }
 
-            scoreContentElement(el) {
-                let score = 0;
-                const textContent = el.textContent || '';
-                const htmlContent = el.innerHTML || '';
-                const textLength = textContent.length;
-                const contentLength = htmlContent.length;
+            async performContentExtraction() {
+                const startTime = Date.now();
 
-                if (contentLength > 0) {
-                    const textDensity = textLength / contentLength;
-                    score += Math.min(40, textDensity * 50);
-                }
+                // Use unified-vibe processing if available
+                if (window.__vibeUnified?.ContentTransformer) {
+                    try {
+                        const processor = window.__vibeUnified.ContentTransformer;
 
-                const wordCount = Math.ceil(textLength / 5);
-                if (wordCount >= 1000 && wordCount <= 3000) {
-                    score += 20;
-                } else if (wordCount >= 500 && wordCount < 1000) {
-                    score += 15;
-                } else if (wordCount >= 200 && wordCount < 500) {
-                    score += 10;
-                } else if (wordCount >= 100) {
-                    score += 5;
-                }
+                        // Extract text content
+                        const textContent = this.extractTextContent(document.body);
+                        const textResult = {
+                            text: textContent,
+                            wordCount: textContent.split(/\s+/).filter(word => word.length > 0).length,
+                            characterCount: textContent.length,
+                            extractionMethod: 'unified'
+                        };
 
-                const headings = (htmlContent.match(/<h[1-6]/gi) || []).length;
-                const paragraphs = (htmlContent.match(/<p>/gi) || []).length;
-                const lists = (htmlContent.match(/<[uo]l>/gi) || []).length;
+                        this.storeExtractionResult('text', textResult);
+                        this.extractionMetrics.contentExtracted++;
 
-                const structureScore = Math.min(20,
-                    (headings * 3) + (paragraphs * 0.3) + (lists * 2)
-                );
-                score += structureScore;
+                        console.log('📄 Content extraction completed using unified processor');
 
-                const images = (htmlContent.match(/<img/gi) || []).length;
-                const videos = (htmlContent.match(/<video/gi) || []).length;
-                const tables = (htmlContent.match(/<table/gi) || []).length;
-
-                const mediaScore = Math.min(10,
-                    (images * 0.5) + (videos * 3) + (tables * 1.5)
-                );
-                score += mediaScore;
-
-                return Math.round(Math.min(100, score));
-            }
-
-            async postProcessContent(content) {
-                console.log('Post-processing content');
-
-                const finalContent = DOMPurify.sanitize(content.content, {
-                    ALLOWED_TAGS: [
-                        'p', 'div', 'span', 'a', 'img', 'video', 'audio',
-                        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-                        'blockquote', 'pre', 'code', 'em', 'strong', 'b', 'i', 'u',
-                        'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'td', 'th',
-                        'figure', 'figcaption', 'picture', 'source', 'br', 'hr',
-                        'time', 'mark', 'section', 'article'
-                    ],
-                    ALLOWED_ATTR: [
-                        'href', 'src', 'srcset', 'alt', 'title', 'width', 'height',
-                        'loading', 'class', 'id', 'data-*', 'rel', 'target',
-                        'type', 'media', 'sizes', 'datetime', 'cite', 'controls'
-                    ],
-                    ALLOW_DATA_ATTR: true,
-                    KEEP_CONTENT: true
-                });
-
-                const tempDiv = document.createElement('div');
-                // eslint-disable-next-line no-unsanitized/property
-                tempDiv.innerHTML = finalContent;
-
-                tempDiv.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h => {
-                    h.classList.add('cyber-heading');
-                });
-
-                tempDiv.querySelectorAll('a').forEach(link => {
-                    link.classList.add('cyber-link');
-                    link.setAttribute('target', '_blank');
-                    link.setAttribute('rel', 'noopener noreferrer');
-                });
-
-                tempDiv.querySelectorAll('pre,code').forEach(code => {
-                    code.classList.add('cyber-code');
-                });
-
-                tempDiv.querySelectorAll('table').forEach(table => {
-                    table.classList.add('cyber-table');
-                });
-
-                return {
-                    content: tempDiv.innerHTML,
-                    metadata: {
-                        title: content.title || document.title,
-                        byline: content.byline,
-                        excerpt: content.excerpt,
-                        length: content.length,
-                        dir: content.dir,
-                        lang: content.lang,
-                        siteName: content.siteName || this.extractSiteName(),
-                        framework: this.frameworkDetected,
-                        url: window.location.href,
-                        extractedAt: Date.now()
+                    } catch (error) {
+                        console.warn('Unified processor failed, using fallback extraction');
+                        await this.performFallbackExtraction();
                     }
+                } else {
+                    await this.performFallbackExtraction();
+                }
+
+                const duration = Date.now() - startTime;
+                console.log(`⏱️ Content extraction took ${duration}ms`);
+            }
+
+            extractTextContent(element) {
+                // Skip script and style elements
+                const skipTags = ['SCRIPT', 'STYLE', 'NOSCRIPT'];
+                if (skipTags.includes(element.tagName)) return '';
+
+                // For text nodes, return the text content
+                if (element.nodeType === 3) {
+                    return element.textContent.trim();
+                }
+
+                // For element nodes, recursively extract text
+                let text = '';
+                for (const child of element.childNodes) {
+                    if (child.nodeType === 1) { // Element node
+                        text += this.extractTextContent(child) + ' ';
+                    } else if (child.nodeType === 3) { // Text node
+                        text += child.textContent.trim() + ' ';
+                    }
+                }
+
+                return text.trim();
+            }
+
+            async performFallbackExtraction() {
+                // Fallback text extraction
+                const textContent = document.body.textContent || document.body.innerText || '';
+                const wordCount = textContent.trim().split(/\s+/).filter(word => word.length > 0).length;
+
+                this.storeExtractionResult('text', {
+                    text: textContent.trim(),
+                    wordCount,
+                    characterCount: textContent.length,
+                    extractionMethod: 'fallback'
+                });
+
+                this.extractionMetrics.contentExtracted++;
+            }
+
+            async performMediaDiscovery() {
+                const startTime = Date.now();
+
+                const images = Array.from(document.querySelectorAll('img')).slice(0, 50).map(img => ({
+                    src: img.src,
+                    alt: img.alt || '',
+                    width: img.naturalWidth || img.width || 0,
+                    height: img.naturalHeight || img.height || 0,
+                    loading: img.loading || 'auto'
+                })).filter(img => img.src && img.width > 50 && img.height > 50);
+
+                const videos = Array.from(document.querySelectorAll('video')).slice(0, 20).map(video => ({
+                    src: video.src || video.currentSrc || '',
+                    poster: video.poster || '',
+                    duration: video.duration || 0,
+                    width: video.videoWidth || video.width || 0,
+                    height: video.videoHeight || video.height || 0
+                })).filter(video => video.src);
+
+                const media = {
+                    images,
+                    videos,
+                    imageCount: images.length,
+                    videoCount: videos.length,
+                    processedBy: this.origin,
+                    timestamp: Date.now()
                 };
+
+                this.storeExtractionResult('media', media);
+                this.extractionMetrics.mediaDiscovered++;
+
+                // Send media to proxy immediately
+                await this.sendMediaToProxy(media);
+
+                const duration = Date.now() - startTime;
+                console.log(`🎬 Media discovery took ${duration}ms (${images.length} images, ${videos.length} videos)`);
             }
 
-            // === UTILITY METHODS ===
-            waitForInitialStability(timeout) {
-                return new Promise((resolve) => {
-                    const timer = setTimeout(resolve, timeout);
+            async performStructureAnalysis() {
+                const startTime = Date.now();
 
-                    const stabilityHandler = this.eventBus.on('content-stable', () => {
-                        clearTimeout(timer);
-                        stabilityHandler();
-                        resolve();
+                const structure = {
+                    headings: Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6')).slice(0, 50).map(h => ({
+                        level: parseInt(h.tagName.charAt(1)),
+                        text: h.textContent.trim(),
+                        id: h.id || ''
+                    })),
+                    sections: Array.from(document.querySelectorAll('section, article, main, aside')).slice(0, 30).map(s => ({
+                        type: s.tagName.toLowerCase(),
+                        id: s.id || '',
+                        className: s.className || '',
+                        childCount: s.children.length
+                    })),
+                    lists: Array.from(document.querySelectorAll('ul, ol')).slice(0, 20).map(l => ({
+                        type: l.tagName.toLowerCase(),
+                        itemCount: l.querySelectorAll('li').length
+                    })),
+                    forms: Array.from(document.querySelectorAll('form')).slice(0, 10).map(f => ({
+                        action: f.action || '',
+                        method: f.method || 'get',
+                        inputCount: f.querySelectorAll('input').length
+                    })),
+                    processedBy: this.origin,
+                    timestamp: Date.now()
+                };
+
+                this.storeExtractionResult('structure', structure);
+                this.extractionMetrics.analysisPerformed++;
+
+                // Send structure to proxy
+                await this.sendStructureToProxy(structure);
+
+                const duration = Date.now() - startTime;
+                console.log(`🏗️ Structure analysis took ${duration}ms`);
+            }
+
+            startDynamicMonitoring() {
+                // Already set up in setupContentObservers
+                console.log('👁️ Dynamic content monitoring started');
+            }
+
+            // ===== CONTENT OBSERVERS =====
+
+            handleDOMMutations(mutations) {
+                if (!this.extractionState.isActive) return;
+
+                let hasSignificantChanges = false;
+
+                for (const mutation of mutations) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        // Check if added nodes contain significant content
+                        for (const node of mutation.addedNodes) {
+                            if (node.nodeType === Node.ELEMENT_NODE) {
+                                const textContent = node.textContent || '';
+                                if (textContent.length > 100) { // Significant content threshold
+                                    hasSignificantChanges = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (hasSignificantChanges) {
+                    this.queueContentUpdate('mutation');
+                }
+            }
+
+            handleScrollEvent() {
+                if (!this.extractionState.isActive) return;
+
+                this.extractionMetrics.scrollEvents++;
+
+                // Detect if near bottom of page (infinite scroll)
+                const scrollPosition = window.scrollY;
+                const windowHeight = window.innerHeight;
+                const documentHeight = document.documentElement.scrollHeight;
+
+                const distanceFromBottom = documentHeight - (scrollPosition + windowHeight);
+
+                if (distanceFromBottom < 1000) { // Within 1000px of bottom
+                    this.queueContentUpdate('scroll-bottom');
+                }
+
+              // Throttle scroll processing
+              if (this.scrollTimeout) return;
+
+              this.scrollTimeout = setTimeout(() => {
+                  this.processScrollUpdate();
+                  this.scrollTimeout = null;
+              }, this.extractionConfig.scrollDelay);
+            }
+
+            handlePageLoadComplete() {
+                console.log('📄 Page load complete, starting initial analysis');
+
+                // Queue initial full extraction
+                setTimeout(() => {
+                    if (!this.extractionState.isActive) {
+                        this.emit('handle-start-extraction', { config: this.extractionConfig });
+                    }
+                }, 1000); // Give page time to fully render
+            }
+
+            // ===== QUEUE PROCESSING =====
+
+            queueContentUpdate(source) {
+                const updateId = `update-${source}-${Date.now()}`;
+
+                this.processingQueue.set(updateId, {
+                    source,
+                    timestamp: Date.now(),
+                    type: 'content-update',
+                    priority: source === 'scroll-bottom' ? 'high' : 'normal'
+                });
+            }
+
+            async processExtractionQueue() {
+                // Process high priority first
+                const items = Array.from(this.processingQueue.entries())
+                    .sort(([, a], [, b]) => {
+                        const priorityOrder = { high: 0, normal: 1, low: 2 };
+                        return priorityOrder[a.priority] - priorityOrder[b.priority];
+                    })
+                    .slice(0, this.extractionConfig.batchSize);
+
+                for (const [updateId, update] of items) {
+                    try {
+                        await this.processContentUpdate(update);
+                        this.processingQueue.delete(updateId);
+                    } catch (error) {
+                        console.error(`Processing error for ${updateId}:`, error);
+                        this.processingQueue.delete(updateId); // Remove failed items
+                    }
+                }
+            }
+
+            async processContentUpdate(update) {
+                const { source, type } = update;
+
+                switch (type) {
+                    case 'content-update':
+                        await this.processIncrementalExtraction(source);
+                        break;
+                    default:
+                        console.warn(`Unknown update type: ${type}`);
+                }
+            }
+
+            async processIncrementalExtraction(source) {
+                // Perform lightweight incremental extraction
+                try {
+                    if (source === 'scroll-bottom') {
+                        // Extract any new content near bottom
+                        const newContent = this.extractNewContent();
+                        if (newContent) {
+                            await this.sendContentToProxy(newContent, 'incremental');
+                        }
+                    } else if (source === 'mutation') {
+                        // Re-analyze modified sections
+                        await this.performPartialReanalysis();
+                    }
+                } catch (error) {
+                    console.error(`Incremental extraction failed for ${source}:`, error);
+                }
+            }
+
+            async processAnalysisQueue() {
+                // Process any pending analysis tasks
+                const items = Array.from(this.analysisQueue.entries()).slice(0, 5);
+
+                for (const [analysisId, task] of items) {
+                    try {
+                        await this.performAnalysisTask(task);
+                        this.analysisQueue.delete(analysisId);
+                    } catch (error) {
+                        console.error(`Analysis error for ${analysisId}:`, error);
+                        this.analysisQueue.delete(analysisId);
+                    }
+                }
+            }
+
+            async performAnalysisTask(task) {
+                // Placeholder for specific analysis tasks
+                console.log(`Performing analysis task: ${task.type}`);
+            }
+
+            // ===== RESULT MANAGEMENT =====
+
+            storeExtractionResult(type, data) {
+                this.extractionState.extractedContent.set(type, {
+                    data,
+                    timestamp: Date.now(),
+                    processed: false
+                });
+            }
+
+            async sendExtractionResults() {
+                // Send all accumulated results to proxy
+                for (const [type, result] of this.extractionState.extractedContent.entries()) {
+                    if (!result.processed) {
+                        await this.sendContentToProxy(result.data, type);
+                        result.processed = true;
+                    }
+                }
+            }
+
+            async sendContentToProxy(content, type) {
+                if (window.__crossContextBridge) {
+                    try {
+                        return await window.__crossContextBridge.sendToProxy('displayContent', {
+                            content,
+                            type,
+                            timestamp: Date.now(),
+                            source: 'extractor'
+                        });
+                    } catch (error) {
+                        console.error(`Failed to send ${type} to proxy:`, error);
+                    }
+                } else {
+                    // Fallback to direct emit
+                    return await this.emit('send-to-proxy', {
+                        action: 'displayContent',
+                        content,
+                        type,
+                        source: 'extractor'
                     });
-                });
-            }
-
-            signalReady() {
-                this.progressEmitter.emitNow('extractionProgress', {
-                    status: 'initialized',
-                    progress: 0,
-                    framework: this.frameworkDetected
-                }, { action: 'extractionProgress' });
-            }
-
-            sendExtractionResult(result, type) {
-                console.log(`Sending ${type} extraction result`);
-                dump(`Sending ${type} extraction result\n`);
-
-                this.progressEmitter.emitNow('extractionProgress', {
-                    status: 'complete',
-                    progress: 100,
-                    extractionType: type
-                }, { action: 'extractionProgress' });
-
-                // Send via MessageBridge to background (will be routed to visible tab)
-                this.bridge.send(null, 'contentExtracted', {
-                    content: result.content,
-                    metadata: result.metadata
-                });
-
-                // Also emit event for HiddenTabManager subscriber
-                this.emit('content-extracted', {
-                    hiddenTabId: this.hiddenTabId || null,
-                    content: result.content,
-                    metadata: result.metadata,
-                    extractionType: type
-                });
-            }
-
-            handleExtractionError(error) {
-                console.error('Extraction error:', error);
-
-                this.progressEmitter.emitNow('extractionProgress', {
-                    status: 'error',
-                    progress: 0,
-                    error: error.message
-                }, { action: 'extractionProgress' });
-            }
-
-            handleExtractionRequest(config) {
-                if (config.scrolling !== undefined) {
-                    this.scrollingEnabled = config.scrolling;
                 }
-                if (config.proxyScroll !== undefined) {
-                    this.proxyScrollEnabled = config.proxyScroll;
+            }
+
+            async sendMediaToProxy(media) {
+                return await this.sendContentToProxy(media, 'media');
+            }
+
+            async sendStructureToProxy(structure) {
+                return await this.sendContentToProxy(structure, 'structure');
+            }
+
+            cleanExtractionResults() {
+                const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+
+                for (const [type, result] of this.extractionState.extractedContent.entries()) {
+                    if (result.timestamp < tenMinutesAgo && result.processed) {
+                        this.extractionState.extractedContent.delete(type);
+                    }
                 }
 
-                return { success: true, extractionId: this.extractionId };
+                // Clear old entries from discovery map
+                for (const [key, item] of this.extractionState.discoveredMedia.entries()) {
+                    if (item.timestamp < tenMinutesAgo) {
+                        this.extractionState.discoveredMedia.delete(key);
+                    }
+                }
+
+                console.log('🧹 Cleaned old extraction results');
             }
 
-            executeProxyCommand(data) {
-                const { command, params } = data;
+            // ===== COMMAND EXECUTION =====
+
+            async executeProxyCommand(data) {
+                const { command, parameters = {} } = data;
 
                 try {
                     switch (command) {
-                        case 'scroll':
-                            window.scrollTo(0, params.scrollPosition);
-                            return { success: true };
+                        case 'pause-extraction':
+                            this.extractionState.isActive = false;
+                            return { success: true, message: 'Extraction paused' };
 
-                        case 'click': {
-                            const el = document.querySelector(params.selector);
-                            if (el) {
-                                el.click();
-                                return { success: true };
-                            }
-                            return { success: false, error: 'Element not found' };
-                        }
+                        case 'resume-extraction':
+                            this.extractionState.isActive = true;
+                            return { success: true, message: 'Extraction resumed' };
 
-                        case 'getState':
-                            return {
-                                success: true,
-                                state: this.getState()
-                            };
+                        case 'force-reextraction':
+                            return await this.startExtraction(parameters);
 
-                        case 'reextract':
-                            this.runEnhancedExtraction();
-                            return { success: true };
+                        case 'get-status':
+                            return { success: true, status: this.getExtractorStatus() };
+
+                        case 'update-config':
+                            this.extractionConfig = { ...this.extractionConfig, ...parameters };
+                            return { success: true, message: 'Configuration updated' };
+
+                        case 'clear-results':
+                            this.extractionState.extractedContent.clear();
+                            this.extractionState.discoveredMedia.clear();
+                            this.extractionState.analysisResults.clear();
+                            return { success: true, message: 'Results cleared' };
 
                         default:
-                            return { success: false, error: 'Unknown command' };
+                            return { success: false, error: `Unknown command: ${command}` };
                     }
                 } catch (error) {
                     return { success: false, error: error.message };
                 }
             }
 
-            configurePipeline(config) {
-                if (config.steps) {
-                    this.extractionPipeline = [...config.steps];
-                }
-                if (config.heuristics) {
-                    Object.assign(this.discoveryHeuristics, config.heuristics);
-                }
-
-                return { success: true, pipeline: this.extractionPipeline };
-            }
-
-            // === ENHANCED UTILITY METHODS ===
-            shouldTriggerLazyLoading() {
-                return this.mutationCount < 10 &&
-                    this.mediaStats.images < 5 &&
-                    !!document.querySelectorAll('[data-src], [loading="lazy"]').length;
-            }
-
-            triggerLazyContentDiscovery() {
-                this.emit('lazy-loading-trigger', {
-                    timestamp: Date.now(),
-                    lazyElements: document.querySelectorAll('[data-src], [loading="lazy"]').length
-                });
-
-                if (this.scrollingEnabled) {
-                    this.simulateContentDiscovery();
+            async updateExtractionSetting(setting, value) {
+                if (setting in this.extractionConfig) {
+                    this.extractionConfig[setting] = value;
+                    console.log(`⚙️ Updated setting ${setting} to ${value}`);
+                    return { success: true, setting, value };
+                } else {
+                    return { success: false, error: `Unknown setting: ${setting}` };
                 }
             }
 
-            getMetrics() {
+            getExtractorStatus() {
                 return {
-                    extraction: this.extractionMetrics,
-                    media: this.mediaStats,
-                    framework: this.frameworkDetected,
-                    mutations: this.mutationCount,
-                    scrolling: {
-                        enabled: this.scrollingEnabled,
-                        proxyEnabled: this.proxyScrollEnabled
-                    },
-                    subscribers: this.getSubscriberStats(),
-                    events: this.getEventStats()
-                };
-            }
-
-            getState() {
-                return {
-                    isActive: this.isActive,
-                    extractionInProgress: this.extractionInProgress,
-                    extractionId: this.extractionId,
-                    framework: this.frameworkDetected,
-                    scrollPosition: window.scrollY,
-                    documentHeight: document.documentElement.scrollHeight,
-                    viewportHeight: window.innerHeight,
-                    url: window.location.href,
-                    metrics: this.getMetrics(),
-                    subscriberHealth: this.getSubscriberHealth()
-                };
-            }
-
-            getSubscriberHealth() {
-                const stats = this.getSubscriberStats();
-                return {
-                    total: stats.totalSubscribers,
-                    active: stats.byState.active || 0,
-                    quarantined: stats.quarantined || 0,
-                    healthScore: this.calculateHealthScore(stats)
-                };
-            }
-
-            calculateHealthScore(stats) {
-                if (stats.totalSubscribers === 0) return 100;
-
-                const activeRatio = (stats.byState.active || 0) / stats.totalSubscribers;
-                const quarantineRatio = (stats.quarantined || 0) / stats.totalSubscribers;
-
-                return Math.max(0, Math.min(100,
-                    (activeRatio * 100) - (quarantineRatio * 50)
-                ));
-            }
-
-            // === TESTING AND DEBUGGING HELPERS ===
-            emitTestEvent(eventType, data = {}) {
-                this.emit(`test-${eventType}`, {
-                    ...data,
-                    testTimestamp: Date.now(),
+                    isActive: this.extractionState.isActive,
+                    currentPhase: this.extractionState.currentPhase,
+                    extractedContent: this.extractionState.extractedContent.size,
+                    discoveredMedia: this.extractionState.discoveredMedia.size,
+                    processingQueue: this.processingQueue.size,
+                    analysisQueue: this.analysisQueue.size,
+                    config: { ...this.extractionConfig },
+                    metrics: { ...this.extractionMetrics },
                     extractionId: this.extractionId
-                });
-            }
-
-            getSubscriberDiagnostics() {
-                return {
-                    stats: this.getSubscriberStats(),
-                    eventStats: this.getEventStats(),
-                    health: this.getSubscriberHealth(),
-                    recentErrors: this.getRecentSubscriberErrors()
                 };
             }
 
-            getRecentSubscriberErrors() {
-                // Placeholder for error tracking
-                return [];
+            // Additional helper methods
+            extractNewContent() {
+                // Extract content that wasn't there before
+                const currentContent = document.body.textContent;
+                if (this.lastContentSnapshot && currentContent !== this.lastContentSnapshot) {
+                    const newText = currentContent.replace(this.lastContentSnapshot, '').trim();
+                    this.lastContentSnapshot = currentContent;
+
+                    if (newText.length > 100) { // Significant new content
+                        return {
+                            text: newText,
+                            timestamp: Date.now(),
+                            type: 'incremental',
+                            wordCount: newText.split(/\s+/).length
+                        };
+                    }
+                } else if (!this.lastContentSnapshot) {
+                    this.lastContentSnapshot = currentContent;
+                }
+                return null;
             }
 
-            extractByline(doc) {
-                const selectors = [
-                    '[rel="author"]', '.author', '.byline', '.by-line',
-                    '.writer', 'meta[name="author"]'
-                ];
+            async performPartialReanalysis() {
+                // Re-analyze sections that have changed
+                const modifiedElements = document.querySelectorAll('[data-recently-modified]');
+                if (modifiedElements.length > 0) {
+                    const partialResults = {
+                        modifiedSections: modifiedElements.length,
+                        timestamp: Date.now(),
+                        type: 'partial-reanalysis'
+                    };
 
-                for (const selector of selectors) {
-                    const el = (doc || document).querySelector(selector);
-                    if (el) {
-                        const content = el.textContent || el.getAttribute('content');
-                        if (content) return content.trim();
-                    }
+                    await this.sendContentToProxy(partialResults, 'partial-update');
+                } else {
+                    // Perform lightweight re-extraction
+                    await this.performMediaDiscovery();
+                }
+            }
+
+            // Cleanup method
+            destroy() {
+                // Remove observers
+                if (this.mutationObserver) {
+                    this.mutationObserver.disconnect();
                 }
 
-                return '';
-            }
-
-            extractSiteName() {
-                const metaSelectors = [
-                    'meta[property="og:site_name"]',
-                    'meta[name="application-name"]',
-                    'meta[name="apple-mobile-web-app-title"]'
-                ];
-
-                for (const selector of metaSelectors) {
-                    const meta = document.querySelector(selector);
-                    if (meta) {
-                        const content = meta.getAttribute('content');
-                        if (content) return content;
-                    }
+                // Remove event listeners
+                if (this.scrollHandler) {
+                    window.removeEventListener('scroll', this.scrollHandler);
                 }
 
-                return window.location.hostname;
-            }
+                // Clear intervals
+                if (this.extractionInterval) {
+                    clearInterval(this.extractionInterval);
+                }
+                if (this.analysisInterval) {
+                    clearInterval(this.analysisInterval);
+                }
+                if (this.cleanupInterval) {
+                    clearInterval(this.cleanupInterval);
+                }
 
-            logExtraction(category, level, message) {
-                console.log(`[${category}] ${level}: ${message}`);
-            }
+                // Clear queues
+                this.processingQueue.clear();
+                this.analysisQueue.clear();
 
-            escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text || '';
-                return div.innerHTML;
+                // Clear state
+                this.extractionState.extractedContent.clear();
+                this.extractionState.discoveredMedia.clear();
+                this.extractionState.analysisResults.clear();
+
+                // Call parent destroy
+                super.destroy();
+
+                console.log('🧹 StealthExtractor destroyed');
             }
         }
 
         // Create singleton instance
-        window.__vibeReaderStealthExtractor = new StealthExtractor();
+        const stealthExtractor = new StealthExtractor();
+        window.__vibeReaderStealthExtractor = stealthExtractor;
+        window.__stealthExtractor = stealthExtractor;
+
+        console.log('✅ StealthExtractor v2.5 loaded');
 
         true;
     } catch (error) {
         delete window.__vibeReaderStealthExtractor;
+        delete window.__stealthExtractor;
+        console.error('Failed to initialize StealthExtractor:', error);
         throw error;
     }
 }

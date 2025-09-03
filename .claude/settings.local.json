@@ -18,7 +18,9 @@
       "Bash(sed:*)",
       "Bash(npm run dev:extension:*)",
       "Bash(powershell.exe:*)",
-      "Bash(.run-extension.ps1)"
+      "Bash(.run-extension.ps1)",
+      "Bash(grep:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

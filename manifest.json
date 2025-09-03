@@ -51,8 +51,10 @@
     "lib/readability.js",
     "lib/rxjs.min.js",
     "lib/aalib.js",
+    "lib/unified-bundle.js",
     "src/vibe-subscribe.js",
     "src/vibe-utils.js",
+    "src/unified-vibe.js",
     "src/stealth-extractor.js",
     "src/proxy-controller.js"
   ],

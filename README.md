@@ -4,9 +4,12 @@
 
 [![Firefox Extension](https://img.shields.io/badge/Firefox-Extension-orange)](https://www.mozilla.org/firefox/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-2.4-green.svg)](manifest.json)
+[![Version](https://img.shields.io/badge/Version-2.5-orange.svg)](manifest.json)
+[![Status](https://img.shields.io/badge/Status-Development-yellow.svg)](#-known-issues)
 
 VibeReader is a Firefox browser extension that provides an immersive reading experience with synthwave aesthetics, terminal-style diagnostic panels, and advanced content extraction capabilities.
+
+> ⚠️ **DEVELOPMENT STATUS**: This extension is currently under active development. While the middleware architecture is fully implemented, there are missing base class dependencies that prevent full functionality. See [Known Issues](#-known-issues) for current blockers.
 
 ## 🌟 Features
 
@@ -73,14 +76,20 @@ VibeReader is a Firefox browser extension that provides an immersive reading exp
 
 ```
 vibe-reader-extension/
-├── manifest.json                 # Extension configuration (Manifest V2)
-├── src/
-│   ├── background-enhanced.js    # Hidden tab manager & message routing
-│   ├── stealth-extractor.js     # Content extraction with framework detection  
-│   ├── proxy-controller.js      # UI overlay with terminal system
-│   ├── unified-vibe.js          # ContentTransformer & PipelineProcessor
-│   ├── vibe-subscribe.js        # SubscriberEnabledComponent middleware architecture
-│   └── vibe-utils.js            # Core utilities (MessageBridge, EventBus, VibeLogger)
+├── manifest.json                 # Extension configuration (Manifest V2, loads background scripts)
+├── src/                         # Core JavaScript modules
+│   ├── vibe-subscribe.js        # Subscriber architecture & middleware system (⚠️ Missing base classes)
+│   ├── vibe-utils.js            # LocalEventBus & Cross-context MessageBridge
+│   ├── background-enhanced.js   # BackgroundOrchestrator, SmartTab management, ScriptInjector
+│   ├── stealth-extractor.js     # Content extraction with ExtractionPipelineMiddleware
+│   ├── proxy-controller.js      # UI overlay with MediaAggregationMiddleware & SmartTerminal
+│   ├── unified-vibe.js          # Content processing pipeline (unified.js integration)
+│   └── unified-entry.js         # Entry point for unified processing
+├── lib/                         # External libraries
+│   ├── unified-bundle.js        # Unified.js processing library
+│   ├── readability.js           # Mozilla Readability extraction
+│   ├── aalib.js                 # ASCII art conversion
+│   └── purify.min.js            # DOM sanitization
 ├── popup/
 │   ├── popup.html               # Settings interface
 │   ├── popup.js                 # Settings controller with persistence
@@ -88,8 +97,7 @@ vibe-reader-extension/
 ├── styles/
 │   ├── generated.css            # Compiled Tailwind output (1,600 lines)
 │   └── src/styles/tailwind.css  # Source components and utilities
-├── lib/                         # External libraries (Readability.js, aalib.js)
-├── fonts/                       # Custom synthwave fonts
+├── fonts/                       # Custom synthwave fonts (Orbitron, Fira Code, VT323)
 └── icons/                       # Extension icons
 ```
 
@@ -183,10 +191,16 @@ class MyComponent extends SubscriberEnabledComponent {
 
 ### Common Issues
 
-**Extension not activating:**
-- Check browser console for class definition errors
-- Verify script loading order in manifest.json
-- Ensure SubscriberEnabledComponent loads before other scripts
+**Extension not loading (v2.5 critical):**
+- Check browser console for `ReferenceError: SubscriberEnabledComponent is not defined`
+- Look for `ReferenceError: SubscriberMiddleware is not defined` 
+- Verify `window.__globalSubscriberManager` is initialized in `vibe-subscribe.js`
+- Current error: Syntax error fixed, but base classes missing
+
+**Extension activation failures:**
+- Ensure all base classes are defined before component instantiation
+- Check script loading order: vibe-subscribe.js → vibe-utils.js → background-enhanced.js
+- Look for initialization sequence in browser console
 
 **Performance issues:**  
 - Monitor terminal output for subscriber quarantine messages
@@ -243,6 +257,25 @@ npm run build:css:prod           # Minified production CSS (~1,600 lines → ~80
 - **Chrome/Safari Support**: Cross-browser compatibility
 
 ## 🐛 Known Issues
+
+### 🔴 Critical Blockers (v2.5)
+
+1. **Missing Base Classes** - Extension fails to load due to undefined classes:
+   - `SubscriberEnabledComponent` (referenced by all main components)
+   - `SubscriberMiddleware` (extended by all middleware classes)
+   - These need to be defined in `vibe-subscribe.js`
+
+2. **Global Subscriber Manager** - Never initialized:
+   - `window.__globalSubscriberManager` is referenced but not created
+   - Background scripts check for `window.__globalSubscriberManager?.origin === "background"`
+   - Must be initialized before any components are instantiated
+
+3. **Script Loading Dependencies** - Components extend undefined classes:
+   - `BackgroundOrchestrator extends SubscriberEnabledComponent` → ReferenceError
+   - `StealthExtractor extends SubscriberEnabledComponent` → ReferenceError  
+   - `ProxyController extends SubscriberEnabledComponent` → ReferenceError
+
+### ⚠️ Secondary Issues
 
 - **Chrome Compatibility**: Requires Manifest V3 conversion
 - **Readability.js Dependency**: May need replacement for better content extraction

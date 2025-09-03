@@ -123,11 +123,14 @@
     "yargs-parser": "^21.1.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
     "@eslint/js": "^9.34.0",
     "@microsoft/eslint-plugin-sdl": "^1.1.0",
     "@types/hast": "^3.0.4",
     "@types/mdast": "^4.0.4",
     "autoprefixer": "^10.4.21",
+    "babel-loader": "^10.0.0",
     "cssnano": "^7.1.1",
     "dompurify": "^3.2.6",
     "eslint": "^9.34.0",
@@ -164,13 +167,17 @@
     "unified": "^11.0.5",
     "unist-util-remove": "^4.0.0",
     "unist-util-select": "^5.1.0",
-    "unist-util-visit": "^5.0.0"
+    "unist-util-visit": "^5.0.0",
+    "webpack": "^5.101.3",
+    "webpack-cli": "^6.0.1"
   },
   "scripts": {
     "build:css": "postcss src/styles/main.css -o styles/generated.css --watch",
     "build:css:prod": "set NODE_ENV=production && postcss src/styles/main.css -o styles/generated.css",
+    "build:unified": "webpack --config webpack.unified.config.js",
+    "watch:unified": "webpack --config webpack.unified.config.js --watch",
     "dev": "npm run build:css",
-    "build": "npm run build:css:prod",
+    "build": "npm run build:css:prod && npm run build:unified",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:src": "eslint src/ popup/",
