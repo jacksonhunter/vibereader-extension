@@ -3023,6 +3023,22 @@ class DebugMiddleware extends SubscriberMiddleware {
               this.initializeDebugMiddleware();
           }
 
+          ensureArrayValue(value, defaultValue = []) {
+              if (Array.isArray(value)) return value;
+              if (typeof value === 'string') {
+                  // Handle comma-separated strings
+                  if (value.includes(',')) {
+                      return value.split(',').map(s => s.trim());
+                  }
+                  return [value];
+              }
+              if (value && typeof value === 'object') {
+                  // Handle objects with numeric keys (like corrupted arrays)
+                  return Object.values(value);
+              }
+              return defaultValue;
+          }
+
           detectOrigin() {
               if (typeof window === "undefined") return "background";
               if (window.__vibeReaderProxyController) return "proxy";
@@ -3063,9 +3079,11 @@ class DebugMiddleware extends SubscriberMiddleware {
                           'vibeDebugStorage'
                       ]);
 
-                      // Update debug settings
+                      // Update debug settings with type safety
+                      const safeCategories = this.ensureArrayValue(settings.vibeDebugCategories, ['events', 'errors']);
+                      
                       this.debugSettings.set('enabled', settings.vibeDebugEnabled || false);
-                      this.debugSettings.set('categories', settings.vibeDebugCategories || ['events', 'errors']);
+                      this.debugSettings.set('categories', safeCategories);
                       this.debugSettings.set('eventFilter', settings.vibeDebugEventFilter || []);
                       this.debugSettings.set('performance', settings.vibeDebugPerformance || false);
                       this.debugSettings.set('verbosity', settings.vibeDebugVerbosity || 'normal');
@@ -3092,8 +3110,11 @@ class DebugMiddleware extends SubscriberMiddleware {
               try {
                   const localSettings = JSON.parse(localStorage.getItem('vibeDebugSettings') || '{}');
 
+                  // Ensure categories is always an array with type safety
+                  const safeCategories = this.ensureArrayValue(localSettings.categories, ['events', 'errors']);
+
                   this.debugSettings.set('enabled', localSettings.enabled || false);
-                  this.debugSettings.set('categories', localSettings.categories || ['events', 'errors']);
+                  this.debugSettings.set('categories', safeCategories);
                   this.debugSettings.set('eventFilter', localSettings.eventFilter || []);
                   this.debugSettings.set('performance', localSettings.performance || false);
                   this.debugSettings.set('verbosity', localSettings.verbosity || 'normal');
@@ -3121,7 +3142,9 @@ class DebugMiddleware extends SubscriberMiddleware {
           }
 
           applyDebugFilters() {
-              const categories = this.debugSettings.get('categories') || [];
+              const rawCategories = this.debugSettings.get('categories') || [];
+              // Ensure categories is ALWAYS an array
+              const categories = this.ensureArrayValue(rawCategories, ['events', 'errors']);
               const eventFilter = this.debugSettings.get('eventFilter') || [];
 
               // Build event filters based on categories
@@ -3456,9 +3479,12 @@ class DebugMiddleware extends SubscriberMiddleware {
 
           // Configuration methods
           async enableDebug(categories = ['events', 'errors']) {
+              // Ensure categories is always an array
+              const safeCategories = this.ensureArrayValue(categories, ['events', 'errors']);
+              
               await this.updateDebugSettings({
                   vibeDebugEnabled: true,
-                  vibeDebugCategories: categories
+                  vibeDebugCategories: safeCategories
               });
           }
 
@@ -3486,6 +3512,7 @@ class DebugMiddleware extends SubscriberMiddleware {
 
           // Status and monitoring
           getDebugStatus() {
+
               return {
                   enabled: this.debugSettings.get('enabled'),
                   origin: this.origin,
