@@ -10,24 +10,25 @@ if (window.__vibeSubscribe) {
     // ===== BASE SUBSCRIBER CLASS =====
     class VibeSubscriber {
       constructor(id, callback, options = {}) {
-                this.id = id || `sub-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        this.id =
+          id || `sub-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         this.callback = callback;
         this.state = options.state || "active";
         this.origin = this.getOrigin();
         this.preferences = {
-            origin: options.origin || this.origin,
+          origin: options.origin || this.origin,
           eventTypes: options.eventTypes || [],
           priority: options.priority || 0,
           maxRetries: options.maxRetries || 3,
           fallbackBehavior: options.fallbackBehavior || "log",
           transformations: options.transformations || [],
-                    crossContext: options.crossContext !== false,
+          crossContext: options.crossContext !== false,
           maxPerSecond: options.maxPerSecond || 50,
           maxPerMinute: options.maxPerMinute || 1000,
           burstAllowed: options.burstAllowed || 20,
           rateLimitMs: options.rateLimitMs || 0,
           debounceMs: options.debounceMs || 0,
-           ...options.preferences,
+          ...options.preferences,
         };
 
         this.lastExecuted = 0;
@@ -40,36 +41,41 @@ if (window.__vibeSubscribe) {
         this.createdAt = Date.now();
         this.lastActivity = Date.now();
 
-          this.cleanup = () => {
-              this.middlewares = null;
-              this.callback = null;
-              clearTimeout(this.debounceTimer);
-          };
+        this.cleanup = () => {
+          this.middlewares = null;
+          this.callback = null;
+          clearTimeout(this.debounceTimer);
+        };
+
         this.middlewares = [];
         this.setupDefaultMiddlewares();
       }
 
-        getOrigin() {
-            // Check for background context FIRST using API availability
-            if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getManifest) {
-                try {
-                    // Background has tabs API but content scripts don't
-                    if (browser.tabs && browser.tabs.query) {
-                        return "background";
-                    }
-                } catch(e) {}
+      getOrigin() {
+        // Check for background context FIRST using API availability
+        if (
+          typeof browser !== "undefined" &&
+          browser.runtime &&
+          browser.runtime.getManifest
+        ) {
+          try {
+            // Background has tabs API but content scripts don't
+            if (browser.tabs && browser.tabs.query) {
+              return "background";
             }
-            
-            // Then check for specific component markers
-            if (window.__vibeReaderProxyController) return "proxy";
-            if (window.__vibeReaderStealthExtractor) return "extractor";
-            if (window.location?.href?.includes("popup.html")) return "popup";
-            
-            // Fallback for Node.js style background (shouldn't happen in Firefox)
-            if (typeof window === "undefined") return "background";
-            
-            return "unknown";
+          } catch (e) {}
         }
+
+        // Then check for specific component markers
+        if (window.__vibeReaderProxyController) return "proxy";
+        if (window.__vibeReaderStealthExtractor) return "extractor";
+        if (window.location?.href?.includes("popup.html")) return "popup";
+
+        // Fallback for Node.js style background (shouldn't happen in Firefox)
+        if (typeof window === "undefined") return "background";
+
+        return "unknown";
+      }
       setupDefaultMiddlewares() {
         this.middlewares = [
           new StateValidationMiddleware(),
@@ -115,15 +121,15 @@ if (window.__vibeSubscribe) {
             }
           }
 
-                    // Execute the callback
-                    this.executionCount++;
-                    const callbackResult = await this.callback(
-                        eventContext.event,
-                        eventContext.data,
-                        eventContext.context
-                    );
+          // Execute the callback
+          this.executionCount++;
+          const callbackResult = await this.callback(
+            eventContext.event,
+            eventContext.data,
+            eventContext.context,
+          );
 
-                    return { success: true, result: callbackResult };
+          return { success: true, result: callbackResult };
         } catch (error) {
           this.failureCount++;
           return { success: false, error: error.message };
@@ -174,9 +180,24 @@ if (window.__vibeSubscribe) {
 
     // ===== MIDDLEWARE BASE CLASS =====
     class SubscriberMiddleware {
+      static classes = new Set();
+
+      static get register() {
+        if (this !== SubscriberMiddleware) {
+          this.classes.add(this);
+        }
+        window[this.name] = this;
+        return true;
+      }
+      static _ = this.register;
+
       constructor(name, priority = 0) {
         this.name = name;
         this.priority = priority;
+      }
+
+      static getAllMiddlewareClasses() {
+        return Array.from(this.classes);
       }
 
       async process(eventContext) {
@@ -197,7 +218,10 @@ if (window.__vibeSubscribe) {
       async process(eventContext) {
         const subscriber = eventContext.subscriber;
 
-                if (subscriber.state === "disabled" || subscriber.state === "destroyed") {
+        if (
+          subscriber.state === "disabled" ||
+          subscriber.state === "destroyed"
+        ) {
           return false;
         }
 
@@ -205,11 +229,17 @@ if (window.__vibeSubscribe) {
           return false;
         }
 
-                if (subscriber.isQuarantined && Date.now() < subscriber.quarantineUntil) {
+        if (
+          subscriber.isQuarantined &&
+          Date.now() < subscriber.quarantineUntil
+        ) {
           return false;
         }
 
-                if (subscriber.isQuarantined && Date.now() >= subscriber.quarantineUntil) {
+        if (
+          subscriber.isQuarantined &&
+          Date.now() >= subscriber.quarantineUntil
+        ) {
           subscriber.isQuarantined = false;
           subscriber.failureCount = 0;
         }
@@ -218,295 +248,107 @@ if (window.__vibeSubscribe) {
       }
     }
 
+    // ===== MINIMAL THROTTLE & DEBOUNCE MIDDLEWARE =====
     class RateLimitMiddleware extends SubscriberMiddleware {
-        constructor() {
-            super('UnifiedRateLimit', 4);
+      constructor() {
+        super("ThrottleDebounce", 3);
 
-            // Cross-context rate limits (context-pair based)
-            this.crossContextLimits = new Map();
-            this.crossContextTracking = new Map();
+        this.throttleMap = new Map(); // event -> last execution time
+        this.debounceMap = new Map(); // event -> timeout ID
+        this.batchableEvents = new Set(); // events that should batch instead of throttle
 
-            // Subscriber-specific rate limits (subscriber-based)
-            this.subscriberLimits = new Map();
-            this.subscriberTracking = new Map();
+        this.setupThrottleRules();
+      }
 
-            // Default limits
-            this.setupDefaultLimits();
+      setupThrottleRules() {
+        // Events that benefit from throttling (high frequency)
+        this.throttleRules = new Map([
+          [/scroll|mousemove|resize/i, { type: "throttle", ms: 16 }], // ~60fps
+          [/search|input|filter/i, { type: "debounce", ms: 300 }],
+          [/api-|network/i, { type: "throttle", ms: 100 }],
+          [/dom-mutation/i, { type: "throttle", ms: 50 }],
+        ]);
 
-            console.log('⏱️ Unified Rate Limit Middleware initialized');
+        // Events that should use batching middleware instead
+        this.batchableEvents.add("terminal-log");
+        this.batchableEvents.add("media-discovered");
+        this.batchableEvents.add("content-update");
+      }
+
+      async process(eventContext) {
+        const { event } = eventContext;
+
+        // Skip if this event should be handled by batching middleware
+        if (this.batchableEvents.has(event)) {
+          return true;
         }
 
-        setupDefaultLimits() {
-            // Default cross-context limits
-            this.crossContextLimits.set('extractor->proxy', {
-                maxPerSecond: 20,
-                maxPerMinute: 200,
-                burstAllowed: 5,
-                window: 1000
-            });
+        // Find matching throttle rule
+        const rule = this.findThrottleRule(event);
+        if (!rule) return true;
 
-            this.crossContextLimits.set('proxy->background', {
-                maxPerSecond: 30,
-                maxPerMinute: 500,
-                burstAllowed: 10,
-                window: 1000
-            });
+        const key = `${event}-${eventContext.subscriber?.id || "global"}`;
 
-            this.crossContextLimits.set('background->extractor', {
-                maxPerSecond: 15,
-                maxPerMinute: 300,
-                burstAllowed: 3,
-                window: 1000
-            });
-
-            // Default subscriber limits (can be overridden per subscriber)
-            this.defaultSubscriberLimits = {
-                maxPerSecond: 50,
-                maxPerMinute: 1000,
-                burstAllowed: 20,
-                debounceMs: 0,
-                throttleMs: 0
-            };
+        if (rule.type === "throttle") {
+          return this.applyThrottle(key, rule.ms);
+        } else if (rule.type === "debounce") {
+          return this.applyDebounce(key, rule.ms, eventContext);
         }
 
-        async process(eventContext) {
-            const { event, subscriber, context } = eventContext;
+        return true;
+      }
 
-            // Check subscriber-specific rate limits first (highest priority)
-                if (subscriber && subscriber.preferences) {
-                const subscriberResult = this.checkSubscriberRateLimit(subscriber, event, context);
-                if (!subscriberResult.allowed) {
-                    eventContext.context.rateLimited = true;
-                    eventContext.context.rateLimitReason = subscriberResult.reason;
-                    eventContext.context.rateLimitType = 'subscriber';
-                    return false;
-                }
-            }
+      findThrottleRule(event) {
+        for (const [pattern, rule] of this.throttleRules) {
+          if (pattern.test(event)) return rule;
+        }
+        return null;
+      }
 
-            // Check cross-context rate limits for cross-context events
-            if (context.crossContext || context.sourceContext) {
-                const crossContextResult = this.checkCrossContextRateLimit(event, context);
-                if (!crossContextResult.allowed) {
-                    eventContext.context.rateLimited = true;
-                    eventContext.context.rateLimitReason = crossContextResult.reason;
-                    eventContext.context.rateLimitType = 'cross-context';
-                    return false;
-                }
-            }
+      applyThrottle(key, intervalMs) {
+        const now = Date.now();
+        const lastExecution = this.throttleMap.get(key) || 0;
 
-            return true;
+        if (now - lastExecution < intervalMs) {
+          return false; // Block execution
         }
 
-        checkSubscriberRateLimit(subscriber, event, context) {
-            const subscriberId = subscriber.id;
+        this.throttleMap.set(key, now);
+        return true; // Allow execution
+      }
 
-            // Get subscriber-specific limits (with fallback to defaults)
-            const limits = {
-                ...this.defaultSubscriberLimits,
-                    ...(subscriber.preferences.rateLimit || {}),
-                    maxPerSecond: subscriber.preferences.maxPerSecond || this.defaultSubscriberLimits.maxPerSecond,
-                    maxPerMinute: subscriber.preferences.maxPerMinute || this.defaultSubscriberLimits.maxPerMinute,
-                    burstAllowed: subscriber.preferences.burstAllowed || this.defaultSubscriberLimits.burstAllowed,
-                    debounceMs: subscriber.preferences.debounceMs || 0,
-                    throttleMs: subscriber.preferences.throttleMs || subscriber.preferences.rateLimitMs || 0
-            };
-
-            // Get or create tracking for this subscriber
-            if (!this.subscriberTracking.has(subscriberId)) {
-                this.subscriberTracking.set(subscriberId, {
-                    secondWindow: [],
-                    minuteWindow: [],
-                    lastEvent: 0,
-                    burstCount: 0,
-                    lastBurstReset: Date.now()
-                });
-            }
-
-            const tracking = this.subscriberTracking.get(subscriberId);
-            const now = Date.now();
-
-            // Clean old entries
-            this.cleanTrackingWindows(tracking, now);
-
-            // Check debounce (subscriber-specific feature)
-            if (limits.debounceMs > 0) {
-                const timeSinceLastEvent = now - tracking.lastEvent;
-                if (timeSinceLastEvent < limits.debounceMs) {
-                    return {
-                        allowed: false,
-                        reason: `Debounced: ${timeSinceLastEvent}ms < ${limits.debounceMs}ms`,
-                        retryAfter: limits.debounceMs - timeSinceLastEvent
-                    };
-                }
-            }
-
-            // Check throttle (subscriber-specific feature)
-            if (limits.throttleMs > 0) {
-                const timeSinceLastEvent = now - tracking.lastEvent;
-                if (timeSinceLastEvent < limits.throttleMs) {
-                    return {
-                        allowed: false,
-                        reason: `Throttled: ${timeSinceLastEvent}ms < ${limits.throttleMs}ms`,
-                        retryAfter: limits.throttleMs - timeSinceLastEvent
-                    };
-                }
-            }
-
-            // Check burst limit
-            if (now - tracking.lastBurstReset > 1000) {
-                tracking.burstCount = 0;
-                tracking.lastBurstReset = now;
-            }
-
-            if (tracking.burstCount >= limits.burstAllowed) {
-                return {
-                    allowed: false,
-                    reason: `Burst limit exceeded: ${tracking.burstCount}/${limits.burstAllowed}`,
-                    retryAfter: 1000 - (now - tracking.lastBurstReset)
-                };
-            }
-
-            // Check rate limits
-            if (tracking.secondWindow.length >= limits.maxPerSecond) {
-                return {
-                    allowed: false,
-                    reason: `Rate limit exceeded: ${tracking.secondWindow.length}/${limits.maxPerSecond} per second`,
-                    retryAfter: 1000 - (now - tracking.secondWindow[0])
-                };
-            }
-
-            if (tracking.minuteWindow.length >= limits.maxPerMinute) {
-                return {
-                    allowed: false,
-                    reason: `Rate limit exceeded: ${tracking.minuteWindow.length}/${limits.maxPerMinute} per minute`,
-                    retryAfter: 60000 - (now - tracking.minuteWindow[0])
-                };
-            }
-
-            // Record the event
-            tracking.secondWindow.push(now);
-            tracking.minuteWindow.push(now);
-            tracking.lastEvent = now;
-            tracking.burstCount++;
-
-            return { allowed: true };
+      applyDebounce(key, delayMs, eventContext) {
+        // Clear existing debounce
+        if (this.debounceMap.has(key)) {
+          clearTimeout(this.debounceMap.get(key));
         }
 
-        checkCrossContextRateLimit(event, context) {
-            const sourceContext = context.sourceContext || this.origin;
-            const targetContext = context.targetContext || 'unknown';
-            const contextPair = `${sourceContext}->${targetContext}`;
-
-            const limits = this.crossContextLimits.get(contextPair);
-            if (!limits) {
-                return { allowed: true }; // No limits configured
-            }
-
-            // Get or create tracking for this context pair
-            if (!this.crossContextTracking.has(contextPair)) {
-                this.crossContextTracking.set(contextPair, {
-                    secondWindow: [],
-                    minuteWindow: [],
-                    burstCount: 0,
-                    lastBurstReset: Date.now()
-                });
-            }
-
-            const tracking = this.crossContextTracking.get(contextPair);
-            const now = Date.now();
-
-            // Clean old entries
-            this.cleanTrackingWindows(tracking, now);
-
-            // Check burst limit
-            if (now - tracking.lastBurstReset > 1000) {
-                tracking.burstCount = 0;
-                tracking.lastBurstReset = now;
-            }
-
-            if (tracking.burstCount >= limits.burstAllowed) {
-                return {
-                    allowed: false,
-                    reason: `Cross-context burst limit exceeded for ${contextPair}: ${tracking.burstCount}/${limits.burstAllowed}`,
-                    retryAfter: 1000 - (now - tracking.lastBurstReset)
-                };
-            }
-
-            // Check rate limits
-            if (tracking.secondWindow.length >= limits.maxPerSecond) {
-                return {
-                    allowed: false,
-                    reason: `Cross-context rate limit exceeded for ${contextPair}: ${tracking.secondWindow.length}/${limits.maxPerSecond} per second`,
-                    retryAfter: 1000 - (now - tracking.secondWindow[0])
-                };
-            }
-
-            if (tracking.minuteWindow.length >= limits.maxPerMinute) {
-                return {
-                    allowed: false,
-                    reason: `Cross-context rate limit exceeded for ${contextPair}: ${tracking.minuteWindow.length}/${limits.maxPerMinute} per minute`,
-                    retryAfter: 60000 - (now - tracking.minuteWindow[0])
-                };
-            }
-
-            // Record the event
-            tracking.secondWindow.push(now);
-            tracking.minuteWindow.push(now);
-            tracking.burstCount++;
-
-            return { allowed: true };
-        }
-
-        cleanTrackingWindows(tracking, now) {
-            // Clean second window (keep last 1 second)
-            tracking.secondWindow = tracking.secondWindow.filter(timestamp =>
-                now - timestamp < 1000
+        // Set new debounce
+        const timeoutId = setTimeout(() => {
+          this.debounceMap.delete(key);
+          // Re-emit the event after debounce delay
+          if (window.__globalSubscriberManager) {
+            window.__globalSubscriberManager.emit(
+              eventContext.event,
+              eventContext.data,
+              { ...eventContext.context, debounced: true },
             );
+          }
+        }, delayMs);
 
-            // Clean minute window (keep last 1 minute)
-            tracking.minuteWindow = tracking.minuteWindow.filter(timestamp =>
-                now - timestamp < 60000
-            );
+        this.debounceMap.set(key, timeoutId);
+
+        return false; // Block immediate execution
+      }
+
+      cleanup() {
+        // Clear all debounce timers
+        for (const timeoutId of this.debounceMap.values()) {
+          clearTimeout(timeoutId);
         }
-
-        // Public API for dynamic configuration
-        setSubscriberRateLimit(subscriberId, limits) {
-                if (!this.subscriberLimits.has(subscriberId)) {
-                    this.subscriberLimits.set(subscriberId, {});
-                }
-                Object.assign(this.subscriberLimits.get(subscriberId), limits);
-                console.log(`⏱️ Updated rate limits for subscriber ${subscriberId}`);
-                return true;
-            }
-
-        setCrossContextRateLimit(contextPair, limits) {
-            this.crossContextLimits.set(contextPair, {
-                ...this.crossContextLimits.get(contextPair),
-                ...limits
-            });
-            console.log(`⏱️ Updated cross-context rate limits for ${contextPair}`);
-        }
-
-        getRateLimitStats() {
-            return {
-                subscriberTracking: this.subscriberTracking.size,
-                crossContextTracking: this.crossContextTracking.size,
-                activeLimits: {
-                    subscribers: this.subscriberLimits.size,
-                    crossContext: this.crossContextLimits.size
-                },
-                recentBlocks: this.getRecentBlocks()
-            };
-        }
-
-        getRecentBlocks() {
-            // This would track recent rate limit blocks for debugging
-            return {
-                subscriberBlocks: 0,
-                crossContextBlocks: 0,
-                lastBlockTime: null
-            };
-        }
+        this.debounceMap.clear();
+        this.throttleMap.clear();
+      }
     }
 
     class EventFilterMiddleware extends SubscriberMiddleware {
@@ -564,8 +406,10 @@ if (window.__vibeSubscribe) {
                 eventContext,
               );
               if (result && typeof result === "object") {
-                                transformedData = result.data !== undefined ? result.data : transformedData;
-                                transformedContext = result.context !== undefined
+                transformedData =
+                  result.data !== undefined ? result.data : transformedData;
+                transformedContext =
+                  result.context !== undefined
                     ? result.context
                     : transformedContext;
               }
@@ -659,462 +503,496 @@ if (window.__vibeSubscribe) {
       }
     }
 
-      // ===== ADVANCED CROSS-CONTEXT SERIALIZATION MIDDLEWARE =====
-      class CrossContextSerializationMiddleware extends SubscriberMiddleware {
-          constructor() {
-              super('CrossContextSerialization', 3); // Before routing
-
-              this.serializers = new Map();
-              this.deserializers = new Map();
-              this.serializationStats = {
-                  serialized: 0,
-                  deserialized: 0,
-                  errors: 0,
-                  bytesOriginal: 0,
-                  bytesSerialized: 0
-              };
-
-              this.setupSerializers();
-              console.log('🔄 Cross-Context Serialization Middleware initialized');
-          }
-
-          setupSerializers() {
-              // DOM Node serializer
-              this.serializers.set('dom', this.serializeDOMNode.bind(this));
-              this.deserializers.set('dom', this.deserializeDOMNode.bind(this));
-
-              // Error object serializer
-              this.serializers.set('error', this.serializeError.bind(this));
-              this.deserializers.set('error', this.deserializeError.bind(this));
-
-              // Function serializer (limited)
-              this.serializers.set('function', this.serializeFunction.bind(this));
-              this.deserializers.set('function', this.deserializeFunction.bind(this));
-
-              // Complex object serializer (handles circular references)
-              this.serializers.set('object', this.serializeComplexObject.bind(this));
-              this.deserializers.set('object', this.deserializeComplexObject.bind(this));
-
-              // HAST/AST serializer
-              this.serializers.set('ast', this.serializeAST.bind(this));
-              this.deserializers.set('ast', this.deserializeAST.bind(this));
-
-              // Map/Set serializer
-              this.serializers.set('collection', this.serializeCollection.bind(this));
-              this.deserializers.set('collection', this.deserializeCollection.bind(this));
-          }
-
-          async process(eventContext) {
-              const { event, data, context } = eventContext;
-
-              // Only serialize for cross-context events or when explicitly requested
-              if (context.crossContext || context.forceSerialize || this.needsSerialization(data)) {
-                  try {
-                      const originalSize = this.estimateSize(data);
-                      const serializedData = await this.serialize(data);
-                      const serializedSize = this.estimateSize(serializedData);
-
-                      eventContext.data = serializedData;
-                      eventContext.context.serialized = true;
-                      eventContext.context.originalSize = originalSize;
-                      eventContext.context.serializedSize = serializedSize;
-
-                      this.serializationStats.serialized++;
-                      this.serializationStats.bytesOriginal += originalSize;
-                      this.serializationStats.bytesSerialized += serializedSize;
-
-                  } catch (error) {
-                      console.warn(`Serialization failed for ${event}:`, error);
-                      this.serializationStats.errors++;
-                      eventContext.context.serializationError = error.message;
-                  }
-              }
-
-              return true;
-          }
-
-          async postProcess(eventContext, results) {
-              // Deserialize responses from other contexts
-              if (eventContext.context.serialized && results.responses) {
-                  try {
-                      results.responses = await Promise.all(
-                          results.responses.map(response => this.deserialize(response))
-                      );
-                      this.serializationStats.deserialized++;
-                  } catch (error) {
-                      console.warn('Response deserialization failed:', error);
-                      this.serializationStats.errors++;
-                  }
-              }
-
-              return results;
-          }
-
-          needsSerialization(data) {
-              if (!data || typeof data !== 'object') return false;
-
-              // Check for types that need special serialization
-              return this.hasComplexTypes(data);
-          }
-
-          hasComplexTypes(obj, visited = new WeakSet()) {
-              if (visited.has(obj)) return true; // Circular reference
-              visited.add(obj);
-
-              // DOM nodes
-              if (obj.nodeType !== undefined) return true;
-
-              // Error objects
-              if (obj instanceof Error) return true;
-
-              // Functions
-              if (typeof obj === 'function') return true;
-
-              // Maps and Sets
-              if (obj instanceof Map || obj instanceof Set) return true;
-
-              // AST-like objects (have type property)
-              if (obj.type && (obj.children || obj.properties || obj.value !== undefined)) return true;
-
-              // Check nested objects
-              if (typeof obj === 'object' && obj !== null) {
-                  for (const value of Object.values(obj)) {
-                      if (typeof value === 'object' && value !== null) {
-                          if (this.hasComplexTypes(value, visited)) return true;
-                      }
-                  }
-              }
-
-              return false;
-          }
-
-          async serialize(data) {
-              return this.serializeValue(data, new Map(), new Set());
-          }
-
-          serializeValue(value, refMap, processing) {
-              if (value === null || value === undefined) return value;
-
-              // Handle primitives
-              if (typeof value !== 'object' && typeof value !== 'function') {
-                  return value;
-              }
-
-              // Handle circular references
-              if (processing.has(value)) {
-                  const refId = refMap.get(value) || `ref_${refMap.size}`;
-                  refMap.set(value, refId);
-                  return { __ref: refId };
-              }
-              processing.add(value);
-
-              try {
-                  // DOM Node
-                  if (value.nodeType !== undefined) {
-                      return {
-                          __type: 'dom',
-                          __data: this.serializeDOMNode(value)
-                      };
-                  }
-
-                  // Error object
-                  if (value instanceof Error) {
-                      return {
-                          __type: 'error',
-                          __data: this.serializeError(value)
-                      };
-                  }
-
-                  // Function
-                  if (typeof value === 'function') {
-                      return {
-                          __type: 'function',
-                          __data: this.serializeFunction(value)
-                      };
-                  }
-
-                  // Map
-                  if (value instanceof Map) {
-                      return {
-                          __type: 'collection',
-                          __data: this.serializeCollection(value)
-                      };
-                  }
-
-                  // Set
-                  if (value instanceof Set) {
-                      return {
-                          __type: 'collection',
-                          __data: this.serializeCollection(value)
-                      };
-                  }
-
-                  // AST-like object
-                  if (value.type && (value.children || value.properties || value.value !== undefined)) {
-                      return {
-                          __type: 'ast',
-                          __data: this.serializeAST(value, refMap, processing)
-                      };
-                  }
-
-                  // Regular object or array
-                  if (Array.isArray(value)) {
-                      return value.map(item => this.serializeValue(item, refMap, processing));
-                  }
-
-                  const serialized = {};
-                  for (const [key, val] of Object.entries(value)) {
-                      serialized[key] = this.serializeValue(val, refMap, processing);
-                  }
-
-                  return {
-                      __type: 'object',
-                      __data: serialized
-                  };
-
-              } finally {
-                  processing.delete(value);
-              }
-          }
-
-          // Specific serializers
-          serializeDOMNode(node) {
-              return {
-                  nodeType: node.nodeType,
-                  nodeName: node.nodeName,
-                  nodeValue: node.nodeValue,
-                  textContent: node.textContent,
-                  attributes: node.attributes ? Array.from(node.attributes).map(attr => ({
-                      name: attr.name,
-                      value: attr.value
-                  })) : null,
-                  classList: node.classList ? Array.from(node.classList) : null,
-                  id: node.id,
-                  className: node.className,
-                  innerHTML: node.innerHTML,
-                  outerHTML: node.outerHTML
-              };
-          }
-
-          serializeError(error) {
-              return {
-                  name: error.name,
-                  message: error.message,
-                  stack: error.stack,
-                  cause: error.cause,
-                  // Preserve custom properties
-                  ...Object.fromEntries(
-                      Object.getOwnPropertyNames(error)
-                          .filter(key => !['name', 'message', 'stack'].includes(key))
-                          .map(key => [key, error[key]])
-                  )
-              };
-          }
-
-          serializeFunction(func) {
-              return {
-                  name: func.name,
-                  source: func.toString(),
-                  isAsync: func.constructor.name === 'AsyncFunction',
-                  isArrow: !func.prototype,
-                  length: func.length
-              };
-          }
-
-          serializeCollection(collection) {
-              if (collection instanceof Map) {
-                  return {
-                      type: 'Map',
-                      entries: Array.from(collection.entries())
-                  };
-              }
-
-              if (collection instanceof Set) {
-                  return {
-                      type: 'Set',
-                      values: Array.from(collection.values())
-                  };
-              }
-
-              return { type: 'unknown', value: collection };
-          }
-
-          serializeAST(ast, refMap, processing) {
-              const serialized = {
-                  type: ast.type
-              };
-
-              // Serialize common AST properties
-              if (ast.children) {
-                  serialized.children = ast.children.map(child =>
-                      this.serializeValue(child, refMap, processing)
-                  );
-              }
-
-              if (ast.properties) {
-                  serialized.properties = this.serializeValue(ast.properties, refMap, processing);
-              }
-
-              if (ast.value !== undefined) {
-                  serialized.value = ast.value;
-              }
-
-              if (ast.data) {
-                  serialized.data = this.serializeValue(ast.data, refMap, processing);
-              }
-
-              // Serialize other properties
-              for (const [key, value] of Object.entries(ast)) {
-                  if (!['type', 'children', 'properties', 'value', 'data'].includes(key)) {
-                      serialized[key] = this.serializeValue(value, refMap, processing);
-                  }
-              }
-
-              return serialized;
-          }
-
-          // Deserialization methods
-          async deserialize(data) {
-              return this.deserializeValue(data, new Map());
-          }
-
-          deserializeValue(value, refMap) {
-              if (value === null || value === undefined) return value;
-
-              // Handle primitives
-              if (typeof value !== 'object') return value;
-
-              // Handle references
-              if (value.__ref) {
-                  return refMap.get(value.__ref) || null;
-              }
-
-              // Handle typed objects
-              if (value.__type && value.__data !== undefined) {
-                  const deserializer = this.deserializers.get(value.__type);
-                  if (deserializer) {
-                      const deserialized = deserializer(value.__data);
-                      return deserialized;
-                  }
-              }
-
-              // Handle arrays
-              if (Array.isArray(value)) {
-                  return value.map(item => this.deserializeValue(item, refMap));
-              }
-
-              // Handle regular objects
-              const deserialized = {};
-              for (const [key, val] of Object.entries(value)) {
-                  deserialized[key] = this.deserializeValue(val, refMap);
-              }
-
-              return deserialized;
-          }
-
-          // Specific deserializers
-          deserializeDOMNode(data) {
-              // Create a representative object (can't recreate actual DOM nodes in cross-context)
-              return {
-                  __isDOMNode: true,
-                  nodeType: data.nodeType,
-                  nodeName: data.nodeName,
-                  nodeValue: data.nodeValue,
-                  textContent: data.textContent,
-                  attributes: data.attributes,
-                  classList: data.classList,
-                  id: data.id,
-                  className: data.className,
-                  innerHTML: data.innerHTML,
-                  outerHTML: data.outerHTML
-              };
-          }
-
-          deserializeError(data) {
-              const error = new Error(data.message);
-              error.name = data.name;
-              error.stack = data.stack;
-              if (data.cause) error.cause = data.cause;
-
-              // Restore custom properties
-              for (const [key, value] of Object.entries(data)) {
-                  if (!['name', 'message', 'stack', 'cause'].includes(key)) {
-                      error[key] = value;
-                  }
-              }
-
-              return error;
-          }
-
-          deserializeFunction(data) {
-              // Return function info object (can't recreate actual functions in cross-context)
-              return {
-                  __isFunction: true,
-                  name: data.name,
-                  source: data.source,
-                  isAsync: data.isAsync,
-                  isArrow: data.isArrow,
-                  length: data.length,
-                  toString: () => data.source
-              };
-          }
-
-          deserializeCollection(data) {
-              if (data.type === 'Map') {
-                  return new Map(data.entries);
-              }
-
-              if (data.type === 'Set') {
-                  return new Set(data.values);
-              }
-
-              return data.value;
-          }
-
-          deserializeAST(data) {
-              const ast = { type: data.type };
-
-              // Deserialize AST properties
-              for (const [key, value] of Object.entries(data)) {
-                  if (key !== 'type') {
-                      ast[key] = this.deserializeValue(value);
-                  }
-              }
-
-              return ast;
-          }
-
-            serializeComplexObject(data) {
-                return data;
-            }
-
-            deserializeComplexObject(data) {
-                return data;
-            }
-
-          estimateSize(data) {
-              try {
-                  return JSON.stringify(data).length;
-              } catch {
-                  return 0; // Fallback for non-serializable data
-              }
-          }
-
-          getSerializationStats() {
-              return {
-                  ...this.serializationStats,
-                  compressionRatio: this.serializationStats.bytesSerialized > 0
-                      ? this.serializationStats.bytesOriginal / this.serializationStats.bytesSerialized
-                      : 1,
-                  errorRate: this.serializationStats.serialized > 0
-                      ? this.serializationStats.errors / (this.serializationStats.serialized + this.serializationStats.errors)
-                      : 0
-              };
-          }
+    // ===== ADVANCED CROSS-CONTEXT SERIALIZATION MIDDLEWARE =====
+    class CrossContextSerializationMiddleware extends SubscriberMiddleware {
+      static _ = this.register;
+
+      constructor() {
+        super("CrossContextSerialization", 3); // Before routing
+
+        this.serializers = new Map();
+        this.deserializers = new Map();
+        this.serializationStats = {
+          serialized: 0,
+          deserialized: 0,
+          errors: 0,
+          bytesOriginal: 0,
+          bytesSerialized: 0,
+        };
+
+        this.setupSerializers();
+        console.log("🔄 Cross-Context Serialization Middleware initialized");
       }
 
-      // ===== CROSS-CONTEXT ROUTING MIDDLEWARE =====
+      setupSerializers() {
+        // DOM Node serializer
+        this.serializers.set("dom", this.serializeDOMNode.bind(this));
+        this.deserializers.set("dom", this.deserializeDOMNode.bind(this));
+
+        // Error object serializer
+        this.serializers.set("error", this.serializeError.bind(this));
+        this.deserializers.set("error", this.deserializeError.bind(this));
+
+        // Function serializer (limited)
+        this.serializers.set("function", this.serializeFunction.bind(this));
+        this.deserializers.set("function", this.deserializeFunction.bind(this));
+
+        // Complex object serializer (handles circular references)
+        this.serializers.set("object", this.serializeComplexObject.bind(this));
+        this.deserializers.set(
+          "object",
+          this.deserializeComplexObject.bind(this),
+        );
+
+        // HAST/AST serializer
+        this.serializers.set("ast", this.serializeAST.bind(this));
+        this.deserializers.set("ast", this.deserializeAST.bind(this));
+
+        // Map/Set serializer
+        this.serializers.set("collection", this.serializeCollection.bind(this));
+        this.deserializers.set(
+          "collection",
+          this.deserializeCollection.bind(this),
+        );
+      }
+
+      async process(eventContext) {
+        const { event, data, context } = eventContext;
+
+        // Only serialize for cross-context events or when explicitly requested
+        if (
+          context.crossContext ||
+          context.forceSerialize ||
+          this.needsSerialization(data)
+        ) {
+          try {
+            const originalSize = this.estimateSize(data);
+            const serializedData = await this.serialize(data);
+            const serializedSize = this.estimateSize(serializedData);
+
+            eventContext.data = serializedData;
+            eventContext.context.serialized = true;
+            eventContext.context.originalSize = originalSize;
+            eventContext.context.serializedSize = serializedSize;
+
+            this.serializationStats.serialized++;
+            this.serializationStats.bytesOriginal += originalSize;
+            this.serializationStats.bytesSerialized += serializedSize;
+          } catch (error) {
+            console.warn(`Serialization failed for ${event}:`, error);
+            this.serializationStats.errors++;
+            eventContext.context.serializationError = error.message;
+          }
+        }
+
+        return true;
+      }
+
+      async postProcess(eventContext, results) {
+        // Deserialize responses from other contexts
+        if (eventContext.context.serialized && results.responses) {
+          try {
+            results.responses = await Promise.all(
+              results.responses.map((response) => this.deserialize(response)),
+            );
+            this.serializationStats.deserialized++;
+          } catch (error) {
+            console.warn("Response deserialization failed:", error);
+            this.serializationStats.errors++;
+          }
+        }
+
+        return results;
+      }
+
+      needsSerialization(data) {
+        if (!data || typeof data !== "object") return false;
+
+        // Check for types that need special serialization
+        return this.hasComplexTypes(data);
+      }
+
+      hasComplexTypes(obj, visited = new WeakSet()) {
+        if (visited.has(obj)) return true; // Circular reference
+        visited.add(obj);
+
+        // DOM nodes
+        if (obj.nodeType !== undefined) return true;
+
+        // Error objects
+        if (obj instanceof Error) return true;
+
+        // Functions
+        if (typeof obj === "function") return true;
+
+        // Maps and Sets
+        if (obj instanceof Map || obj instanceof Set) return true;
+
+        // AST-like objects (have type property)
+        if (
+          obj.type &&
+          (obj.children || obj.properties || obj.value !== undefined)
+        )
+          return true;
+
+        // Check nested objects
+        if (typeof obj === "object" && obj !== null) {
+          for (const value of Object.values(obj)) {
+            if (typeof value === "object" && value !== null) {
+              if (this.hasComplexTypes(value, visited)) return true;
+            }
+          }
+        }
+
+        return false;
+      }
+
+      async serialize(data) {
+        return this.serializeValue(data, new Map(), new Set());
+      }
+
+      serializeValue(value, refMap, processing) {
+        if (value === null || value === undefined) return value;
+
+        // Handle primitives
+        if (typeof value !== "object" && typeof value !== "function") {
+          return value;
+        }
+
+        // Handle circular references
+        if (processing.has(value)) {
+          const refId = refMap.get(value) || `ref_${refMap.size}`;
+          refMap.set(value, refId);
+          return { __ref: refId };
+        }
+        processing.add(value);
+
+        try {
+          // DOM Node
+          if (value.nodeType !== undefined) {
+            return {
+              __type: "dom",
+              __data: this.serializeDOMNode(value),
+            };
+          }
+
+          // Error object
+          if (value instanceof Error) {
+            return {
+              __type: "error",
+              __data: this.serializeError(value),
+            };
+          }
+
+          // Function
+          if (typeof value === "function") {
+            return {
+              __type: "function",
+              __data: this.serializeFunction(value),
+            };
+          }
+
+          // Map
+          if (value instanceof Map) {
+            return {
+              __type: "collection",
+              __data: this.serializeCollection(value),
+            };
+          }
+
+          // Set
+          if (value instanceof Set) {
+            return {
+              __type: "collection",
+              __data: this.serializeCollection(value),
+            };
+          }
+
+          // AST-like object
+          if (
+            value.type &&
+            (value.children || value.properties || value.value !== undefined)
+          ) {
+            return {
+              __type: "ast",
+              __data: this.serializeAST(value, refMap, processing),
+            };
+          }
+
+          // Regular object or array
+          if (Array.isArray(value)) {
+            return value.map((item) =>
+              this.serializeValue(item, refMap, processing),
+            );
+          }
+
+          const serialized = {};
+          for (const [key, val] of Object.entries(value)) {
+            serialized[key] = this.serializeValue(val, refMap, processing);
+          }
+
+          return {
+            __type: "object",
+            __data: serialized,
+          };
+        } finally {
+          processing.delete(value);
+        }
+      }
+
+      // Specific serializers
+      serializeDOMNode(node) {
+        return {
+          nodeType: node.nodeType,
+          nodeName: node.nodeName,
+          nodeValue: node.nodeValue,
+          textContent: node.textContent,
+          attributes: node.attributes
+            ? Array.from(node.attributes).map((attr) => ({
+                name: attr.name,
+                value: attr.value,
+              }))
+            : null,
+          classList: node.classList ? Array.from(node.classList) : null,
+          id: node.id,
+          className: node.className,
+          innerHTML: node.innerHTML,
+          outerHTML: node.outerHTML,
+        };
+      }
+
+      serializeError(error) {
+        return {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+          cause: error.cause,
+          // Preserve custom properties
+          ...Object.fromEntries(
+            Object.getOwnPropertyNames(error)
+              .filter((key) => !["name", "message", "stack"].includes(key))
+              .map((key) => [key, error[key]]),
+          ),
+        };
+      }
+
+      serializeFunction(func) {
+        return {
+          name: func.name,
+          source: func.toString(),
+          isAsync: func.constructor.name === "AsyncFunction",
+          isArrow: !func.prototype,
+          length: func.length,
+        };
+      }
+
+      serializeCollection(collection) {
+        if (collection instanceof Map) {
+          return {
+            type: "Map",
+            entries: Array.from(collection.entries()),
+          };
+        }
+
+        if (collection instanceof Set) {
+          return {
+            type: "Set",
+            values: Array.from(collection.values()),
+          };
+        }
+
+        return { type: "unknown", value: collection };
+      }
+
+      serializeAST(ast, refMap, processing) {
+        const serialized = {
+          type: ast.type,
+        };
+
+        // Serialize common AST properties
+        if (ast.children) {
+          serialized.children = ast.children.map((child) =>
+            this.serializeValue(child, refMap, processing),
+          );
+        }
+
+        if (ast.properties) {
+          serialized.properties = this.serializeValue(
+            ast.properties,
+            refMap,
+            processing,
+          );
+        }
+
+        if (ast.value !== undefined) {
+          serialized.value = ast.value;
+        }
+
+        if (ast.data) {
+          serialized.data = this.serializeValue(ast.data, refMap, processing);
+        }
+
+        // Serialize other properties
+        for (const [key, value] of Object.entries(ast)) {
+          if (
+            !["type", "children", "properties", "value", "data"].includes(key)
+          ) {
+            serialized[key] = this.serializeValue(value, refMap, processing);
+          }
+        }
+
+        return serialized;
+      }
+
+      // Deserialization methods
+      async deserialize(data) {
+        return this.deserializeValue(data, new Map());
+      }
+
+      deserializeValue(value, refMap) {
+        if (value === null || value === undefined) return value;
+
+        // Handle primitives
+        if (typeof value !== "object") return value;
+
+        // Handle references
+        if (value.__ref) {
+          return refMap.get(value.__ref) || null;
+        }
+
+        // Handle typed objects
+        if (value.__type && value.__data !== undefined) {
+          const deserializer = this.deserializers.get(value.__type);
+          if (deserializer) {
+            const deserialized = deserializer(value.__data);
+            return deserialized;
+          }
+        }
+
+        // Handle arrays
+        if (Array.isArray(value)) {
+          return value.map((item) => this.deserializeValue(item, refMap));
+        }
+
+        // Handle regular objects
+        const deserialized = {};
+        for (const [key, val] of Object.entries(value)) {
+          deserialized[key] = this.deserializeValue(val, refMap);
+        }
+
+        return deserialized;
+      }
+
+      // Specific deserializers
+      deserializeDOMNode(data) {
+        // Create a representative object (can't recreate actual DOM nodes in cross-context)
+        return {
+          __isDOMNode: true,
+          nodeType: data.nodeType,
+          nodeName: data.nodeName,
+          nodeValue: data.nodeValue,
+          textContent: data.textContent,
+          attributes: data.attributes,
+          classList: data.classList,
+          id: data.id,
+          className: data.className,
+          innerHTML: data.innerHTML,
+          outerHTML: data.outerHTML,
+        };
+      }
+
+      deserializeError(data) {
+        const error = new Error(data.message);
+        error.name = data.name;
+        error.stack = data.stack;
+        if (data.cause) error.cause = data.cause;
+
+        // Restore custom properties
+        for (const [key, value] of Object.entries(data)) {
+          if (!["name", "message", "stack", "cause"].includes(key)) {
+            error[key] = value;
+          }
+        }
+
+        return error;
+      }
+
+      deserializeFunction(data) {
+        // Return function info object (can't recreate actual functions in cross-context)
+        return {
+          __isFunction: true,
+          name: data.name,
+          source: data.source,
+          isAsync: data.isAsync,
+          isArrow: data.isArrow,
+          length: data.length,
+          toString: () => data.source,
+        };
+      }
+
+      deserializeCollection(data) {
+        if (data.type === "Map") {
+          return new Map(data.entries);
+        }
+
+        if (data.type === "Set") {
+          return new Set(data.values);
+        }
+
+        return data.value;
+      }
+
+      deserializeAST(data) {
+        const ast = { type: data.type };
+
+        // Deserialize AST properties
+        for (const [key, value] of Object.entries(data)) {
+          if (key !== "type") {
+            ast[key] = this.deserializeValue(value);
+          }
+        }
+
+        return ast;
+      }
+
+      serializeComplexObject(data) {
+        return data;
+      }
+
+      deserializeComplexObject(data) {
+        return data;
+      }
+
+      estimateSize(data) {
+        try {
+          return JSON.stringify(data).length;
+        } catch {
+          return 0; // Fallback for non-serializable data
+        }
+      }
+
+      getSerializationStats() {
+        return {
+          ...this.serializationStats,
+          compressionRatio:
+            this.serializationStats.bytesSerialized > 0
+              ? this.serializationStats.bytesOriginal /
+                this.serializationStats.bytesSerialized
+              : 1,
+          errorRate:
+            this.serializationStats.serialized > 0
+              ? this.serializationStats.errors /
+                (this.serializationStats.serialized +
+                  this.serializationStats.errors)
+              : 0,
+        };
+      }
+    }
+
+    // ===== CROSS-CONTEXT ROUTING MIDDLEWARE =====
     class CrossContextRoutingMiddleware extends SubscriberMiddleware {
+      static _ = this.register;
+
       constructor() {
         super("CrossContextRouting", -1);
 
@@ -1135,28 +1013,34 @@ if (window.__vibeSubscribe) {
         // Setup storage listener for fallback communication
         this.setupStorageListener();
 
-                console.log(`🌐 CrossContextRouting initialized in ${this.origin} context`);
+        console.log(
+          `🌐 CrossContextRouting initialized in ${this.origin} context`,
+        );
       }
 
       getOrigin() {
         // Check for background context FIRST using API availability
-        if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getManifest) {
-            try {
-                // Background has tabs API but content scripts don't
-                if (browser.tabs && browser.tabs.query) {
-                    return "background";
-                }
-            } catch(e) {}
+        if (
+          typeof browser !== "undefined" &&
+          browser.runtime &&
+          browser.runtime.getManifest
+        ) {
+          try {
+            // Background has tabs API but content scripts don't
+            if (browser.tabs && browser.tabs.query) {
+              return "background";
+            }
+          } catch (e) {}
         }
-        
+
         // Then check for specific component markers
         if (window.__vibeReaderProxyController) return "proxy";
         if (window.__vibeReaderStealthExtractor) return "extractor";
         if (window.location?.href?.includes("popup.html")) return "popup";
-        
+
         // Fallback for Node.js style background (shouldn't happen in Firefox)
         if (typeof window === "undefined") return "background";
-        
+
         return "unknown";
       }
 
@@ -1205,153 +1089,156 @@ if (window.__vibeSubscribe) {
         await this.routeToRemoteSubscribers(event, data);
         return results;
       }
-// Refactored to remove redundancy
-        async sendAnnouncement(action, data) {
-            const strategies = [
-                () => this.announceViaRuntime(action, data),
-                () => this.announceViaTabs(action, data),
-                () => this.announceViaStorage(action, data)
-            ];
+      // Refactored to remove redundancy
+      async sendAnnouncement(action, data) {
+        const strategies = [
+          () => this.announceViaRuntime(action, data),
+          () => this.announceViaTabs(action, data),
+          () => this.announceViaStorage(action, data),
+        ];
 
-            for (const strategy of strategies) {
-                try {
-                    const result = await strategy();
-                    if (result?.success) return result;
-                } catch (error) {
-                    console.debug(`Strategy failed: ${error.message}`);
-                }
-            }
-
-            return { success: false, error: 'All strategies failed' };
+        for (const strategy of strategies) {
+          try {
+            const result = await strategy();
+            if (result?.success) return result;
+          } catch (error) {
+            console.debug(`Strategy failed: ${error.message}`);
+          }
         }
 
-        async announceViaRuntime(action, data) {
-            // Content scripts use runtime to send to background
-            if (this.origin === 'background') {
-                return { success: false, error: 'Background cannot use runtime.sendMessage to itself' };
-            }
-            
+        return { success: false, error: "All strategies failed" };
+      }
+
+      async announceViaRuntime(action, data) {
+        // Content scripts use runtime to send to background
+        if (this.origin === "background") {
+          return {
+            success: false,
+            error: "Background cannot use runtime.sendMessage to itself",
+          };
+        }
+
+        try {
+          await browser.runtime.sendMessage({
+            action,
+            data,
+            method: "runtime",
+            sourceContext: this.origin,
+          });
+          return { success: true, method: "runtime" };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      }
+
+      async announceViaTabs(action, data) {
+        // Only background can use tabs API
+        if (this.origin !== "background") {
+          return { success: false, error: "Only background can use tabs API" };
+        }
+
+        try {
+          const tabs = await browser.tabs.query({});
+          let successCount = 0;
+
+          for (const tab of tabs) {
             try {
-                await browser.runtime.sendMessage({
-                    action,
-                    data,
-                    method: 'runtime',
-                    sourceContext: this.origin
-                });
-                return { success: true, method: 'runtime' };
-            } catch (error) {
-                return { success: false, error: error.message };
+              await browser.tabs.sendMessage(tab.id, {
+                action,
+                data,
+                method: "tabs",
+                sourceContext: this.origin,
+              });
+              successCount++;
+            } catch (e) {
+              // Tab might not have content script, skip silently
             }
+          }
+
+          return {
+            success: successCount > 0,
+            method: "tabs",
+            sentTo: successCount,
+          };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      }
+
+      async announce(sourceContext) {
+        const announcement = {
+          context: sourceContext,
+          tabId: this.getTabId(),
+          timestamp: Date.now(),
+          capabilities: this.getContextCapabilities(sourceContext),
+        };
+
+        return this.sendAnnouncement("context-announcement", announcement);
+      }
+
+      async announceSubscription(eventType) {
+        const announcement = {
+          eventType,
+          subscriberContext: this.origin,
+          timestamp: Date.now(),
+        };
+
+        // Check if already announced
+        const announcementKey = `${eventType}-${this.origin}`;
+        if (this.announcementHistory.has(announcementKey)) return;
+        this.announcementHistory.set(announcementKey, Date.now());
+
+        return this.sendAnnouncement("subscription-announcement", announcement);
+      }
+
+      async announceViaStorage(announcement) {
+        // FIX: Use storage as fallback announcement mechanism
+        if (browser.storage && browser.storage.local) {
+          const key = `context-announcement-${announcement.context}`;
+          await browser.storage.local.set({
+            [key]: {
+              ...announcement,
+              method: "storage",
+            },
+          });
+
+          return { success: true, method: "storage" };
         }
 
-        async announceViaTabs(action, data) {
-            // Only background can use tabs API
-            if (this.origin !== 'background') {
-                return { success: false, error: 'Only background can use tabs API' };
-            }
-            
-            try {
-                const tabs = await browser.tabs.query({});
-                let successCount = 0;
-                
-                for (const tab of tabs) {
-                    try {
-                        await browser.tabs.sendMessage(tab.id, {
-                            action,
-                            data,
-                            method: 'tabs',
-                            sourceContext: this.origin
-                        });
-                        successCount++;
-                    } catch (e) {
-                        // Tab might not have content script, skip silently
-                    }
+        return { success: false, error: "Storage not available" };
+      }
+
+      setupStorageListener() {
+        if (browser.storage && browser.storage.onChanged) {
+          browser.storage.onChanged.addListener((changes, area) => {
+            if (area !== "local") return;
+
+            Object.keys(changes).forEach((key) => {
+              if (key.startsWith("context-announcement-")) {
+                const { newValue } = changes[key];
+                if (newValue && newValue.context !== this.origin) {
+                  this.handleRemoteSubscriptionAnnouncement(newValue, {
+                    storage: true,
+                    context: newValue.context,
+                  });
                 }
-                
-                return { 
-                    success: successCount > 0, 
-                    method: 'tabs',
-                    sentTo: successCount 
-                };
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
+              }
+            });
+          });
         }
+      }
 
-        async announce(sourceContext) {
-            const announcement = {
-                context: sourceContext,
-                tabId: this.getTabId(),
-                timestamp: Date.now(),
-                capabilities: this.getContextCapabilities(sourceContext)
-            };
+      getContextCapabilities(context) {
+        // Define what each context can do
+        const capabilities = {
+          background: ["orchestrate", "inject", "storage", "tabs"],
+          proxy: ["display", "ui", "terminal", "user-input"],
+          extractor: ["extract", "analyze", "observe", "media-discovery"],
+          popup: ["settings", "controls", "status"],
+        };
 
-            return this.sendAnnouncement('context-announcement', announcement);
-        }
-
-        async announceSubscription(eventType) {
-            const announcement = {
-                eventType,
-                subscriberContext: this.origin,
-                timestamp: Date.now()
-            };
-
-            // Check if already announced
-            const announcementKey = `${eventType}-${this.origin}`;
-            if (this.announcementHistory.has(announcementKey)) return;
-            this.announcementHistory.set(announcementKey, Date.now());
-
-            return this.sendAnnouncement('subscription-announcement', announcement);
-        }
-
-        async announceViaStorage(announcement) {
-            // FIX: Use storage as fallback announcement mechanism
-            if (browser.storage && browser.storage.local) {
-                const key = `context-announcement-${announcement.context}`;
-                await browser.storage.local.set({
-                    [key]: {
-                        ...announcement,
-                        method: 'storage'
-                    }
-                });
-
-                return { success: true, method: 'storage' };
-            }
-
-            return { success: false, error: 'Storage not available' };
-        }
-
-        setupStorageListener() {
-            if (browser.storage && browser.storage.onChanged) {
-                browser.storage.onChanged.addListener((changes, area) => {
-                    if (area !== 'local') return;
-                    
-                    Object.keys(changes).forEach(key => {
-                        if (key.startsWith('context-announcement-')) {
-                            const { newValue } = changes[key];
-                            if (newValue && newValue.context !== this.origin) {
-                                this.handleRemoteSubscriptionAnnouncement(newValue, {
-                                    storage: true,
-                                    context: newValue.context
-                                });
-                            }
-                        }
-                    });
-                });
-            }
-        }
-
-        getContextCapabilities(context) {
-            // Define what each context can do
-            const capabilities = {
-                background: ['orchestrate', 'inject', 'storage', 'tabs'],
-                proxy: ['display', 'ui', 'terminal', 'user-input'],
-                extractor: ['extract', 'analyze', 'observe', 'media-discovery'],
-                popup: ['settings', 'controls', 'status']
-            };
-
-            return capabilities[context] || [];
-        }
+        return capabilities[context] || [];
+      }
 
       handleRemoteSubscriptionAnnouncement(data, sender) {
         const { eventType, subscriberContext } = data;
@@ -1463,12 +1350,542 @@ if (window.__vibeSubscribe) {
       }
     }
 
+    class UnhandledMessageMiddleware extends SubscriberMiddleware {
+      static _ = this.register;
+
+      constructor() {
+        super("UnhandledMessage", 2);
+
+        this.unhandledMessages = new Map();
+        this.messagePatterns = new Map();
+        this.alertThresholds = {
+          count: 10, // Alert after 10 unhandled messages
+          timeWindow: 60000, // within 1 minute
+          severity: 5, // Alert after 5 of same type
+        };
+
+        this.setupMessageTracking();
+      }
+
+      setupMessageTracking() {
+        // Clean up old unhandled message records
+        setInterval(() => {
+          this.cleanupOldMessages();
+        }, 60000); // Every minute
+      }
+
+      async process(eventContext) {
+        const { event, data, subscriber } = eventContext;
+
+        // Skip if this is a system/internal event
+        if (event.startsWith("system-") || event.startsWith("internal-")) {
+          return true;
+        }
+
+        return true; // Let processing continue
+      }
+
+      async postProcess(eventContext, results) {
+        const { event, data, context } = eventContext;
+
+        // Check if message was handled
+        const wasHandled =
+          results.responses &&
+          results.responses.length > 0 &&
+          results.responses.some((r) => r.success);
+
+        if (!wasHandled && !event.startsWith("system-")) {
+          this.trackUnhandledMessage(event, data, context);
+        }
+
+        return results;
+      }
+
+      trackUnhandledMessage(event, data, context) {
+        const messageId = `${event}-${Date.now()}`;
+        const record = {
+          id: messageId,
+          event,
+          data: JSON.stringify(data).substring(0, 200), // Truncate for storage
+          context: context.sourceContext || "unknown",
+          timestamp: Date.now(),
+          origin: this.getOrigin(),
+        };
+
+        this.unhandledMessages.set(messageId, record);
+
+        // Track patterns
+        const patternKey = event;
+        if (!this.messagePatterns.has(patternKey)) {
+          this.messagePatterns.set(patternKey, {
+            count: 0,
+            firstSeen: Date.now(),
+            lastSeen: Date.now(),
+            contexts: new Set(),
+          });
+        }
+
+        const pattern = this.messagePatterns.get(patternKey);
+        pattern.count++;
+        pattern.lastSeen = Date.now();
+        pattern.contexts.add(context.sourceContext || "unknown");
+
+        // Check if we should alert
+        this.checkAlertThresholds(patternKey, pattern);
+
+        console.warn(
+          `⚠️ Unhandled message: ${event} from ${context.sourceContext || "unknown"}`,
+        );
+
+        // Emit unhandled message event for debugging
+        if (window.__globalSubscriberManager) {
+          window.__globalSubscriberManager.emit("unhandled-message-detected", {
+            event,
+            context: context.sourceContext,
+            timestamp: Date.now(),
+          });
+        }
+      }
+
+      checkAlertThresholds(patternKey, pattern) {
+        const now = Date.now();
+        const timeWindow = this.alertThresholds.timeWindow;
+
+        // Check severity threshold (same message type repeatedly)
+        if (pattern.count >= this.alertThresholds.severity) {
+          console.error(
+            `🚨 High frequency unhandled message: ${patternKey} (${pattern.count} times)`,
+          );
+
+          if (window.__globalSubscriberManager) {
+            window.__globalSubscriberManager.emit("unhandled-message-alert", {
+              type: "high-frequency",
+              event: patternKey,
+              count: pattern.count,
+              contexts: Array.from(pattern.contexts),
+            });
+          }
+        }
+
+        // Check total unhandled messages in time window
+        const recentMessages = Array.from(
+          this.unhandledMessages.values(),
+        ).filter((msg) => now - msg.timestamp < timeWindow);
+
+        if (recentMessages.length >= this.alertThresholds.count) {
+          console.error(
+            `🚨 High volume of unhandled messages: ${recentMessages.length} in ${timeWindow}ms`,
+          );
+
+          if (window.__globalSubscriberManager) {
+            window.__globalSubscriberManager.emit("unhandled-message-alert", {
+              type: "high-volume",
+              count: recentMessages.length,
+              timeWindow,
+            });
+          }
+        }
+      }
+
+      cleanupOldMessages() {
+        const cutoffTime = Date.now() - 10 * 60 * 1000; // 10 minutes
+
+        // Clean unhandled messages
+        for (const [id, record] of this.unhandledMessages.entries()) {
+          if (record.timestamp < cutoffTime) {
+            this.unhandledMessages.delete(id);
+          }
+        }
+
+        // Clean message patterns (but keep longer for trend analysis)
+        const patternCutoff = Date.now() - 60 * 60 * 1000; // 1 hour
+        for (const [pattern, data] of this.messagePatterns.entries()) {
+          if (data.lastSeen < patternCutoff) {
+            this.messagePatterns.delete(pattern);
+          }
+        }
+      }
+
+      getOrigin() {
+        if (
+          typeof browser !== "undefined" &&
+          browser.runtime &&
+          browser.runtime.getManifest
+        ) {
+          try {
+            if (browser.tabs && browser.tabs.query) {
+              return "background";
+            }
+          } catch (e) {}
+        }
+
+        if (window.__vibeReaderProxyController) return "proxy";
+        if (window.__vibeReaderStealthExtractor) return "extractor";
+        if (window.location?.href?.includes("popup.html")) return "popup";
+
+        return "unknown";
+      }
+
+      getUnhandledStats() {
+        return {
+          totalUnhandled: this.unhandledMessages.size,
+          patterns: Object.fromEntries(
+            Array.from(this.messagePatterns.entries()).map(
+              ([pattern, data]) => [
+                pattern,
+                {
+                  count: data.count,
+                  contexts: Array.from(data.contexts),
+                  firstSeen: data.firstSeen,
+                  lastSeen: data.lastSeen,
+                },
+              ],
+            ),
+          ),
+          recentMessages: Array.from(this.unhandledMessages.values())
+            .slice(-10)
+            .map((msg) => ({
+              event: msg.event,
+              context: msg.context,
+              timestamp: msg.timestamp,
+            })),
+        };
+      }
+    }
+
+    class AutoRegistrationMiddleware extends SubscriberMiddleware {
+      static _ = this.register;
+
+      constructor() {
+        super("AutoRegistration", 1);
+
+        this.autoRegisteredHandlers = new Map();
+        this.registrationPatterns = new Map();
+        this.origin = this.getOrigin();
+
+        this.setupAutoRegistration();
+      }
+
+      setupAutoRegistration() {
+        // Set up patterns for auto-registration
+        this.registrationPatterns.set(/^handle-(.+)$/, {
+          priority: 3,
+          crossContext: true,
+          autoResponse: true,
+        });
+
+        this.registrationPatterns.set(/^process-(.+)$/, {
+          priority: 4,
+          crossContext: false,
+          autoResponse: false,
+        });
+
+        this.registrationPatterns.set(/^route-(.+)$/, {
+          priority: 2,
+          crossContext: true,
+          autoResponse: true,
+        });
+      }
+
+      async process(eventContext) {
+        const { event, subscriber } = eventContext;
+
+        // Check if this event matches auto-registration patterns
+        for (const [pattern, config] of this.registrationPatterns.entries()) {
+          if (pattern.test(event)) {
+            this.registerHandler(event, config);
+
+            // Add auto-registration context
+            eventContext.context.autoRegistered = true;
+            eventContext.context.registrationPattern = pattern.source;
+            eventContext.context.expectedCrossContext = config.crossContext;
+
+            break;
+          }
+        }
+
+        return true;
+      }
+
+      registerHandler(event, config) {
+        const handlerKey = `${event}-${this.origin}`;
+
+        if (!this.autoRegisteredHandlers.has(handlerKey)) {
+          this.autoRegisteredHandlers.set(handlerKey, {
+            event,
+            config,
+            registeredAt: Date.now(),
+            origin: this.origin,
+            callCount: 0,
+            lastCalled: null,
+          });
+
+          console.log(
+            `📝 Auto-registered handler: ${event} in ${this.origin} context`,
+          );
+
+          // Emit registration event
+          if (window.__globalSubscriberManager) {
+            window.__globalSubscriberManager.emit("auto-handler-registered", {
+              event,
+              origin: this.origin,
+              config,
+              timestamp: Date.now(),
+            });
+          }
+        }
+
+        // Update call statistics
+        const handler = this.autoRegisteredHandlers.get(handlerKey);
+        handler.callCount++;
+        handler.lastCalled = Date.now();
+      }
+
+      getOrigin() {
+        if (
+          typeof browser !== "undefined" &&
+          browser.runtime &&
+          browser.runtime.getManifest
+        ) {
+          try {
+            if (browser.tabs && browser.tabs.query) {
+              return "background";
+            }
+          } catch (e) {}
+        }
+
+        if (window.__vibeReaderProxyController) return "proxy";
+        if (window.__vibeReaderStealthExtractor) return "extractor";
+        if (window.location?.href?.includes("popup.html")) return "popup";
+
+        return "unknown";
+      }
+
+      getAutoRegistrationStats() {
+        return {
+          origin: this.origin,
+          totalRegistered: this.autoRegisteredHandlers.size,
+          patterns: Array.from(this.registrationPatterns.keys()).map(
+            (p) => p.source,
+          ),
+          handlers: Object.fromEntries(
+            Array.from(this.autoRegisteredHandlers.entries()).map(
+              ([key, handler]) => [
+                key,
+                {
+                  event: handler.event,
+                  callCount: handler.callCount,
+                  lastCalled: handler.lastCalled,
+                  registeredAt: handler.registeredAt,
+                },
+              ],
+            ),
+          ),
+        };
+      }
+    }
+
+    // ===== MINIMAL PERFORMANCE TRACKER =====
+    class MinimalPerformanceMiddleware extends SubscriberMiddleware {
+      static _ = this.register;
+
+      constructor() {
+        super("MinimalPerformance", 10); // Low priority - runs after others
+
+        this.slowEvents = new Map(); // event -> count
+        this.slowThreshold = 100; // ms
+        this.reportThreshold = 5; // report after 5 slow events
+
+        // Track only problematic events
+        this.trackingEnabled = false;
+        this.enableTracking();
+      }
+
+      async process(eventContext) {
+        if (!this.trackingEnabled) return true;
+
+        eventContext.context.perfStart = performance.now();
+        return true;
+      }
+
+      async postProcess(eventContext, results) {
+        if (!this.trackingEnabled || !eventContext.context.perfStart) {
+          return results;
+        }
+
+        const duration = performance.now() - eventContext.context.perfStart;
+
+        if (duration > this.slowThreshold) {
+          this.trackSlowEvent(eventContext.event, duration);
+        }
+
+        return results;
+      }
+
+      trackSlowEvent(event, duration) {
+        const count = this.slowEvents.get(event) || 0;
+        this.slowEvents.set(event, count + 1);
+
+        // Report if threshold reached
+        if (count + 1 >= this.reportThreshold) {
+          console.warn(
+            `🐌 Slow event detected: ${event} (${duration.toFixed(1)}ms) - occurred ${count + 1} times`,
+          );
+
+          // Emit performance warning
+          if (window.__localEventBus) {
+            window.__localEventBus.emitLocal("performance-warning", {
+              event,
+              duration,
+              count: count + 1,
+              threshold: this.slowThreshold,
+            });
+          }
+
+          // Reset counter to avoid spam
+          this.slowEvents.set(event, 0);
+        }
+      }
+
+      enableTracking() {
+        // Only enable in development or when explicitly requested
+        this.trackingEnabled =
+          window.location?.search?.includes("debug=performance") ||
+          localStorage.getItem("vibe-debug-performance") === "true" ||
+          window.__vibeDebugMode;
+      }
+
+      getStats() {
+        return {
+          trackingEnabled: this.trackingEnabled,
+          slowThreshold: this.slowThreshold,
+          slowEvents: Object.fromEntries(this.slowEvents),
+          totalSlowEvents: Array.from(this.slowEvents.values()).reduce(
+            (a, b) => a + b,
+            0,
+          ),
+        };
+      }
+    }
+
+    // ===== MINIMAL LOOP PREVENTION & DEDUPLICATION =====
+    class LoopPreventionMiddleware extends SubscriberMiddleware {
+      static _ = this.register;
+
+      constructor() {
+        super("LoopPrevention", 1); // High priority - runs early
+
+        this.recentEvents = new Map(); // event+data hash -> timestamp
+        this.loopDetection = new Map(); // event -> consecutive count
+        this.maxDuplicates = 3; // Block after 3 identical events
+        this.duplicateWindow = 100; // ms window for duplicate detection
+        this.loopWindow = 1000; // ms window for loop detection
+
+        // Cleanup old entries periodically
+        setInterval(() => this.cleanup(), 30000);
+      }
+
+      async process(eventContext) {
+        const { event, data } = eventContext;
+
+        // Create simple hash for deduplication
+        const eventHash = this.createEventHash(event, data);
+        const now = Date.now();
+
+        // Check for rapid duplicates
+        if (this.recentEvents.has(eventHash)) {
+          const lastTime = this.recentEvents.get(eventHash);
+          if (now - lastTime < this.duplicateWindow) {
+            return false; // Block duplicate
+          }
+        }
+
+        // Update recent events
+        this.recentEvents.set(eventHash, now);
+
+        // Check for event loops (same event firing repeatedly)
+        const loopCount = this.loopDetection.get(event) || 0;
+
+        if (loopCount >= this.maxDuplicates) {
+          // Reset if enough time has passed
+          if (
+            now - (this.loopDetection.get(`${event}-time`) || 0) >
+            this.loopWindow
+          ) {
+            this.loopDetection.set(event, 1);
+            this.loopDetection.set(`${event}-time`, now);
+          } else {
+            console.warn(
+              `🔄 Event loop prevented: ${event} (${loopCount} rapid fires)`,
+            );
+            return false; // Block loop
+          }
+        } else {
+          this.loopDetection.set(event, loopCount + 1);
+          if (loopCount === 0) {
+            this.loopDetection.set(`${event}-time`, now);
+          }
+        }
+
+        return true;
+      }
+
+      createEventHash(event, data) {
+        // Simple hash for deduplication - don't include timestamp/random data
+        const hashData = {
+          event,
+          dataType: typeof data,
+          dataKeys:
+            data && typeof data === "object" ? Object.keys(data).sort() : null,
+          stringData: typeof data === "string" ? data.slice(0, 50) : null,
+        };
+
+        try {
+          return JSON.stringify(hashData);
+        } catch (e) {
+          return `${event}-${Date.now()}`;
+        }
+      }
+
+      cleanup() {
+        const now = Date.now();
+        const cutoff = now - 5 * 60 * 1000; // 5 minutes
+
+        // Remove old duplicate tracking
+        for (const [hash, timestamp] of this.recentEvents.entries()) {
+          if (timestamp < cutoff) {
+            this.recentEvents.delete(hash);
+          }
+        }
+
+        // Reset loop counters periodically
+        for (const [key, timestamp] of this.loopDetection.entries()) {
+          if (key.includes("-time") && timestamp < cutoff) {
+            const event = key.replace("-time", "");
+            this.loopDetection.delete(event);
+            this.loopDetection.delete(key);
+          }
+        }
+      }
+
+      getStats() {
+        return {
+          recentEventsTracked: this.recentEvents.size,
+          loopDetectionActive: this.loopDetection.size / 2, // Divide by 2 because we store event + time
+          maxDuplicates: this.maxDuplicates,
+          duplicateWindow: this.duplicateWindow,
+          loopWindow: this.loopWindow,
+        };
+      }
+    }
     // ===== TERMINAL INTEGRATION MIDDLEWARE =====
     class TerminalIntegrationMiddleware extends SubscriberMiddleware {
+      static _ = this.register;
+
       constructor() {
         super("TerminalIntegration", 8);
-          this.outputBuffer = [];
-          this.flushTimer = null;
+        this.outputBuffer = [];
+        this.flushTimer = null;
         this.terminalEvents = [
           "extraction-start",
           "extraction-progress",
@@ -1509,7 +1926,8 @@ if (window.__vibeSubscribe) {
         if (window.__vibeReaderProxyController?.logToTerminal) {
           const proxy = window.__vibeReaderProxyController;
           const category = this.categorizeEvent(eventType);
-                    const level = eventType.includes("error") || eventType.includes("failed")
+          const level =
+            eventType.includes("error") || eventType.includes("failed")
               ? "ERR"
               : "INFO";
 
@@ -1522,40 +1940,45 @@ if (window.__vibeSubscribe) {
           );
         }
       }
-        async process(eventContext) {
-            const { event, data } = eventContext;
+      async process(eventContext) {
+        const { event, data } = eventContext;
 
-            // Check if this is a batched terminal-log event
-            if (event === 'terminal-log' && data.batched) {
-                // Process entire batch at once
-                data.items.forEach(item => {
-                    this.outputBuffer.push(this.formatMessage(item));
-                });
-                this.scheduleFlush();
-                return false; // Prevent further processing
-            }
-
-            return true;
-        }
-        scheduleFlush() {
-            if (!this.flushTimer) {
-                this.flushTimer = setTimeout(() => this.flush(), 10);
-            }
+        // Check if this is a batched terminal-log event
+        if (event === "terminal-log" && data.batched) {
+          // Process entire batch at once
+          data.items.forEach((item) => {
+            this.outputBuffer.push(this.formatMessage(item));
+          });
+          this.scheduleFlush();
+          return false; // Prevent further processing
         }
 
-        flush() {
-            if (this.outputBuffer.length > 0 && typeof dump !== 'undefined') {
-                // Single dump() call for entire batch
-                dump(this.outputBuffer.join(''));
-                this.outputBuffer = [];
-            }
-            this.flushTimer = null;
+        return true;
+      }
+      scheduleFlush() {
+        if (!this.flushTimer) {
+          this.flushTimer = setTimeout(() => this.flush(), 10);
         }
+      }
+
+      flush() {
+        if (this.outputBuffer.length > 0 && typeof dump !== "undefined") {
+          // Single dump() call for entire batch
+          dump(this.outputBuffer.join(""));
+          this.outputBuffer = [];
+        }
+        this.flushTimer = null;
+      }
 
       categorizeEvent(eventType) {
-                if (eventType.includes("error") || eventType.includes("failed")) return "ERRORS";
+        if (eventType.includes("error") || eventType.includes("failed"))
+          return "ERRORS";
         if (eventType.includes("css")) return "CSS";
-                if (eventType.includes("media") || eventType.includes("image") || eventType.includes("video"))
+        if (
+          eventType.includes("media") ||
+          eventType.includes("image") ||
+          eventType.includes("video")
+        )
           return "MEDIA";
         if (eventType.includes("ascii")) return "ASCII";
         if (eventType.includes("extraction") || eventType.includes("proxy"))
@@ -1566,6 +1989,8 @@ if (window.__vibeSubscribe) {
 
     // =====  BATCHING MIDDLEWARE =====
     class BatchingMiddleware extends SubscriberMiddleware {
+      static _ = this.register;
+
       constructor() {
         super("Batching", 5);
 
@@ -1706,6 +2131,8 @@ if (window.__vibeSubscribe) {
 
     // ===== MEMORY MANAGEMENT MIDDLEWARE =====
     class MemoryManagementMiddleware extends SubscriberMiddleware {
+      static _ = this.register;
+
       constructor() {
         super("MemoryManagement", 2);
 
@@ -1736,7 +2163,8 @@ if (window.__vibeSubscribe) {
       recordSubscriberActivity(subscriberId) {
         this.memoryMetrics.set(`subscriber-${subscriberId}`, {
           lastActivity: Date.now(),
-                    activityCount: (this.memoryMetrics.get(`subscriber-${subscriberId}`)
+          activityCount:
+            (this.memoryMetrics.get(`subscriber-${subscriberId}`)
               ?.activityCount || 0) + 1,
         });
       }
@@ -1762,7 +2190,10 @@ if (window.__vibeSubscribe) {
         if (window.__vibeReaderProxyController) {
           const proxy = window.__vibeReaderProxyController;
 
-                    if (proxy.extractedContent && Date.now() - (proxy.contentTimestamp || 0) > 30 * 60 * 1000) {
+          if (
+            proxy.extractedContent &&
+            Date.now() - (proxy.contentTimestamp || 0) > 30 * 60 * 1000
+          ) {
             proxy.extractedContent = null;
             console.log("🧹 Cleared old extracted content");
           }
@@ -1778,1751 +2209,1227 @@ if (window.__vibeSubscribe) {
       }
     }
 
-        // ===== CROSS-CONTEXT METRICS MIDDLEWARE =====
-      class CrossContextMetricsMiddleware extends SubscriberMiddleware {
-          constructor() {
-              super('CrossContextMetrics', 10); // Low priority - runs after everything else
+    // ===== CROSS-CONTEXT METRICS MIDDLEWARE =====
+    class CrossContextMetricsMiddleware extends SubscriberMiddleware {
+      static _ = this.register;
 
-              this.origin = this.getOrigin();
+      constructor() {
+        super("CrossContextMetrics", 10); // Low priority - runs after everything else
 
-              // Metrics storage
-              this.contextMetrics = new Map();          // contextPair -> detailed metrics
-              this.eventTypeMetrics = new Map();        // eventType -> aggregated metrics
-              this.performanceMetrics = new Map();      // performance tracking per context
-              this.errorMetrics = new Map();            // error tracking per context pair
-              this.throughputMetrics = new Map();       // throughput tracking
+        this.origin = this.getOrigin();
 
-              // Configuration
-              this.aggregationInterval = 30000;         // 30 seconds
-              this.retentionPeriod = 24 * 60 * 60 * 1000; // 24 hours
-              this.performanceThresholds = {
-                  slow: 1000,      // 1 second
-                  verySlow: 5000,  // 5 seconds
-                  timeout: 30000   // 30 seconds
-              };
+        // Metrics storage
+        this.contextMetrics = new Map(); // contextPair -> detailed metrics
+        this.eventTypeMetrics = new Map(); // eventType -> aggregated metrics
+        this.performanceMetrics = new Map(); // performance tracking per context
+        this.errorMetrics = new Map(); // error tracking per context pair
+        this.throughputMetrics = new Map(); // throughput tracking
 
-              // Real-time metrics
-              this.currentWindowStart = Date.now();
-              this.currentWindowMetrics = new Map();
+        // Configuration
+        this.aggregationInterval = 30000; // 30 seconds
+        this.retentionPeriod = 24 * 60 * 60 * 1000; // 24 hours
+        this.performanceThresholds = {
+          slow: 1000, // 1 second
+          verySlow: 5000, // 5 seconds
+          timeout: 30000, // 30 seconds
+        };
 
-              this.initializeMetrics();
-          }
+        // Real-time metrics
+        this.currentWindowStart = Date.now();
+        this.currentWindowMetrics = new Map();
 
-          getOrigin() {
-              // Check for background context FIRST using API availability
-              if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getManifest) {
-                  try {
-                      // Background has tabs API but content scripts don't
-                      if (browser.tabs && browser.tabs.query) {
-                          return "background";
-                      }
-                  } catch(e) {}
-              }
-              
-              // Then check for specific component markers
-              if (window.__vibeReaderProxyController) return "proxy";
-              if (window.__vibeReaderStealthExtractor) return "extractor";
-              if (window.location?.href?.includes("popup.html")) return "popup";
-              
-              // Fallback for Node.js style background (shouldn't happen in Firefox)
-              if (typeof window === "undefined") return "background";
-              
-              return "unknown";
-          }
+        this.initializeMetrics();
+      }
 
-          initializeMetrics() {
-              // Start aggregation timer
-              this.aggregationTimer = setInterval(() => {
-                  this.aggregateMetrics();
-              }, this.aggregationInterval);
-
-              // Start cleanup timer
-              this.cleanupTimer = setInterval(() => {
-                  this.cleanupOldMetrics();
-              }, this.retentionPeriod / 24); // Cleanup every hour
-
-              // Initialize current window
-              this.resetCurrentWindow();
-
-              console.log(`📊 CrossContextMetrics initialized in ${this.origin} context`);
-          }
-
-          // Pre-processing - capture event start time
-          async process(eventContext) {
-              const { event, context } = eventContext;
-
-              // Mark processing start time
-              eventContext.context.metricsStartTime = Date.now();
-
-              // Track event frequency
-              this.trackEventFrequency(event, context);
-
-              return true;
-          }
-
-          // Post-processing - collect comprehensive metrics
-          async postProcess(eventContext, results) {
-              const { event, data, context } = eventContext;
-              const startTime = context.metricsStartTime || Date.now();
-              const duration = Date.now() - startTime;
-
-              // Collect base metrics
-              const metrics = {
-                  event,
-                  duration,
-                  timestamp: Date.now(),
-                  success: results.responses && results.responses.length > 0,
-                  responseCount: results.responses ? results.responses.length : 0,
-                  dataSize: this.calculateDataSize(data),
-                  origin: this.origin,
-                  crossContext: context.crossContext || false,
-                  sourceContext: context.sourceContext,
-                  targetContext: context.targetContext,
-                  sessionId: context.sessionId,
-                  batchable: context.batchable || false,
-                  batched: context.batched || false,
-                  retried: context.retried || false,
-                  cached: context.cached || false
-              };
-
-              // Record comprehensive metrics
-              this.recordMetrics(metrics);
-
-              // Track performance issues
-              this.trackPerformanceIssues(metrics);
-
-              // Update throughput metrics
-              this.updateThroughputMetrics(metrics);
-
-              // Track errors if any
-              if (!metrics.success) {
-                  this.trackError(metrics, results.error);
-              }
-
-              return results;
-          }
-
-          recordMetrics(metrics) {
-              // Record context pair metrics
-              if (metrics.crossContext) {
-                  const contextPair = `${metrics.sourceContext}->${this.origin}`;
-                  this.recordContextPairMetrics(contextPair, metrics);
-              }
-
-              // Record event type metrics
-              this.recordEventTypeMetrics(metrics.event, metrics);
-
-              // Record in current window for real-time aggregation
-              this.recordCurrentWindowMetrics(metrics);
-          }
-
-          recordContextPairMetrics(contextPair, metrics) {
-              if (!this.contextMetrics.has(contextPair)) {
-                  this.contextMetrics.set(contextPair, {
-                      totalEvents: 0,
-                      successfulEvents: 0,
-                      failedEvents: 0,
-                      totalDuration: 0,
-                      averageDuration: 0,
-                      minDuration: Infinity,
-                      maxDuration: 0,
-                      totalDataSize: 0,
-                      averageDataSize: 0,
-                      recentEvents: [],
-                      performanceBuckets: {
-                          fast: 0,        // < 100ms
-                          normal: 0,      // 100ms - 1s
-                          slow: 0,        // 1s - 5s
-                          verySlow: 0     // > 5s
-                      },
-                      hourlyStats: new Map(),
-                      lastUpdated: Date.now()
-                  });
-              }
-
-              const stats = this.contextMetrics.get(contextPair);
-
-              // Update counters
-              stats.totalEvents++;
-              if (metrics.success) {
-                  stats.successfulEvents++;
-              } else {
-                  stats.failedEvents++;
-              }
-
-              // Update duration stats
-              stats.totalDuration += metrics.duration;
-              stats.averageDuration = stats.totalDuration / stats.totalEvents;
-              stats.minDuration = Math.min(stats.minDuration, metrics.duration);
-              stats.maxDuration = Math.max(stats.maxDuration, metrics.duration);
-
-              // Update data size stats
-              stats.totalDataSize += metrics.dataSize;
-              stats.averageDataSize = stats.totalDataSize / stats.totalEvents;
-
-              // Update performance buckets
-              if (metrics.duration < 100) {
-                  stats.performanceBuckets.fast++;
-              } else if (metrics.duration < 1000) {
-                  stats.performanceBuckets.normal++;
-              } else if (metrics.duration < 5000) {
-                  stats.performanceBuckets.slow++;
-              } else {
-                  stats.performanceBuckets.verySlow++;
-              }
-
-              // Track recent events (keep last 50)
-              stats.recentEvents.push({
-                  event: metrics.event,
-                  duration: metrics.duration,
-                  success: metrics.success,
-                  timestamp: metrics.timestamp,
-                  dataSize: metrics.dataSize
-              });
-
-              if (stats.recentEvents.length > 50) {
-                  stats.recentEvents = stats.recentEvents.slice(-50);
-              }
-
-              // Update hourly stats
-              const hour = new Date(metrics.timestamp).getHours();
-              if (!stats.hourlyStats.has(hour)) {
-                  stats.hourlyStats.set(hour, { count: 0, avgDuration: 0, totalDuration: 0 });
-              }
-              const hourlyStats = stats.hourlyStats.get(hour);
-              hourlyStats.count++;
-              hourlyStats.totalDuration += metrics.duration;
-              hourlyStats.avgDuration = hourlyStats.totalDuration / hourlyStats.count;
-
-              stats.lastUpdated = Date.now();
-          }
-
-          recordEventTypeMetrics(eventType, metrics) {
-              if (!this.eventTypeMetrics.has(eventType)) {
-                  this.eventTypeMetrics.set(eventType, {
-                      totalCount: 0,
-                      crossContextCount: 0,
-                      localCount: 0,
-                      averageDuration: 0,
-                      totalDuration: 0,
-                      successRate: 0,
-                      totalSuccesses: 0,
-                      contexts: new Set(),
-                      lastSeen: Date.now()
-                  });
-              }
-
-              const stats = this.eventTypeMetrics.get(eventType);
-              stats.totalCount++;
-
-              if (metrics.crossContext) {
-                  stats.crossContextCount++;
-                  if (metrics.sourceContext) {
-                      stats.contexts.add(`${metrics.sourceContext}->${this.origin}`);
-                  }
-              } else {
-                  stats.localCount++;
-              }
-
-              stats.totalDuration += metrics.duration;
-              stats.averageDuration = stats.totalDuration / stats.totalCount;
-
-              if (metrics.success) {
-                  stats.totalSuccesses++;
-              }
-              stats.successRate = stats.totalSuccesses / stats.totalCount;
-              stats.lastSeen = Date.now();
-          }
-
-            recordCurrentWindowMetrics(metrics) {
-                const windowKey = `${metrics.event}-${Math.floor(Date.now() / 1000)}`;
-
-                if (!this.currentWindowMetrics.has(windowKey)) {
-                    this.currentWindowMetrics.set(windowKey, {
-                        eventType: metrics.event,
-                        count: 0,
-                        windowStart: Math.floor(Date.now() / 1000) * 1000,
-                        crossContext: metrics.crossContext || false
-                    });
-                }
-
-                this.currentWindowMetrics.get(windowKey).count++;
+      getOrigin() {
+        // Check for background context FIRST using API availability
+        if (
+          typeof browser !== "undefined" &&
+          browser.runtime &&
+          browser.runtime.getManifest
+        ) {
+          try {
+            // Background has tabs API but content scripts don't
+            if (browser.tabs && browser.tabs.query) {
+              return "background";
             }
+          } catch (e) {}
+        }
 
-          trackEventFrequency(eventType, context) {
-              const now = Date.now();
-              const windowKey = `${eventType}-${Math.floor(now / 1000)}`; // 1-second windows
+        // Then check for specific component markers
+        if (window.__vibeReaderProxyController) return "proxy";
+        if (window.__vibeReaderStealthExtractor) return "extractor";
+        if (window.location?.href?.includes("popup.html")) return "popup";
 
-              if (!this.currentWindowMetrics.has(windowKey)) {
-                  this.currentWindowMetrics.set(windowKey, {
-                      eventType,
-                      count: 0,
-                      windowStart: Math.floor(now / 1000) * 1000,
-                      crossContext: context.crossContext || false
-                  });
-              }
+        // Fallback for Node.js style background (shouldn't happen in Firefox)
+        if (typeof window === "undefined") return "background";
 
-              this.currentWindowMetrics.get(windowKey).count++;
-          }
-
-          trackPerformanceIssues(metrics) {
-              if (metrics.duration > this.performanceThresholds.slow) {
-                  const issueKey = `${metrics.event}-${this.origin}`;
-
-                  if (!this.performanceMetrics.has(issueKey)) {
-                      this.performanceMetrics.set(issueKey, {
-                          eventType: metrics.event,
-                          slowEvents: 0,
-                          verySlowEvents: 0,
-                          timeoutEvents: 0,
-                          totalIssues: 0,
-                          firstSeen: Date.now(),
-                          lastSeen: Date.now()
-                      });
-                  }
-
-                  const perfStats = this.performanceMetrics.get(issueKey);
-
-                  if (metrics.duration > this.performanceThresholds.timeout) {
-                      perfStats.timeoutEvents++;
-                  } else if (metrics.duration > this.performanceThresholds.verySlow) {
-                      perfStats.verySlowEvents++;
-                  } else {
-                      perfStats.slowEvents++;
-                  }
-
-                  perfStats.totalIssues++;
-                  perfStats.lastSeen = Date.now();
-              }
-          }
-
-          updateThroughputMetrics(metrics) {
-              const minuteKey = Math.floor(Date.now() / 60000); // 1-minute windows
-
-              if (!this.throughputMetrics.has(minuteKey)) {
-                  this.throughputMetrics.set(minuteKey, {
-                      minute: minuteKey,
-                      totalEvents: 0,
-                      crossContextEvents: 0,
-                      localEvents: 0,
-                      totalDataSize: 0,
-                      successfulEvents: 0,
-                      failedEvents: 0
-                  });
-              }
-
-              const throughput = this.throughputMetrics.get(minuteKey);
-              throughput.totalEvents++;
-              throughput.totalDataSize += metrics.dataSize;
-
-              if (metrics.crossContext) {
-                  throughput.crossContextEvents++;
-              } else {
-                  throughput.localEvents++;
-              }
-
-              if (metrics.success) {
-                  throughput.successfulEvents++;
-              } else {
-                  throughput.failedEvents++;
-              }
-          }
-
-          trackError(metrics, error) {
-              const errorKey = `${metrics.event}-${this.origin}`;
-
-              if (!this.errorMetrics.has(errorKey)) {
-                  this.errorMetrics.set(errorKey, {
-                      eventType: metrics.event,
-                      totalErrors: 0,
-                      errorTypes: new Map(),
-                      recentErrors: [],
-                      firstError: Date.now(),
-                      lastError: Date.now()
-                  });
-              }
-
-              const errorStats = this.errorMetrics.get(errorKey);
-              errorStats.totalErrors++;
-
-              const errorType = error ? error.constructor.name : 'UnknownError';
-              const errorCount = errorStats.errorTypes.get(errorType) || 0;
-              errorStats.errorTypes.set(errorType, errorCount + 1);
-
-              errorStats.recentErrors.push({
-                  error: error ? error.message : 'Unknown error',
-                  timestamp: Date.now(),
-                  duration: metrics.duration,
-                  crossContext: metrics.crossContext
-              });
-
-              // Keep last 20 errors
-              if (errorStats.recentErrors.length > 20) {
-                  errorStats.recentErrors = errorStats.recentErrors.slice(-20);
-              }
-
-              errorStats.lastError = Date.now();
-          }
-
-          calculateDataSize(data) {
-              try {
-                  return JSON.stringify(data).length;
-              } catch (error) {
-                  return 0;
-              }
-          }
-
-          aggregateMetrics() {
-              const aggregatedData = {
-                  timestamp: Date.now(),
-                  origin: this.origin,
-                  windowDuration: this.aggregationInterval,
-                  contextMetrics: Object.fromEntries(this.contextMetrics),
-                  eventTypeMetrics: Object.fromEntries(this.eventTypeMetrics),
-                  performanceIssues: Object.fromEntries(this.performanceMetrics),
-                  throughput: this.getThroughputSummary(),
-                  topEvents: this.getTopEvents(),
-                  systemHealth: this.calculateSystemHealth()
-              };
-
-              // Emit aggregated metrics
-              if (window.__globalSubscriberManager) {
-                  window.__globalSubscriberManager.emit('cross-context-metrics-aggregated', aggregatedData);
-              }
-
-              // Log summary for debugging
-              console.log(`📊 Metrics Summary (${this.origin}):`, {
-                  totalContextPairs: this.contextMetrics.size,
-                  totalEventTypes: this.eventTypeMetrics.size,
-                  performanceIssues: this.performanceMetrics.size,
-                  systemHealth: aggregatedData.systemHealth
-              });
-          }
-
-          getThroughputSummary() {
-              const recentMinutes = Array.from(this.throughputMetrics.values())
-                  .slice(-5); // Last 5 minutes
-
-              return {
-                  recentMinutes: recentMinutes.length,
-                  avgEventsPerMinute: recentMinutes.reduce((sum, m) => sum + m.totalEvents, 0) / Math.max(recentMinutes.length, 1),
-                  avgDataSizePerMinute: recentMinutes.reduce((sum, m) => sum + m.totalDataSize, 0) / Math.max(recentMinutes.length, 1),
-                  crossContextRatio: recentMinutes.reduce((sum, m) => sum + m.crossContextEvents, 0) /
-                      Math.max(recentMinutes.reduce((sum, m) => sum + m.totalEvents, 0), 1)
-              };
-          }
-
-          getTopEvents() {
-              return Array.from(this.eventTypeMetrics.entries())
-                  .map(([eventType, stats]) => ({ eventType, ...stats }))
-                  .sort((a, b) => b.totalCount - a.totalCount)
-                  .slice(0, 10);
-          }
-
-          calculateSystemHealth() {
-              const now = Date.now();
-              const recentThreshold = 5 * 60 * 1000; // 5 minutes
-
-              let totalRecentEvents = 0;
-              let successfulRecentEvents = 0;
-              let slowRecentEvents = 0;
-
-              // Analyze recent context metrics
-              for (const stats of this.contextMetrics.values()) {
-                  const recentEvents = stats.recentEvents.filter(
-                      event => now - event.timestamp < recentThreshold
-                  );
-
-                  totalRecentEvents += recentEvents.length;
-                  successfulRecentEvents += recentEvents.filter(e => e.success).length;
-                  slowRecentEvents += recentEvents.filter(e => e.duration > this.performanceThresholds.slow).length;
-              }
-
-              const successRate = totalRecentEvents > 0 ? successfulRecentEvents / totalRecentEvents : 1;
-              const performanceRate = totalRecentEvents > 0 ? (totalRecentEvents - slowRecentEvents) / totalRecentEvents : 1;
-
-              return {
-                  overall: Math.min(successRate, performanceRate),
-                  successRate,
-                  performanceRate,
-                  recentEvents: totalRecentEvents,
-                  health: successRate > 0.95 && performanceRate > 0.9 ? 'excellent' :
-                      successRate > 0.85 && performanceRate > 0.8 ? 'good' :
-                          successRate > 0.7 && performanceRate > 0.6 ? 'fair' : 'poor'
-              };
-          }
-
-          resetCurrentWindow() {
-              this.currentWindowStart = Date.now();
-              this.currentWindowMetrics.clear();
-          }
-
-          cleanupOldMetrics() {
-              const cutoffTime = Date.now() - this.retentionPeriod;
-
-              // Clean old throughput metrics
-              for (const [minuteKey, throughput] of this.throughputMetrics.entries()) {
-                  if (minuteKey * 60000 < cutoffTime) {
-                      this.throughputMetrics.delete(minuteKey);
-                  }
-              }
-
-              // Clean old performance metrics
-              for (const [issueKey, perfStats] of this.performanceMetrics.entries()) {
-                  if (perfStats.lastSeen < cutoffTime) {
-                      this.performanceMetrics.delete(issueKey);
-                  }
-              }
-
-              console.log(`🧹 Cleaned old metrics (${this.origin}): ${this.throughputMetrics.size} throughput entries remaining`);
-          }
-
-          // Public API for accessing metrics
-          getMetricsSummary() {
-              return {
-                  origin: this.origin,
-                  contextMetrics: Object.fromEntries(this.contextMetrics),
-                  eventTypeMetrics: Object.fromEntries(this.eventTypeMetrics),
-                  performanceMetrics: Object.fromEntries(this.performanceMetrics),
-                  systemHealth: this.calculateSystemHealth(),
-                  topEvents: this.getTopEvents(),
-                  throughputSummary: this.getThroughputSummary()
-              };
-          }
-
-          getContextPairMetrics(contextPair) {
-              return this.contextMetrics.get(contextPair) || null;
-          }
-
-          getEventTypeMetrics(eventType) {
-              return this.eventTypeMetrics.get(eventType) || null;
-          }
+        return "unknown";
       }
 
-// ===== CROSS-CONTEXT EVENT REPLAY MIDDLEWARE =====
-      class CrossContextReplayMiddleware extends SubscriberMiddleware {
-          constructor() {
-              super('CrossContextReplay', 11); // Lowest priority
-
-              this.origin = this.getOrigin();
-
-              // Event storage
-              this.sessionHistory = new Map();          // sessionId -> event history
-              this.contextHistory = new Map();          // contextPair -> recent events
-              this.replayableEvents = new Set();        // events that can be replayed
-              this.sessionMetadata = new Map();         // sessionId -> metadata
-
-              // Configuration
-              this.maxHistoryPerSession = 200;          // max events per session
-              this.maxHistoryPerContext = 100;          // max events per context pair
-              this.retentionPeriod = 24 * 60 * 60 * 1000; // 24 hours
-              this.compressionThreshold = 50;           // compress after 50 events
-
-              // Replay state
-              this.activeReplays = new Map();           // replayId -> replay state
-              this.replayQueue = new Map();             // queued replay operations
-
-              this.initializeReplay();
-          }
-
-          getOrigin() {
-              // Check for background context FIRST using API availability
-              if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getManifest) {
-                  try {
-                      // Background has tabs API but content scripts don't
-                      if (browser.tabs && browser.tabs.query) {
-                          return "background";
-                      }
-                  } catch(e) {}
-              }
-              
-              // Then check for specific component markers
-              if (window.__vibeReaderProxyController) return "proxy";
-              if (window.__vibeReaderStealthExtractor) return "extractor";
-              if (window.location?.href?.includes("popup.html")) return "popup";
-              
-              // Fallback for Node.js style background (shouldn't happen in Firefox)
-              if (typeof window === "undefined") return "background";
-              
-              return "unknown";
-          }
-
-          initializeReplay() {
-              // Setup replayable events
-              this.setupReplayableEvents();
-
-              // Start cleanup timer
-              this.cleanupTimer = setInterval(() => {
-                  this.cleanupOldHistory();
-              }, this.retentionPeriod / 24); // Cleanup every hour
-
-              // Setup replay queue processor
-              this.queueProcessor = setInterval(() => {
-                  this.processReplayQueue();
-              }, 1000); // Process queue every second
-
-              console.log(`🎬 CrossContextReplay initialized in ${this.origin} context`);
-          }
-
-          setupReplayableEvents() {
-              // Define events that are safe and useful to replay
-              this.replayableEvents = new Set([
-                  'content-extracted',
-                  'media-discovered',
-                  'user-command',
-                  'settings-changed',
-                  'theme-updated',
-                  'extraction-progress',
-                  'pipeline-step-complete',
-                  'terminal-log',
-                  'display-content',
-                  'structure-analyzed',
-                  'content-updated',
-                  'session-state-changed'
-              ]);
-          }
-
-          // Pre-processing - determine if event should be recorded
-          async process(eventContext) {
-              const { event, data, context } = eventContext;
-
-              // Mark for recording if it's replayable
-              if (this.isReplayable(event, context)) {
-                  eventContext.context.recordForReplay = true;
-                  eventContext.context.replayTimestamp = Date.now();
-              }
-
-              return true;
-          }
-
-          // Post-processing - record successful events for replay
-          async postProcess(eventContext, results) {
-              const { event, data, context } = eventContext;
-
-              if (context.recordForReplay && this.shouldRecord(eventContext, results)) {
-                  this.recordEvent(eventContext, results);
-              }
-
-              return results;
-          }
-
-          isReplayable(event, context) {
-              // Check if event type is replayable
-              if (!this.replayableEvents.has(event)) {
-                  return false;
-              }
-
-              // Don't record replay events themselves to avoid loops
-              if (context.isReplay) {
-                  return false;
-              }
-
-              // Don't record system/internal events
-              if (event.startsWith('system-') || event.startsWith('internal-')) {
-                  return false;
-              }
-
-              return true;
-          }
-
-          shouldRecord(eventContext, results) {
-              const { context } = eventContext;
-
-              // Only record successful events by default
-              if (results.responses && results.responses.length === 0 && !context.recordFailures) {
-                  return false;
-              }
-
-              // Don't record if explicitly disabled
-              if (context.replayable === false) {
-                  return false;
-              }
-
-              return true;
-          }
-
-          recordEvent(eventContext, results) {
-              const { event, data, context } = eventContext;
-
-              const eventRecord = {
-                  id: this.generateEventId(),
-                  event,
-                  data: this.serializeEventData(data),
-                  context: {
-                      sessionId: context.sessionId,
-                      sourceContext: context.sourceContext || this.origin,
-                      targetContext: context.targetContext,
-                      crossContext: context.crossContext || false,
-                      timestamp: context.replayTimestamp,
-                      duration: results.duration,
-                      success: results.responses && results.responses.length > 0
-                  },
-                  results: {
-                      responseCount: results.responses ? results.responses.length : 0,
-                      success: results.responses && results.responses.length > 0
-                  },
-                  metadata: {
-                      recordedAt: Date.now(),
-                      recordedBy: this.origin,
-                      size: JSON.stringify(data).length,
-                      compressed: false
-                  }
-              };
-
-              // Record by session if available
-              if (context.sessionId) {
-                  this.recordSessionEvent(context.sessionId, eventRecord);
-              }
-
-              // Record by context pair if cross-context
-              if (context.crossContext && context.sourceContext) {
-                  this.recordContextEvent(context.sourceContext, eventRecord);
-              }
-
-              // Update session metadata
-              this.updateSessionMetadata(context.sessionId, eventRecord);
-          }
-
-          recordSessionEvent(sessionId, eventRecord) {
-              if (!this.sessionHistory.has(sessionId)) {
-                  this.sessionHistory.set(sessionId, {
-                      sessionId,
-                      events: [],
-                      totalEvents: 0,
-                      startTime: Date.now(),
-                      lastActivity: Date.now(),
-                      compressed: false
-                  });
-              }
-
-              const session = this.sessionHistory.get(sessionId);
-              session.events.push(eventRecord);
-              session.totalEvents++;
-              session.lastActivity = Date.now();
-
-              // Compress if needed
-              if (session.events.length > this.compressionThreshold && !session.compressed) {
-                  this.compressSessionHistory(sessionId);
-              }
-
-              // Trim if too large
-              if (session.events.length > this.maxHistoryPerSession) {
-                  session.events = session.events.slice(-this.maxHistoryPerSession);
-              }
-          }
-
-          recordContextEvent(sourceContext, eventRecord) {
-              const contextPair = `${sourceContext}->${this.origin}`;
-
-              if (!this.contextHistory.has(contextPair)) {
-                  this.contextHistory.set(contextPair, {
-                      contextPair,
-                      events: [],
-                      totalEvents: 0,
-                      firstEvent: Date.now(),
-                      lastEvent: Date.now()
-                  });
-              }
-
-              const contextEvents = this.contextHistory.get(contextPair);
-              contextEvents.events.push({
-                  event: eventRecord.event,
-                  timestamp: eventRecord.context.timestamp,
-                  success: eventRecord.results.success,
-                  duration: eventRecord.context.duration,
-                  size: eventRecord.metadata.size
-              });
-              contextEvents.totalEvents++;
-              contextEvents.lastEvent = Date.now();
-
-              // Trim if too large
-              if (contextEvents.events.length > this.maxHistoryPerContext) {
-                  contextEvents.events = contextEvents.events.slice(-this.maxHistoryPerContext);
-              }
-          }
-
-          updateSessionMetadata(sessionId, eventRecord) {
-              if (!sessionId) return;
-
-              if (!this.sessionMetadata.has(sessionId)) {
-                  this.sessionMetadata.set(sessionId, {
-                      sessionId,
-                      eventTypes: new Set(),
-                      contexts: new Set(),
-                      firstEvent: Date.now(),
-                      lastEvent: Date.now(),
-                      totalEvents: 0,
-                      successfulEvents: 0,
-                      failedEvents: 0,
-                      averageDuration: 0,
-                      totalDuration: 0
-                  });
-              }
-
-              const metadata = this.sessionMetadata.get(sessionId);
-              metadata.eventTypes.add(eventRecord.event);
-
-              if (eventRecord.context.sourceContext) {
-                  metadata.contexts.add(eventRecord.context.sourceContext);
-              }
-              if (eventRecord.context.targetContext) {
-                  metadata.contexts.add(eventRecord.context.targetContext);
-              }
-
-              metadata.lastEvent = Date.now();
-              metadata.totalEvents++;
-
-              if (eventRecord.results.success) {
-                  metadata.successfulEvents++;
-              } else {
-                  metadata.failedEvents++;
-              }
-
-              if (eventRecord.context.duration) {
-                  metadata.totalDuration += eventRecord.context.duration;
-                  metadata.averageDuration = metadata.totalDuration / metadata.totalEvents;
-              }
-          }
-
-          compressSessionHistory(sessionId) {
-              const session = this.sessionHistory.get(sessionId);
-              if (!session || session.compressed) return;
-
-              try {
-                  // Simple compression: remove duplicate consecutive events of same type
-                  const compressedEvents = [];
-                  let lastEventType = null;
-                  let duplicateCount = 0;
-
-                  for (const event of session.events) {
-                      if (event.event === lastEventType) {
-                          duplicateCount++;
-                          if (duplicateCount === 1) {
-                              // Add a compression marker
-                              compressedEvents.push({
-                                  ...event,
-                                  compressed: true,
-                                  duplicateCount: 1
-                              });
-                          } else {
-                              // Update the last compressed event
-                              const lastCompressed = compressedEvents[compressedEvents.length - 1];
-                              if (lastCompressed.compressed) {
-                                  lastCompressed.duplicateCount = duplicateCount;
-                              }
-                          }
-                      } else {
-                          compressedEvents.push(event);
-                          lastEventType = event.event;
-                          duplicateCount = 0;
-                      }
-                  }
-
-                  session.events = compressedEvents;
-                  session.compressed = true;
-
-                  console.log(`🗜️ Compressed session ${sessionId}: ${session.totalEvents} -> ${compressedEvents.length} events`);
-
-              } catch (error) {
-                  console.warn(`Failed to compress session ${sessionId}:`, error);
-              }
-          }
-
-          // ===== REPLAY FUNCTIONALITY =====
-          async replaySession(sessionId, options = {}) {
-              const session = this.sessionHistory.get(sessionId);
-              if (!session) {
-                  throw new Error(`Session ${sessionId} not found`);
-              }
-
-              const replayId = this.generateReplayId();
-              const replayOptions = {
-                  targetContext: options.targetContext || 'all',
-                  speed: options.speed || 1.0,          // 1.0 = real-time, 2.0 = 2x speed, etc.
-                  startTime: options.startTime || 0,    // Start from specific time offset
-                  endTime: options.endTime,             // End at specific time offset
-                  eventFilter: options.eventFilter,     // Function to filter events
-                  pauseOnErrors: options.pauseOnErrors || false,
-                  dryRun: options.dryRun || false,      // Don't actually emit events
-                  ...options
-              };
-
-              const replayState = {
-                  replayId,
-                  sessionId,
-                  status: 'queued',
-                  options: replayOptions,
-                  progress: 0,
-                  currentEventIndex: 0,
-                  totalEvents: session.events.length,
-                  startTime: Date.now(),
-                  errors: [],
-                  replayedEvents: []
-              };
-
-              this.activeReplays.set(replayId, replayState);
-              this.queueReplay(replayId);
-
-              console.log(`🎬 Queued replay ${replayId} for session ${sessionId} (${session.events.length} events)`);
-
-              return {
-                  replayId,
-                  status: 'queued',
-                  totalEvents: session.events.length,
-                  options: replayOptions
-              };
-          }
-
-          async replayContextPair(contextPair, options = {}) {
-              const contextEvents = this.contextHistory.get(contextPair);
-              if (!contextEvents) {
-                  throw new Error(`Context pair ${contextPair} not found`);
-              }
-
-              // Create a temporary session for context replay
-              const tempSessionId = `context-replay-${Date.now()}`;
-              const tempSession = {
-                  sessionId: tempSessionId,
-                  events: contextEvents.events.map(event => ({
-                      ...event,
-                      id: this.generateEventId(),
-                      data: {},
-                      context: {
-                          sessionId: tempSessionId,
-                          crossContext: true,
-                          timestamp: event.timestamp
-                      },
-                      metadata: {
-                          recordedAt: event.timestamp,
-                          recordedBy: this.origin,
-                          size: event.size || 0
-                      }
-                  })),
-                  totalEvents: contextEvents.events.length,
-                  startTime: contextEvents.firstEvent,
-                  lastActivity: contextEvents.lastEvent
-              };
-
-              this.sessionHistory.set(tempSessionId, tempSession);
-
-              const result = await this.replaySession(tempSessionId, {
-                  ...options,
-                  targetContext: contextPair.split('->')[1] // Extract target context
-              });
-
-              return result;
-          }
-
-          queueReplay(replayId) {
-              this.replayQueue.set(replayId, {
-                  replayId,
-                  queuedAt: Date.now()
-              });
-          }
-
-          async processReplayQueue() {
-              if (this.replayQueue.size === 0) return;
-
-              // Process one replay at a time
-              const [replayId] = this.replayQueue.keys();
-              this.replayQueue.delete(replayId);
-
-              try {
-                  await this.executeReplay(replayId);
-              } catch (error) {
-                  console.error(`Replay ${replayId} failed:`, error);
-
-                  const replayState = this.activeReplays.get(replayId);
-                  if (replayState) {
-                      replayState.status = 'failed';
-                      replayState.error = error.message;
-                  }
-              }
-          }
-
-          async executeReplay(replayId) {
-              const replayState = this.activeReplays.get(replayId);
-              if (!replayState) return;
-
-              replayState.status = 'running';
-
-              const session = this.sessionHistory.get(replayState.sessionId);
-              if (!session) {
-                  throw new Error(`Session ${replayState.sessionId} not found for replay`);
-              }
-
-              console.log(`▶️ Starting replay ${replayId} (${session.events.length} events)`);
-
-              const events = this.filterEventsForReplay(session.events, replayState.options);
-              let replayStartTime = Date.now();
-              let originalStartTime = events.length > 0 ? events[0].context.timestamp : Date.now();
-
-              for (let i = 0; i < events.length; i++) {
-                  if (replayState.status !== 'running') break; // Check for cancellation
-
-                  const event = events[i];
-                  replayState.currentEventIndex = i;
-                  replayState.progress = (i / events.length) * 100;
-
-                  try {
-                      // Calculate timing for realistic replay
-                      if (i > 0) {
-                          const originalDelay = event.context.timestamp - events[i-1].context.timestamp;
-                          const scaledDelay = originalDelay / replayState.options.speed;
-
-                          if (scaledDelay > 0) {
-                              await this.sleep(Math.min(scaledDelay, 5000)); // Cap at 5 seconds
-                          }
-                      }
-
-                      // Replay the event
-                      await this.replayEvent(event, replayState);
-
-                      replayState.replayedEvents.push({
-                          originalEvent: event.event,
-                          replayedAt: Date.now(),
-                          success: true
-                      });
-
-                  } catch (error) {
-                      console.warn(`Error replaying event ${event.id}:`, error);
-
-                      replayState.errors.push({
-                          eventId: event.id,
-                          event: event.event,
-                          error: error.message,
-                          timestamp: Date.now()
-                      });
-
-                      if (replayState.options.pauseOnErrors) {
-                          replayState.status = 'paused';
-                          break;
-                      }
-                  }
-              }
-
-              if (replayState.status === 'running') {
-                  replayState.status = 'completed';
-              }
-
-              replayState.completedAt = Date.now();
-              replayState.totalDuration = Date.now() - replayState.startTime;
-
-              console.log(`✅ Replay ${replayId} ${replayState.status}: ${replayState.replayedEvents.length}/${events.length} events`);
-
-              // Emit replay completion event
-              if (window.__globalSubscriberManager) {
-                  window.__globalSubscriberManager.emit('replay-completed', {
-                      replayId,
-                      status: replayState.status,
-                      replayedEvents: replayState.replayedEvents.length,
-                      totalEvents: events.length,
-                      errors: replayState.errors.length,
-                      duration: replayState.totalDuration
-                  });
-              }
-          }
-
-          filterEventsForReplay(events, options) {
-              let filtered = events;
-
-              // Apply time range filter
-              if (options.startTime || options.endTime) {
-                  const sessionStartTime = events.length > 0 ? events[0].context.timestamp : 0;
-                  filtered = filtered.filter(event => {
-                      const relativeTime = event.context.timestamp - sessionStartTime;
-                      return (!options.startTime || relativeTime >= options.startTime) &&
-                          (!options.endTime || relativeTime <= options.endTime);
-                  });
-              }
-
-              // Apply custom event filter
-              if (options.eventFilter && typeof options.eventFilter === 'function') {
-                  filtered = filtered.filter(options.eventFilter);
-              }
-
-              return filtered;
-          }
-
-          async replayEvent(eventRecord, replayState) {
-              if (replayState.options.dryRun) {
-                    console.log(`🏃 DRY RUN: Would replay ${eventRecord.event}`);
-                  return;
-              }
-
-              const replayContext = {
-                  ...eventRecord.context,
-                  isReplay: true,
-                  replayId: replayState.replayId,
-                  originalTimestamp: eventRecord.context.timestamp,
-                  replayTimestamp: Date.now()
-              };
-
-              // Emit the replayed event
-              if (window.__globalSubscriberManager) {
-                  await window.__globalSubscriberManager.emit(
-                      eventRecord.event,
-                      this.deserializeEventData(eventRecord.data),
-                      replayContext
-                  );
-              }
-          }
-
-          // ===== UTILITY METHODS =====
-          serializeEventData(data) {
-              try {
-                  return JSON.parse(JSON.stringify(data)); // Deep copy
-              } catch (error) {
-                  return { __serialization_error: error.message };
-              }
-          }
-
-          deserializeEventData(serializedData) {
-              return serializedData;
-          }
-
-          generateEventId() {
-              return `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-          }
-
-          generateReplayId() {
-              return `rpl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-          }
-
-          sleep(ms) {
-              return new Promise(resolve => setTimeout(resolve, ms));
-          }
-
-          cleanupOldHistory() {
-              const cutoffTime = Date.now() - this.retentionPeriod;
-
-              // Cleanup old sessions
-              for (const [sessionId, session] of this.sessionHistory.entries()) {
-                  if (session.lastActivity < cutoffTime) {
-                      this.sessionHistory.delete(sessionId);
-                      this.sessionMetadata.delete(sessionId);
-                  }
-              }
-
-              // Cleanup old context history
-              for (const [contextPair, contextEvents] of this.contextHistory.entries()) {
-                  if (contextEvents.lastEvent < cutoffTime) {
-                      this.contextHistory.delete(contextPair);
-                  }
-              }
-
-              // Cleanup completed replays
-              for (const [replayId, replayState] of this.activeReplays.entries()) {
-                  if (replayState.completedAt && replayState.completedAt < cutoffTime) {
-                      this.activeReplays.delete(replayId);
-                  }
-              }
-
-              console.log(`🧹 Cleaned old replay history (${this.origin}): ${this.sessionHistory.size} sessions remaining`);
-          }
-
-          // ===== PUBLIC API =====
-          getSessionHistory(sessionId) {
-              const session = this.sessionHistory.get(sessionId);
-              const metadata = this.sessionMetadata.get(sessionId);
-
-              return session ? {
-                  ...session,
-                  metadata: metadata ? {
-                      ...metadata,
-                      eventTypes: Array.from(metadata.eventTypes),
-                      contexts: Array.from(metadata.contexts)
-                  } : null
-              } : null;
-          }
-
-          getContextHistory(contextPair) {
-              return this.contextHistory.get(contextPair) || null;
-          }
-
-          getAllSessions() {
-              return Array.from(this.sessionHistory.keys());
-          }
-
-          getReplayStatus(replayId) {
-              return this.activeReplays.get(replayId) || null;
-          }
-
-          getAllActiveReplays() {
-              return Array.from(this.activeReplays.values());
-          }
-
-          async pauseReplay(replayId) {
-              const replayState = this.activeReplays.get(replayId);
-              if (replayState && replayState.status === 'running') {
-                  replayState.status = 'paused';
-                  return true;
-              }
-              return false;
-          }
-
-          async resumeReplay(replayId) {
-              const replayState = this.activeReplays.get(replayId);
-              if (replayState && replayState.status === 'paused') {
-                  replayState.status = 'running';
-                  this.queueReplay(replayId);
-                  return true;
-              }
-              return false;
-          }
-
-          async cancelReplay(replayId) {
-              const replayState = this.activeReplays.get(replayId);
-              if (replayState) {
-                  replayState.status = 'cancelled';
-                  this.replayQueue.delete(replayId);
-                  return true;
-              }
-              return false;
-          }
-
-          getReplayStats() {
-              return {
-                  origin: this.origin,
-                  sessionsRecorded: this.sessionHistory.size,
-                  contextPairsRecorded: this.contextHistory.size,
-                  activeReplays: this.activeReplays.size,
-                  queuedReplays: this.replayQueue.size,
-                  replayableEventTypes: Array.from(this.replayableEvents),
-                  totalEventsRecorded: Array.from(this.sessionHistory.values())
-                      .reduce((sum, session) => sum + session.totalEvents, 0)
-              };
-          }
+      initializeMetrics() {
+        // Start aggregation timer
+        this.aggregationTimer = setInterval(() => {
+          this.aggregateMetrics();
+        }, this.aggregationInterval);
+
+        // Start cleanup timer
+        this.cleanupTimer = setInterval(() => {
+          this.cleanupOldMetrics();
+        }, this.retentionPeriod / 24); // Cleanup every hour
+
+        // Initialize current window
+        this.resetCurrentWindow();
+
+        console.log(
+          `📊 CrossContextMetrics initialized in ${this.origin} context`,
+        );
       }
 
-        // ===== ADVANCED DEBUG MIDDLEWARE =====
-class DebugMiddleware extends SubscriberMiddleware {
-          constructor() {
-              super('AdvancedDebug', 0.5); // Very high priority - runs early
+      // Pre-processing - capture event start time
+      async process(eventContext) {
+        const { event, context } = eventContext;
 
-              this.origin = this.detectOrigin();
-              this.debugSettings = new Map();
-              this.eventFilters = new Map();
-              this.terminalRouting = new Map();
-              this.debugSessionId = `debug-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        // Mark processing start time
+        eventContext.context.metricsStartTime = Date.now();
 
-              // Debug categories
-              this.debugCategories = {
-                  'events': 'EVENT_DEBUG',
-                  'messaging': 'MESSAGE_DEBUG',
-                  'injection': 'INJECTION_DEBUG',
-                  'extraction': 'EXTRACTION_DEBUG',
-                  'performance': 'PERFORMANCE_DEBUG',
-                  'errors': 'ERROR_DEBUG',
-                  'lifecycle': 'LIFECYCLE_DEBUG',
-                  'storage': 'STORAGE_DEBUG',
-                  'ui': 'UI_DEBUG',
-                  'cross-context': 'CROSS_CONTEXT_DEBUG'
-              };
+        // Track event frequency
+        this.trackEventFrequency(event, context);
 
-              this.initializeDebugMiddleware();
+        return true;
+      }
+
+      // Post-processing - collect comprehensive metrics
+      async postProcess(eventContext, results) {
+        const { event, data, context } = eventContext;
+        const startTime = context.metricsStartTime || Date.now();
+        const duration = Date.now() - startTime;
+
+        // Collect base metrics
+        const metrics = {
+          event,
+          duration,
+          timestamp: Date.now(),
+          success: results.responses && results.responses.length > 0,
+          responseCount: results.responses ? results.responses.length : 0,
+          dataSize: this.calculateDataSize(data),
+          origin: this.origin,
+          crossContext: context.crossContext || false,
+          sourceContext: context.sourceContext,
+          targetContext: context.targetContext,
+          sessionId: context.sessionId,
+          batchable: context.batchable || false,
+          batched: context.batched || false,
+          retried: context.retried || false,
+          cached: context.cached || false,
+        };
+
+        // Record comprehensive metrics
+        this.recordMetrics(metrics);
+
+        // Track performance issues
+        this.trackPerformanceIssues(metrics);
+
+        // Update throughput metrics
+        this.updateThroughputMetrics(metrics);
+
+        // Track errors if any
+        if (!metrics.success) {
+          this.trackError(metrics, results.error);
+        }
+
+        return results;
+      }
+
+      recordMetrics(metrics) {
+        // Record context pair metrics
+        if (metrics.crossContext) {
+          const contextPair = `${metrics.sourceContext}->${this.origin}`;
+          this.recordContextPairMetrics(contextPair, metrics);
+        }
+
+        // Record event type metrics
+        this.recordEventTypeMetrics(metrics.event, metrics);
+
+        // Record in current window for real-time aggregation
+        this.recordCurrentWindowMetrics(metrics);
+      }
+
+      recordContextPairMetrics(contextPair, metrics) {
+        if (!this.contextMetrics.has(contextPair)) {
+          this.contextMetrics.set(contextPair, {
+            totalEvents: 0,
+            successfulEvents: 0,
+            failedEvents: 0,
+            totalDuration: 0,
+            averageDuration: 0,
+            minDuration: Infinity,
+            maxDuration: 0,
+            totalDataSize: 0,
+            averageDataSize: 0,
+            recentEvents: [],
+            performanceBuckets: {
+              fast: 0, // < 100ms
+              normal: 0, // 100ms - 1s
+              slow: 0, // 1s - 5s
+              verySlow: 0, // > 5s
+            },
+            hourlyStats: new Map(),
+            lastUpdated: Date.now(),
+          });
+        }
+
+        const stats = this.contextMetrics.get(contextPair);
+
+        // Update counters
+        stats.totalEvents++;
+        if (metrics.success) {
+          stats.successfulEvents++;
+        } else {
+          stats.failedEvents++;
+        }
+
+        // Update duration stats
+        stats.totalDuration += metrics.duration;
+        stats.averageDuration = stats.totalDuration / stats.totalEvents;
+        stats.minDuration = Math.min(stats.minDuration, metrics.duration);
+        stats.maxDuration = Math.max(stats.maxDuration, metrics.duration);
+
+        // Update data size stats
+        stats.totalDataSize += metrics.dataSize;
+        stats.averageDataSize = stats.totalDataSize / stats.totalEvents;
+
+        // Update performance buckets
+        if (metrics.duration < 100) {
+          stats.performanceBuckets.fast++;
+        } else if (metrics.duration < 1000) {
+          stats.performanceBuckets.normal++;
+        } else if (metrics.duration < 5000) {
+          stats.performanceBuckets.slow++;
+        } else {
+          stats.performanceBuckets.verySlow++;
+        }
+
+        // Track recent events (keep last 50)
+        stats.recentEvents.push({
+          event: metrics.event,
+          duration: metrics.duration,
+          success: metrics.success,
+          timestamp: metrics.timestamp,
+          dataSize: metrics.dataSize,
+        });
+
+        if (stats.recentEvents.length > 50) {
+          stats.recentEvents = stats.recentEvents.slice(-50);
+        }
+
+        // Update hourly stats
+        const hour = new Date(metrics.timestamp).getHours();
+        if (!stats.hourlyStats.has(hour)) {
+          stats.hourlyStats.set(hour, {
+            count: 0,
+            avgDuration: 0,
+            totalDuration: 0,
+          });
+        }
+        const hourlyStats = stats.hourlyStats.get(hour);
+        hourlyStats.count++;
+        hourlyStats.totalDuration += metrics.duration;
+        hourlyStats.avgDuration = hourlyStats.totalDuration / hourlyStats.count;
+
+        stats.lastUpdated = Date.now();
+      }
+
+      recordEventTypeMetrics(eventType, metrics) {
+        if (!this.eventTypeMetrics.has(eventType)) {
+          this.eventTypeMetrics.set(eventType, {
+            totalCount: 0,
+            crossContextCount: 0,
+            localCount: 0,
+            averageDuration: 0,
+            totalDuration: 0,
+            successRate: 0,
+            totalSuccesses: 0,
+            contexts: new Set(),
+            lastSeen: Date.now(),
+          });
+        }
+
+        const stats = this.eventTypeMetrics.get(eventType);
+        stats.totalCount++;
+
+        if (metrics.crossContext) {
+          stats.crossContextCount++;
+          if (metrics.sourceContext) {
+            stats.contexts.add(`${metrics.sourceContext}->${this.origin}`);
+          }
+        } else {
+          stats.localCount++;
+        }
+
+        stats.totalDuration += metrics.duration;
+        stats.averageDuration = stats.totalDuration / stats.totalCount;
+
+        if (metrics.success) {
+          stats.totalSuccesses++;
+        }
+        stats.successRate = stats.totalSuccesses / stats.totalCount;
+        stats.lastSeen = Date.now();
+      }
+
+      recordCurrentWindowMetrics(metrics) {
+        const windowKey = `${metrics.event}-${Math.floor(Date.now() / 1000)}`;
+
+        if (!this.currentWindowMetrics.has(windowKey)) {
+          this.currentWindowMetrics.set(windowKey, {
+            eventType: metrics.event,
+            count: 0,
+            windowStart: Math.floor(Date.now() / 1000) * 1000,
+            crossContext: metrics.crossContext || false,
+          });
+        }
+
+        this.currentWindowMetrics.get(windowKey).count++;
+      }
+
+      trackEventFrequency(eventType, context) {
+        const now = Date.now();
+        const windowKey = `${eventType}-${Math.floor(now / 1000)}`; // 1-second windows
+
+        if (!this.currentWindowMetrics.has(windowKey)) {
+          this.currentWindowMetrics.set(windowKey, {
+            eventType,
+            count: 0,
+            windowStart: Math.floor(now / 1000) * 1000,
+            crossContext: context.crossContext || false,
+          });
+        }
+
+        this.currentWindowMetrics.get(windowKey).count++;
+      }
+
+      trackPerformanceIssues(metrics) {
+        if (metrics.duration > this.performanceThresholds.slow) {
+          const issueKey = `${metrics.event}-${this.origin}`;
+
+          if (!this.performanceMetrics.has(issueKey)) {
+            this.performanceMetrics.set(issueKey, {
+              eventType: metrics.event,
+              slowEvents: 0,
+              verySlowEvents: 0,
+              timeoutEvents: 0,
+              totalIssues: 0,
+              firstSeen: Date.now(),
+              lastSeen: Date.now(),
+            });
           }
 
-          ensureArrayValue(value, defaultValue = []) {
-              if (Array.isArray(value)) return value;
-              if (typeof value === 'string') {
-                  // Handle comma-separated strings
-                  if (value.includes(',')) {
-                      return value.split(',').map(s => s.trim());
-                  }
-                  return [value];
-              }
-              if (value && typeof value === 'object') {
-                  // Handle objects with numeric keys (like corrupted arrays)
-                  return Object.values(value);
-              }
-              return defaultValue;
+          const perfStats = this.performanceMetrics.get(issueKey);
+
+          if (metrics.duration > this.performanceThresholds.timeout) {
+            perfStats.timeoutEvents++;
+          } else if (metrics.duration > this.performanceThresholds.verySlow) {
+            perfStats.verySlowEvents++;
+          } else {
+            perfStats.slowEvents++;
           }
 
-          detectOrigin() {
-              if (typeof window === "undefined") return "background";
-              if (window.__vibeReaderProxyController) return "proxy";
-              if (window.__vibeReaderStealthExtractor) return "extractor";
-              if (window.location?.href?.includes("popup.html")) return "popup";
-              return "unknown";
+          perfStats.totalIssues++;
+          perfStats.lastSeen = Date.now();
+        }
+      }
+
+      updateThroughputMetrics(metrics) {
+        const minuteKey = Math.floor(Date.now() / 60000); // 1-minute windows
+
+        if (!this.throughputMetrics.has(minuteKey)) {
+          this.throughputMetrics.set(minuteKey, {
+            minute: minuteKey,
+            totalEvents: 0,
+            crossContextEvents: 0,
+            localEvents: 0,
+            totalDataSize: 0,
+            successfulEvents: 0,
+            failedEvents: 0,
+          });
+        }
+
+        const throughput = this.throughputMetrics.get(minuteKey);
+        throughput.totalEvents++;
+        throughput.totalDataSize += metrics.dataSize;
+
+        if (metrics.crossContext) {
+          throughput.crossContextEvents++;
+        } else {
+          throughput.localEvents++;
+        }
+
+        if (metrics.success) {
+          throughput.successfulEvents++;
+        } else {
+          throughput.failedEvents++;
+        }
+      }
+
+      trackError(metrics, error) {
+        const errorKey = `${metrics.event}-${this.origin}`;
+
+        if (!this.errorMetrics.has(errorKey)) {
+          this.errorMetrics.set(errorKey, {
+            eventType: metrics.event,
+            totalErrors: 0,
+            errorTypes: new Map(),
+            recentErrors: [],
+            firstError: Date.now(),
+            lastError: Date.now(),
+          });
+        }
+
+        const errorStats = this.errorMetrics.get(errorKey);
+        errorStats.totalErrors++;
+
+        const errorType = error ? error.constructor.name : "UnknownError";
+        const errorCount = errorStats.errorTypes.get(errorType) || 0;
+        errorStats.errorTypes.set(errorType, errorCount + 1);
+
+        errorStats.recentErrors.push({
+          error: error ? error.message : "Unknown error",
+          timestamp: Date.now(),
+          duration: metrics.duration,
+          crossContext: metrics.crossContext,
+        });
+
+        // Keep last 20 errors
+        if (errorStats.recentErrors.length > 20) {
+          errorStats.recentErrors = errorStats.recentErrors.slice(-20);
+        }
+
+        errorStats.lastError = Date.now();
+      }
+
+      calculateDataSize(data) {
+        try {
+          return JSON.stringify(data).length;
+        } catch (error) {
+          return 0;
+        }
+      }
+
+      aggregateMetrics() {
+        const aggregatedData = {
+          timestamp: Date.now(),
+          origin: this.origin,
+          windowDuration: this.aggregationInterval,
+          contextMetrics: Object.fromEntries(this.contextMetrics),
+          eventTypeMetrics: Object.fromEntries(this.eventTypeMetrics),
+          performanceIssues: Object.fromEntries(this.performanceMetrics),
+          throughput: this.getThroughputSummary(),
+          topEvents: this.getTopEvents(),
+          systemHealth: this.calculateSystemHealth(),
+        };
+
+        // Emit aggregated metrics
+        if (window.__globalSubscriberManager) {
+          window.__globalSubscriberManager.emit(
+            "cross-context-metrics-aggregated",
+            aggregatedData,
+          );
+        }
+
+        // Log summary for debugging
+        console.log(`📊 Metrics Summary (${this.origin}):`, {
+          totalContextPairs: this.contextMetrics.size,
+          totalEventTypes: this.eventTypeMetrics.size,
+          performanceIssues: this.performanceMetrics.size,
+          systemHealth: aggregatedData.systemHealth,
+        });
+      }
+
+      getThroughputSummary() {
+        const recentMinutes = Array.from(this.throughputMetrics.values()).slice(
+          -5,
+        ); // Last 5 minutes
+
+        return {
+          recentMinutes: recentMinutes.length,
+          avgEventsPerMinute:
+            recentMinutes.reduce((sum, m) => sum + m.totalEvents, 0) /
+            Math.max(recentMinutes.length, 1),
+          avgDataSizePerMinute:
+            recentMinutes.reduce((sum, m) => sum + m.totalDataSize, 0) /
+            Math.max(recentMinutes.length, 1),
+          crossContextRatio:
+            recentMinutes.reduce((sum, m) => sum + m.crossContextEvents, 0) /
+            Math.max(
+              recentMinutes.reduce((sum, m) => sum + m.totalEvents, 0),
+              1,
+            ),
+        };
+      }
+
+      getTopEvents() {
+        return Array.from(this.eventTypeMetrics.entries())
+          .map(([eventType, stats]) => ({ eventType, ...stats }))
+          .sort((a, b) => b.totalCount - a.totalCount)
+          .slice(0, 10);
+      }
+
+      calculateSystemHealth() {
+        const now = Date.now();
+        const recentThreshold = 5 * 60 * 1000; // 5 minutes
+
+        let totalRecentEvents = 0;
+        let successfulRecentEvents = 0;
+        let slowRecentEvents = 0;
+
+        // Analyze recent context metrics
+        for (const stats of this.contextMetrics.values()) {
+          const recentEvents = stats.recentEvents.filter(
+            (event) => now - event.timestamp < recentThreshold,
+          );
+
+          totalRecentEvents += recentEvents.length;
+          successfulRecentEvents += recentEvents.filter(
+            (e) => e.success,
+          ).length;
+          slowRecentEvents += recentEvents.filter(
+            (e) => e.duration > this.performanceThresholds.slow,
+          ).length;
+        }
+
+        const successRate =
+          totalRecentEvents > 0
+            ? successfulRecentEvents / totalRecentEvents
+            : 1;
+        const performanceRate =
+          totalRecentEvents > 0
+            ? (totalRecentEvents - slowRecentEvents) / totalRecentEvents
+            : 1;
+
+        return {
+          overall: Math.min(successRate, performanceRate),
+          successRate,
+          performanceRate,
+          recentEvents: totalRecentEvents,
+          health:
+            successRate > 0.95 && performanceRate > 0.9
+              ? "excellent"
+              : successRate > 0.85 && performanceRate > 0.8
+                ? "good"
+                : successRate > 0.7 && performanceRate > 0.6
+                  ? "fair"
+                  : "poor",
+        };
+      }
+
+      resetCurrentWindow() {
+        this.currentWindowStart = Date.now();
+        this.currentWindowMetrics.clear();
+      }
+
+      cleanupOldMetrics() {
+        const cutoffTime = Date.now() - this.retentionPeriod;
+
+        // Clean old throughput metrics
+        for (const [
+          minuteKey,
+          throughput,
+        ] of this.throughputMetrics.entries()) {
+          if (minuteKey * 60000 < cutoffTime) {
+            this.throughputMetrics.delete(minuteKey);
           }
+        }
 
-          async initializeDebugMiddleware() {
-              // Load debug settings from storage
-              await this.loadDebugSettings();
-
-              // Setup storage listeners
-              this.setupStorageListeners();
-
-              // Setup debug routing
-              this.setupDebugRouting();
-
-              // Periodic refresh of settings
-              setInterval(() => {
-                  this.loadDebugSettings();
-              }, 30000); // Every 30 seconds
-
-                console.log(`🐛 Advanced Debug Middleware initialized in ${this.origin} context`);
+        // Clean old performance metrics
+        for (const [issueKey, perfStats] of this.performanceMetrics.entries()) {
+          if (perfStats.lastSeen < cutoffTime) {
+            this.performanceMetrics.delete(issueKey);
           }
+        }
 
-          async loadDebugSettings() {
-              try {
-                  if (typeof browser !== 'undefined' && browser.storage && browser.storage.sync) {
-                      const settings = await browser.storage.sync.get([
-                          'vibeDebugEnabled',
-                          'vibeDebugCategories',
-                          'vibeDebugEventFilter',
-                          'vibeDebugPerformance',
-                          'vibeDebugVerbosity',
-                          'vibeDebugContexts',
-                          'vibeDebugAutoRoute',
-                          'vibeDebugStorage'
-                      ]);
+        console.log(
+          `🧹 Cleaned old metrics (${this.origin}): ${this.throughputMetrics.size} throughput entries remaining`,
+        );
+      }
 
-                      // Update debug settings with type safety
-                      const safeCategories = this.ensureArrayValue(settings.vibeDebugCategories, ['events', 'errors']);
-                      
-                      this.debugSettings.set('enabled', settings.vibeDebugEnabled || false);
-                      this.debugSettings.set('categories', safeCategories);
-                      this.debugSettings.set('eventFilter', settings.vibeDebugEventFilter || []);
-                      this.debugSettings.set('performance', settings.vibeDebugPerformance || false);
-                      this.debugSettings.set('verbosity', settings.vibeDebugVerbosity || 'normal');
-                      this.debugSettings.set('contexts', settings.vibeDebugContexts || ['all']);
-                      this.debugSettings.set('autoRoute', settings.vibeDebugAutoRoute !== false); // Default true
-                      this.debugSettings.set('storageDebug', settings.vibeDebugStorage || false);
+      // Public API for accessing metrics
+      getMetricsSummary() {
+        return {
+          origin: this.origin,
+          contextMetrics: Object.fromEntries(this.contextMetrics),
+          eventTypeMetrics: Object.fromEntries(this.eventTypeMetrics),
+          performanceMetrics: Object.fromEntries(this.performanceMetrics),
+          systemHealth: this.calculateSystemHealth(),
+          topEvents: this.getTopEvents(),
+          throughputSummary: this.getThroughputSummary(),
+        };
+      }
 
-                      // Apply filters
-                      this.applyDebugFilters();
+      getContextPairMetrics(contextPair) {
+        return this.contextMetrics.get(contextPair) || null;
+      }
 
-                      console.log(`🔧 Debug settings loaded:`, Object.fromEntries(this.debugSettings));
+      getEventTypeMetrics(eventType) {
+        return this.eventTypeMetrics.get(eventType) || null;
+      }
+    }
 
-                  } else {
-                      // Fallback to localStorage
-                      this.loadDebugSettingsFromLocal();
-                  }
-              } catch (error) {
-                  console.warn('Failed to load debug settings:', error);
-                  this.setDefaultDebugSettings();
-              }
+    // ===== ADVANCED DEBUG MIDDLEWARE =====
+    class DebugMiddleware extends SubscriberMiddleware {
+      static _ = this.register;
+
+      constructor() {
+        super("AdvancedDebug", 0.5); // Very high priority - runs early
+
+        this.origin = this.detectOrigin();
+        this.debugSettings = new Map();
+        this.eventFilters = new Map();
+        this.terminalRouting = new Map();
+        this.debugSessionId = `debug-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+        // Debug categories
+        this.debugCategories = {
+          events: "EVENT_DEBUG",
+          messaging: "MESSAGE_DEBUG",
+          injection: "INJECTION_DEBUG",
+          extraction: "EXTRACTION_DEBUG",
+          performance: "PERFORMANCE_DEBUG",
+          errors: "ERROR_DEBUG",
+          lifecycle: "LIFECYCLE_DEBUG",
+          storage: "STORAGE_DEBUG",
+          ui: "UI_DEBUG",
+          "cross-context": "CROSS_CONTEXT_DEBUG",
+        };
+
+        this.initializeDebugMiddleware();
+      }
+
+      ensureArrayValue(value, defaultValue = []) {
+        if (Array.isArray(value)) return value;
+        if (typeof value === "string") {
+          // Handle comma-separated strings
+          if (value.includes(",")) {
+            return value.split(",").map((s) => s.trim());
           }
+          return [value];
+        }
+        if (value && typeof value === "object") {
+          // Handle objects with numeric keys (like corrupted arrays)
+          return Object.values(value);
+        }
+        return defaultValue;
+      }
 
-          loadDebugSettingsFromLocal() {
-              try {
-                  const localSettings = JSON.parse(localStorage.getItem('vibeDebugSettings') || '{}');
+      detectOrigin() {
+        if (typeof window === "undefined") return "background";
+        if (window.__vibeReaderProxyController) return "proxy";
+        if (window.__vibeReaderStealthExtractor) return "extractor";
+        if (window.location?.href?.includes("popup.html")) return "popup";
+        return "unknown";
+      }
 
-                  // Ensure categories is always an array with type safety
-                  const safeCategories = this.ensureArrayValue(localSettings.categories, ['events', 'errors']);
+      async initializeDebugMiddleware() {
+        // Load debug settings from storage
+        await this.loadDebugSettings();
 
-                  this.debugSettings.set('enabled', localSettings.enabled || false);
-                  this.debugSettings.set('categories', safeCategories);
-                  this.debugSettings.set('eventFilter', localSettings.eventFilter || []);
-                  this.debugSettings.set('performance', localSettings.performance || false);
-                  this.debugSettings.set('verbosity', localSettings.verbosity || 'normal');
-                  this.debugSettings.set('contexts', localSettings.contexts || ['all']);
-                  this.debugSettings.set('autoRoute', localSettings.autoRoute !== false);
+        // Setup storage listeners
+        this.setupStorageListeners();
 
-                  this.applyDebugFilters();
+        // Setup debug routing
+        this.setupDebugRouting();
 
-                  console.log('🔧 Debug settings loaded from localStorage');
+        // Periodic refresh of settings
+        setInterval(() => {
+          this.loadDebugSettings();
+        }, 30000); // Every 30 seconds
 
-              } catch (error) {
-                  console.warn('Failed to load debug settings from localStorage:', error);
-                  this.setDefaultDebugSettings();
-              }
+        console.log(
+          `🐛 Advanced Debug Middleware initialized in ${this.origin} context`,
+        );
+      }
+
+      async loadDebugSettings() {
+        try {
+          if (
+            typeof browser !== "undefined" &&
+            browser.storage &&
+            browser.storage.sync
+          ) {
+            const settings = await browser.storage.sync.get([
+              "vibeDebugEnabled",
+              "vibeDebugCategories",
+              "vibeDebugEventFilter",
+              "vibeDebugPerformance",
+              "vibeDebugVerbosity",
+              "vibeDebugContexts",
+              "vibeDebugAutoRoute",
+              "vibeDebugStorage",
+            ]);
+
+            // Update debug settings with type safety
+            const safeCategories = this.ensureArrayValue(
+              settings.vibeDebugCategories,
+              ["events", "errors"],
+            );
+
+            this.debugSettings.set(
+              "enabled",
+              settings.vibeDebugEnabled || false,
+            );
+            this.debugSettings.set("categories", safeCategories);
+            this.debugSettings.set(
+              "eventFilter",
+              settings.vibeDebugEventFilter || [],
+            );
+            this.debugSettings.set(
+              "performance",
+              settings.vibeDebugPerformance || false,
+            );
+            this.debugSettings.set(
+              "verbosity",
+              settings.vibeDebugVerbosity || "normal",
+            );
+            this.debugSettings.set(
+              "contexts",
+              settings.vibeDebugContexts || ["all"],
+            );
+            this.debugSettings.set(
+              "autoRoute",
+              settings.vibeDebugAutoRoute !== false,
+            ); // Default true
+            this.debugSettings.set(
+              "storageDebug",
+              settings.vibeDebugStorage || false,
+            );
+
+            // Apply filters
+            this.applyDebugFilters();
+
+            console.log(
+              `🔧 Debug settings loaded:`,
+              Object.fromEntries(this.debugSettings),
+            );
+          } else {
+            // Fallback to localStorage
+            this.loadDebugSettingsFromLocal();
           }
+        } catch (error) {
+          console.warn("Failed to load debug settings:", error);
+          this.setDefaultDebugSettings();
+        }
+      }
 
-          setDefaultDebugSettings() {
-              this.debugSettings.set('enabled', false);
-              this.debugSettings.set('categories', ['errors']);
-              this.debugSettings.set('eventFilter', []);
-              this.debugSettings.set('performance', false);
-              this.debugSettings.set('verbosity', 'normal');
-              this.debugSettings.set('contexts', ['all']);
-              this.debugSettings.set('autoRoute', true);
-          }
+      loadDebugSettingsFromLocal() {
+        try {
+          const localSettings = JSON.parse(
+            localStorage.getItem("vibeDebugSettings") || "{}",
+          );
 
-          applyDebugFilters() {
-              const rawCategories = this.debugSettings.get('categories') || [];
-              // Ensure categories is ALWAYS an array
-              const categories = this.ensureArrayValue(rawCategories, ['events', 'errors']);
-              const eventFilter = this.debugSettings.get('eventFilter') || [];
+          // Ensure categories is always an array with type safety
+          const safeCategories = this.ensureArrayValue(
+            localSettings.categories,
+            ["events", "errors"],
+          );
 
-              // Build event filters based on categories
-              this.eventFilters.clear();
+          this.debugSettings.set("enabled", localSettings.enabled || false);
+          this.debugSettings.set("categories", safeCategories);
+          this.debugSettings.set(
+            "eventFilter",
+            localSettings.eventFilter || [],
+          );
+          this.debugSettings.set(
+            "performance",
+            localSettings.performance || false,
+          );
+          this.debugSettings.set(
+            "verbosity",
+            localSettings.verbosity || "normal",
+          );
+          this.debugSettings.set("contexts", localSettings.contexts || ["all"]);
+          this.debugSettings.set(
+            "autoRoute",
+            localSettings.autoRoute !== false,
+          );
 
-              categories.forEach(category => {
-                  switch (category) {
-                      case 'events':
-                          this.eventFilters.set('all-events', { route: true, category: 'EVENT_DEBUG' });
-                          break;
-                      case 'messaging':
-                          this.eventFilters.set(/handle-|cross-context|message/i, { route: true, category: 'MESSAGE_DEBUG' });
-                          break;
-                      case 'injection':
-                          this.eventFilters.set(/inject|script/i, { route: true, category: 'INJECTION_DEBUG' });
-                          break;
-                      case 'extraction':
-                          this.eventFilters.set(/extract|content|media/i, { route: true, category: 'EXTRACTION_DEBUG' });
-                          break;
-                      case 'performance':
-                          this.eventFilters.set(/performance|metric|timing/i, { route: true, category: 'PERFORMANCE_DEBUG' });
-                          break;
-                      case 'errors':
-                          this.eventFilters.set(/error|failed|exception/i, { route: true, category: 'ERROR_DEBUG' });
-                          break;
-                      case 'lifecycle':
-                          this.eventFilters.set(/init|destroy|cleanup|lifecycle/i, { route: true, category: 'LIFECYCLE_DEBUG' });
-                          break;
-                      case 'ui':
-                          this.eventFilters.set(/ui-|display|theme|terminal/i, { route: true, category: 'UI_DEBUG' });
-                          break;
-                      case 'cross-context':
-                          this.eventFilters.set(/cross-context|route|announcement/i, { route: true, category: 'CROSS_CONTEXT_DEBUG' });
-                          break;
-                  }
+          this.applyDebugFilters();
+
+          console.log("🔧 Debug settings loaded from localStorage");
+        } catch (error) {
+          console.warn(
+            "Failed to load debug settings from localStorage:",
+            error,
+          );
+          this.setDefaultDebugSettings();
+        }
+      }
+
+      setDefaultDebugSettings() {
+        this.debugSettings.set("enabled", false);
+        this.debugSettings.set("categories", ["errors"]);
+        this.debugSettings.set("eventFilter", []);
+        this.debugSettings.set("performance", false);
+        this.debugSettings.set("verbosity", "normal");
+        this.debugSettings.set("contexts", ["all"]);
+        this.debugSettings.set("autoRoute", true);
+      }
+
+      applyDebugFilters() {
+        const rawCategories = this.debugSettings.get("categories") || [];
+        // Ensure categories is ALWAYS an array
+        const categories = this.ensureArrayValue(rawCategories, [
+          "events",
+          "errors",
+        ]);
+        const eventFilter = this.debugSettings.get("eventFilter") || [];
+
+        // Build event filters based on categories
+        this.eventFilters.clear();
+
+        categories.forEach((category) => {
+          switch (category) {
+            case "events":
+              this.eventFilters.set("all-events", {
+                route: true,
+                category: "EVENT_DEBUG",
               });
-
-              // Add specific event filters
-              eventFilter.forEach(eventPattern => {
-                  try {
-                      const regex = new RegExp(eventPattern, 'i');
-                      this.eventFilters.set(regex, { route: true, category: 'CUSTOM_DEBUG' });
-                  } catch (error) {
-                      // Exact match fallback
-                      this.eventFilters.set(eventPattern, { route: true, category: 'CUSTOM_DEBUG' });
-                  }
+              break;
+            case "messaging":
+              this.eventFilters.set(/handle-|cross-context|message/i, {
+                route: true,
+                category: "MESSAGE_DEBUG",
               });
+              break;
+            case "injection":
+              this.eventFilters.set(/inject|script/i, {
+                route: true,
+                category: "INJECTION_DEBUG",
+              });
+              break;
+            case "extraction":
+              this.eventFilters.set(/extract|content|media/i, {
+                route: true,
+                category: "EXTRACTION_DEBUG",
+              });
+              break;
+            case "performance":
+              this.eventFilters.set(/performance|metric|timing/i, {
+                route: true,
+                category: "PERFORMANCE_DEBUG",
+              });
+              break;
+            case "errors":
+              this.eventFilters.set(/error|failed|exception/i, {
+                route: true,
+                category: "ERROR_DEBUG",
+              });
+              break;
+            case "lifecycle":
+              this.eventFilters.set(/init|destroy|cleanup|lifecycle/i, {
+                route: true,
+                category: "LIFECYCLE_DEBUG",
+              });
+              break;
+            case "ui":
+              this.eventFilters.set(/ui-|display|theme|terminal/i, {
+                route: true,
+                category: "UI_DEBUG",
+              });
+              break;
+            case "cross-context":
+              this.eventFilters.set(/cross-context|route|announcement/i, {
+                route: true,
+                category: "CROSS_CONTEXT_DEBUG",
+              });
+              break;
           }
+        });
 
-          setupStorageListeners() {
-              if (typeof browser !== 'undefined' && browser.storage && browser.storage.onChanged) {
-                  browser.storage.onChanged.addListener((changes, area) => {
-                      if (area === 'sync') {
-                          const debugKeys = Object.keys(changes).filter(key => key.startsWith('vibeDebug'));
-
-                          if (debugKeys.length > 0) {
-                              console.log('🔧 Debug settings changed:', debugKeys);
-                              this.loadDebugSettings();
-
-                              // Route storage debug event if enabled
-                              if (this.debugSettings.get('storageDebug')) {
-                                  this.routeToTerminal('STORAGE_DEBUG',
-                                      `Debug settings updated: ${debugKeys.join(', ')}`,
-                                      'storage-change'
-                                  );
-                              }
-                          }
-                      }
-                  });
-              }
+        // Add specific event filters
+        eventFilter.forEach((eventPattern) => {
+          try {
+            const regex = new RegExp(eventPattern, "i");
+            this.eventFilters.set(regex, {
+              route: true,
+              category: "CUSTOM_DEBUG",
+            });
+          } catch (error) {
+            // Exact match fallback
+            this.eventFilters.set(eventPattern, {
+              route: true,
+              category: "CUSTOM_DEBUG",
+            });
           }
+        });
+      }
 
-          setupDebugRouting() {
-              // Setup routing to terminal based on origin
-              switch (this.origin) {
-                  case 'background':
-                      // Background can route to all visible tabs
-                      this.terminalRouting.set('method', 'broadcast-to-visible');
-                      break;
+      setupStorageListeners() {
+        if (
+          typeof browser !== "undefined" &&
+          browser.storage &&
+          browser.storage.onChanged
+        ) {
+          browser.storage.onChanged.addListener((changes, area) => {
+            if (area === "sync") {
+              const debugKeys = Object.keys(changes).filter((key) =>
+                key.startsWith("vibeDebug"),
+              );
 
-                  case 'proxy':
-                      // Proxy has direct terminal access
-                      this.terminalRouting.set('method', 'direct-terminal');
-                      break;
+              if (debugKeys.length > 0) {
+                console.log("🔧 Debug settings changed:", debugKeys);
+                this.loadDebugSettings();
 
-                  case 'extractor':
-                  case 'popup':
-                      // Send to proxy via cross-context
-                      this.terminalRouting.set('method', 'cross-context');
-                      this.terminalRouting.set('target', 'proxy');
-                      break;
-
-                  default:
-                      this.terminalRouting.set('method', 'console-fallback');
-              }
-          }
-
-          // Main middleware process method
-          async process(eventContext) {
-              const { event, data, context } = eventContext;
-
-              // Check if debugging is enabled
-              if (!this.debugSettings.get('enabled')) {
-                  return true; // Continue processing
-              }
-
-              // Check if this context should be debugged
-              const contexts = this.debugSettings.get('contexts');
-              if (!contexts.includes('all') && !contexts.includes(this.origin)) {
-                  return true; // Skip this context
-              }
-
-              // Check if event should be routed to terminal
-              const shouldRoute = this.shouldRouteEvent(event, data, context);
-
-              if (shouldRoute) {
-                  const routeInfo = this.getRouteInfo(event);
-                  await this.routeToTerminal(
-                      routeInfo.category,
-                      this.formatDebugMessage(event, data, context),
-                      event,
-                      routeInfo.priority
-                  );
-              }
-
-              // Performance tracking if enabled
-              if (this.debugSettings.get('performance')) {
-                  this.trackPerformance(eventContext);
-              }
-
-              return true; // Always continue processing
-          }
-
-          shouldRouteEvent(event, data, context) {
-              // Check auto-route setting
-              if (!this.debugSettings.get('autoRoute')) {
-                  return false;
-              }
-
-              // Check against filters
-              for (const [pattern, config] of this.eventFilters.entries()) {
-                  if (pattern === 'all-events') {
-                      return config.route;
-                  }
-
-                  if (pattern instanceof RegExp) {
-                      if (pattern.test(event)) {
-                          return config.route;
-                      }
-                  } else if (typeof pattern === 'string') {
-                      if (event.includes(pattern)) {
-                          return config.route;
-                      }
-                  }
-              }
-
-              return false;
-          }
-
-          getRouteInfo(event) {
-              for (const [pattern, config] of this.eventFilters.entries()) {
-                  if (pattern === 'all-events' ||
-                      (pattern instanceof RegExp && pattern.test(event)) ||
-                      (typeof pattern === 'string' && event.includes(pattern))) {
-                      return {
-                          category: config.category,
-                          priority: config.priority || 'normal'
-                      };
-                  }
-              }
-
-              return { category: 'DEBUG', priority: 'normal' };
-          }
-
-          formatDebugMessage(event, data, context) {
-              const verbosity = this.debugSettings.get('verbosity');
-              const timestamp = new Date().toISOString();
-
-              let message = `[${this.origin.toUpperCase()}] ${event}`;
-
-              if (verbosity === 'verbose') {
-                  // Include data and context details
-                  const dataStr = this.safeStringify(data);
-                  const contextStr = this.safeStringify(context);
-
-                  message += `\n  Data: ${dataStr}`;
-                  message += `\n  Context: ${contextStr}`;
-                  message += `\n  Session: ${this.debugSessionId}`;
-                  message += `\n  Time: ${timestamp}`;
-              } else if (verbosity === 'detailed') {
-                  // Include limited data
-                  message += ` | Data: ${this.safeStringify(data, 100)}`;
-                  message += ` | Time: ${timestamp.split('T')[1].split('.')[0]}`;
-              }
-
-              return message;
-          }
-
-          safeStringify(obj, maxLength = 500) {
-              try {
-                  let str = JSON.stringify(obj, (key, value) => {
-                      // Filter out functions and complex objects
-                      if (typeof value === 'function') return '[Function]';
-                      if (value instanceof Element) return '[DOM Element]';
-                      if (value instanceof Window) return '[Window]';
-                      return value;
-                  });
-
-                  if (maxLength && str.length > maxLength) {
-                      str = str.substring(0, maxLength) + '...';
-                  }
-
-                  return str;
-              } catch (error) {
-                  return `[Stringify Error: ${error.message}]`;
-              }
-          }
-
-          async routeToTerminal(category, message, eventType, priority = 'normal') {
-              const routingMethod = this.terminalRouting.get('method');
-
-              try {
-                  switch (routingMethod) {
-                      case 'direct-terminal':
-                          await this.routeDirectToTerminal(category, message, eventType, priority);
-                          break;
-
-                      case 'cross-context':
-                          await this.routeCrossContext(category, message, eventType, priority);
-                          break;
-
-                      case 'broadcast-to-visible':
-                          await this.routeBroadcastToVisible(category, message, eventType, priority);
-                          break;
-
-                      case 'console-fallback':
-                      default:
-                          this.routeToConsole(category, message, eventType, priority);
-                          break;
-                  }
-              } catch (error) {
-                  console.warn(`Debug routing failed (${routingMethod}):`, error);
-                  this.routeToConsole(category, message, eventType, priority);
-              }
-          }
-
-          async routeDirectToTerminal(category, message, eventType, priority) {
-              // Direct access to SmartTerminal in proxy context
-              if (window.__smartTerminal) {
-                  const level = priority === 'high' ? 'warn' : 'debug';
-                  window.__smartTerminal.displayLog(level, message, category, 'debug-middleware');
-              } else if (window.__localEventBus) {
-                  // Fallback to local event bus
-                  window.__localEventBus.emitLocal('debug-terminal-log', {
-                      level: 'debug',
-                      message,
-                      category,
-                      source: 'debug-middleware'
-                  });
-              }
-          }
-
-          async routeCrossContext(category, message, eventType, priority) {
-              // Send to proxy via cross-context bridge
-              if (window.__crossContextBridge) {
-                  await window.__crossContextBridge.sendToProxy('logFromBackground', {
-                      level: priority === 'high' ? 'warn' : 'debug',
-                      message,
-                      category,
-                      source: `debug-${this.origin}`
-                  });
-              }
-          }
-
-          async routeBroadcastToVisible(category, message, eventType, priority) {
-              // Background broadcasting to all visible tabs
-              if (window.__enhancedOrchestrator) {
-                  const visibleTabs = Array.from(window.__enhancedOrchestrator.smartTabs.values())
-                      .filter(tab => tab.type === 'visible');
-
-                  for (const tab of visibleTabs) {
-                      try {
-                          await tab.sendMessage('logFromBackground', {
-                              level: priority === 'high' ? 'warn' : 'debug',
-                              message,
-                              category,
-                              source: 'debug-background'
-                          });
-                      } catch (error) {
-                          // Continue with other tabs
-                      }
-                  }
-              }
-          }
-
-          routeToConsole(category, message, eventType, priority) {
-              const logMethod = priority === 'high' ? console.warn : console.log;
-              logMethod(`[${category}] ${message}`);
-          }
-
-          trackPerformance(eventContext) {
-              const { event, context } = eventContext;
-
-              if (!context.startTime) {
-                  context.startTime = Date.now();
-                  return;
-              }
-
-              const duration = Date.now() - context.startTime;
-
-              if (duration > 100) { // Log slow events
+                // Route storage debug event if enabled
+                if (this.debugSettings.get("storageDebug")) {
                   this.routeToTerminal(
-                      'PERFORMANCE_DEBUG',
-                      `Slow event: ${event} took ${duration}ms`,
-                      'performance-warning',
-                      'high'
+                    "STORAGE_DEBUG",
+                    `Debug settings updated: ${debugKeys.join(", ")}`,
+                    "storage-change",
                   );
+                }
               }
-          }
-
-          // Public API for manual debug routing
-          debugEvent(event, data, options = {}) {
-              if (this.debugSettings.get('enabled')) {
-                  this.routeToTerminal(
-                      options.category || 'MANUAL_DEBUG',
-                      this.formatDebugMessage(event, data, options),
-                      event,
-                      options.priority || 'normal'
-                  );
-              }
-          }
-
-          // Configuration methods
-          async enableDebug(categories = ['events', 'errors']) {
-              // Ensure categories is always an array
-              const safeCategories = this.ensureArrayValue(categories, ['events', 'errors']);
-              
-              await this.updateDebugSettings({
-                  vibeDebugEnabled: true,
-                  vibeDebugCategories: safeCategories
-              });
-          }
-
-          async disableDebug() {
-              await this.updateDebugSettings({
-                  vibeDebugEnabled: false
-              });
-          }
-
-          async updateDebugSettings(updates) {
-              try {
-                  if (typeof browser !== 'undefined' && browser.storage && browser.storage.sync) {
-                      await browser.storage.sync.set(updates);
-                  } else {
-                      // Fallback to localStorage
-                      const current = JSON.parse(localStorage.getItem('vibeDebugSettings') || '{}');
-                      const updated = { ...current, ...updates };
-                      localStorage.setItem('vibeDebugSettings', JSON.stringify(updated));
-                      this.loadDebugSettingsFromLocal();
-                  }
-              } catch (error) {
-                  console.error('Failed to update debug settings:', error);
-              }
-          }
-
-          // Status and monitoring
-          getDebugStatus() {
-
-              return {
-                  enabled: this.debugSettings.get('enabled'),
-                  origin: this.origin,
-                  settings: Object.fromEntries(this.debugSettings),
-                  filters: this.eventFilters.size,
-                  routing: Object.fromEntries(this.terminalRouting),
-                  sessionId: this.debugSessionId
-              };
-          }
+            }
+          });
+        }
       }
+
+      setupDebugRouting() {
+        // Setup routing to terminal based on origin
+        switch (this.origin) {
+          case "background":
+            // Background can route to all visible tabs
+            this.terminalRouting.set("method", "broadcast-to-visible");
+            break;
+
+          case "proxy":
+            // Proxy has direct terminal access
+            this.terminalRouting.set("method", "direct-terminal");
+            break;
+
+          case "extractor":
+          case "popup":
+            // Send to proxy via cross-context
+            this.terminalRouting.set("method", "cross-context");
+            this.terminalRouting.set("target", "proxy");
+            break;
+
+          default:
+            this.terminalRouting.set("method", "console-fallback");
+        }
+      }
+
+      // Main middleware process method
+      async process(eventContext) {
+        const { event, data, context } = eventContext;
+
+        // Check if debugging is enabled
+        if (!this.debugSettings.get("enabled")) {
+          return true; // Continue processing
+        }
+
+        // Check if this context should be debugged
+        const contexts = this.debugSettings.get("contexts");
+        if (!contexts.includes("all") && !contexts.includes(this.origin)) {
+          return true; // Skip this context
+        }
+
+        // Check if event should be routed to terminal
+        const shouldRoute = this.shouldRouteEvent(event, data, context);
+
+        if (shouldRoute) {
+          const routeInfo = this.getRouteInfo(event);
+          await this.routeToTerminal(
+            routeInfo.category,
+            this.formatDebugMessage(event, data, context),
+            event,
+            routeInfo.priority,
+          );
+        }
+
+        // Performance tracking if enabled
+        if (this.debugSettings.get("performance")) {
+          this.trackPerformance(eventContext);
+        }
+
+        return true; // Always continue processing
+      }
+
+      shouldRouteEvent(event, data, context) {
+        // Check auto-route setting
+        if (!this.debugSettings.get("autoRoute")) {
+          return false;
+        }
+
+        // Check against filters
+        for (const [pattern, config] of this.eventFilters.entries()) {
+          if (pattern === "all-events") {
+            return config.route;
+          }
+
+          if (pattern instanceof RegExp) {
+            if (pattern.test(event)) {
+              return config.route;
+            }
+          } else if (typeof pattern === "string") {
+            if (event.includes(pattern)) {
+              return config.route;
+            }
+          }
+        }
+
+        return false;
+      }
+
+      getRouteInfo(event) {
+        for (const [pattern, config] of this.eventFilters.entries()) {
+          if (
+            pattern === "all-events" ||
+            (pattern instanceof RegExp && pattern.test(event)) ||
+            (typeof pattern === "string" && event.includes(pattern))
+          ) {
+            return {
+              category: config.category,
+              priority: config.priority || "normal",
+            };
+          }
+        }
+
+        return { category: "DEBUG", priority: "normal" };
+      }
+
+      formatDebugMessage(event, data, context) {
+        const verbosity = this.debugSettings.get("verbosity");
+        const timestamp = new Date().toISOString();
+
+        let message = `[${this.origin.toUpperCase()}] ${event}`;
+
+        if (verbosity === "verbose") {
+          // Include data and context details
+          const dataStr = this.safeStringify(data);
+          const contextStr = this.safeStringify(context);
+
+          message += `\n  Data: ${dataStr}`;
+          message += `\n  Context: ${contextStr}`;
+          message += `\n  Session: ${this.debugSessionId}`;
+          message += `\n  Time: ${timestamp}`;
+        } else if (verbosity === "detailed") {
+          // Include limited data
+          message += ` | Data: ${this.safeStringify(data, 100)}`;
+          message += ` | Time: ${timestamp.split("T")[1].split(".")[0]}`;
+        }
+
+        return message;
+      }
+
+      safeStringify(obj, maxLength = 500) {
+        try {
+          let str = JSON.stringify(obj, (key, value) => {
+            // Filter out functions and complex objects
+            if (typeof value === "function") return "[Function]";
+            if (value instanceof Element) return "[DOM Element]";
+            if (value instanceof Window) return "[Window]";
+            return value;
+          });
+
+          if (maxLength && str.length > maxLength) {
+            str = str.substring(0, maxLength) + "...";
+          }
+
+          return str;
+        } catch (error) {
+          return `[Stringify Error: ${error.message}]`;
+        }
+      }
+
+      async routeToTerminal(category, message, eventType, priority = "normal") {
+        const routingMethod = this.terminalRouting.get("method");
+
+        try {
+          switch (routingMethod) {
+            case "direct-terminal":
+              await this.routeDirectToTerminal(
+                category,
+                message,
+                eventType,
+                priority,
+              );
+              break;
+
+            case "cross-context":
+              await this.routeCrossContext(
+                category,
+                message,
+                eventType,
+                priority,
+              );
+              break;
+
+            case "broadcast-to-visible":
+              await this.routeBroadcastToVisible(
+                category,
+                message,
+                eventType,
+                priority,
+              );
+              break;
+
+            case "console-fallback":
+            default:
+              this.routeToConsole(category, message, eventType, priority);
+              break;
+          }
+        } catch (error) {
+          console.warn(`Debug routing failed (${routingMethod}):`, error);
+          this.routeToConsole(category, message, eventType, priority);
+        }
+      }
+
+      async routeDirectToTerminal(category, message, eventType, priority) {
+        // Direct access to SmartTerminal in proxy context
+        if (window.__smartTerminal) {
+          const level = priority === "high" ? "warn" : "debug";
+          window.__smartTerminal.displayLog(
+            level,
+            message,
+            category,
+            "debug-middleware",
+          );
+        } else if (window.__localEventBus) {
+          // Fallback to local event bus
+          window.__localEventBus.emitLocal("debug-terminal-log", {
+            level: "debug",
+            message,
+            category,
+            source: "debug-middleware",
+          });
+        }
+      }
+
+      async routeCrossContext(category, message, eventType, priority) {
+        // Send to proxy via cross-context bridge
+        if (window.__crossContextBridge) {
+          await window.__crossContextBridge.sendToProxy("logFromBackground", {
+            level: priority === "high" ? "warn" : "debug",
+            message,
+            category,
+            source: `debug-${this.origin}`,
+          });
+        }
+      }
+
+      async routeBroadcastToVisible(category, message, eventType, priority) {
+        // Background broadcasting to all visible tabs
+        if (window.__enhancedOrchestrator) {
+          const visibleTabs = Array.from(
+            window.__enhancedOrchestrator.smartTabs.values(),
+          ).filter((tab) => tab.type === "visible");
+
+          for (const tab of visibleTabs) {
+            try {
+              await tab.sendMessage("logFromBackground", {
+                level: priority === "high" ? "warn" : "debug",
+                message,
+                category,
+                source: "debug-background",
+              });
+            } catch (error) {
+              // Continue with other tabs
+            }
+          }
+        }
+      }
+
+      routeToConsole(category, message, eventType, priority) {
+        const logMethod = priority === "high" ? console.warn : console.log;
+        logMethod(`[${category}] ${message}`);
+      }
+
+      trackPerformance(eventContext) {
+        const { event, context } = eventContext;
+
+        if (!context.startTime) {
+          context.startTime = Date.now();
+          return;
+        }
+
+        const duration = Date.now() - context.startTime;
+
+        if (duration > 100) {
+          // Log slow events
+          this.routeToTerminal(
+            "PERFORMANCE_DEBUG",
+            `Slow event: ${event} took ${duration}ms`,
+            "performance-warning",
+            "high",
+          );
+        }
+      }
+
+      // Public API for manual debug routing
+      debugEvent(event, data, options = {}) {
+        if (this.debugSettings.get("enabled")) {
+          this.routeToTerminal(
+            options.category || "MANUAL_DEBUG",
+            this.formatDebugMessage(event, data, options),
+            event,
+            options.priority || "normal",
+          );
+        }
+      }
+
+      // Configuration methods
+      async enableDebug(categories = ["events", "errors"]) {
+        // Ensure categories is always an array
+        const safeCategories = this.ensureArrayValue(categories, [
+          "events",
+          "errors",
+        ]);
+
+        await this.updateDebugSettings({
+          vibeDebugEnabled: true,
+          vibeDebugCategories: safeCategories,
+        });
+      }
+
+      async disableDebug() {
+        await this.updateDebugSettings({
+          vibeDebugEnabled: false,
+        });
+      }
+
+      async updateDebugSettings(updates) {
+        try {
+          if (
+            typeof browser !== "undefined" &&
+            browser.storage &&
+            browser.storage.sync
+          ) {
+            await browser.storage.sync.set(updates);
+          } else {
+            // Fallback to localStorage
+            const current = JSON.parse(
+              localStorage.getItem("vibeDebugSettings") || "{}",
+            );
+            const updated = { ...current, ...updates };
+            localStorage.setItem("vibeDebugSettings", JSON.stringify(updated));
+            this.loadDebugSettingsFromLocal();
+          }
+        } catch (error) {
+          console.error("Failed to update debug settings:", error);
+        }
+      }
+
+      // Status and monitoring
+      getDebugStatus() {
+        return {
+          enabled: this.debugSettings.get("enabled"),
+          origin: this.origin,
+          settings: Object.fromEntries(this.debugSettings),
+          filters: this.eventFilters.size,
+          routing: Object.fromEntries(this.terminalRouting),
+          sessionId: this.debugSessionId,
+        };
+      }
+    }
 
     // =====  SUBSCRIBER MANAGER =====
     class SubscriberManager {
@@ -3532,59 +3439,64 @@ class DebugMiddleware extends SubscriberMiddleware {
         this.eventStats = new Map();
         this.isDestroyed = false;
         this.origin = this.getOrigin();
+        this.middlewareClasses =
+          SubscriberMiddleware.getAllMiddlewareClasses();
+        console.log(
+          "Found middleware:",
+          this.middlewareClasses.map((c) => c.name),
+        );
 
-        // Add default global middlewares
-        this.crossContextMiddleware = new CrossContextRoutingMiddleware();
-        this.terminalMiddleware = new TerminalIntegrationMiddleware();
-        this.batchingMiddleware = new BatchingMiddleware();
-        this.memoryMiddleware = new MemoryManagementMiddleware();
-        this.crossContextSerializationMiddleware= new CrossContextSerializationMiddleware();
-                this.rateLimitMiddleware = new RateLimitMiddleware();
-                this.crossContextMetricsMiddleware = new CrossContextMetricsMiddleware();
-                this.crossContextReplayMiddleware = new CrossContextReplayMiddleware();
-        this.debugMiddleware = new DebugMiddleware();
-
-                // Add middlewares in priority order
-                this.addGlobalMiddleware(this.debugMiddleware);
-        this.addGlobalMiddleware(this.crossContextMiddleware);
-        this.addGlobalMiddleware(this.memoryMiddleware);
-                this.addGlobalMiddleware(this.crossContextSerializationMiddleware);
-                this.addGlobalMiddleware(this.rateLimitMiddleware);
-                this.addGlobalMiddleware(this.batchingMiddleware);
-                this.addGlobalMiddleware(this.terminalMiddleware);
-                this.addGlobalMiddleware(this.crossContextMetricsMiddleware);
-                this.addGlobalMiddleware(this.crossContextReplayMiddleware);
+        // Auto-discover and load all middlewares
+        this.setupMiddlewares();
 
         if (typeof unified !== "undefined" && window.__vibeUnified) {
           this.contentTransformer = window.__vibeUnified.ContentTransformer;
-          this.pipelineProcessor = new window.__vibeUnified.PipelineProcessor;
+          this.pipelineProcessor = new window.__vibeUnified.PipelineProcessor();
         }
 
         // Setup context info responder
         this.setupContextInfoResponder();
 
-                console.log(`🎯 SubscriberManager initialized in ${this.origin} context`);
+        console.log(
+          `🎯 SubscriberManager initialized in ${this.origin} context`,
+        );
+      }
+
+      setupMiddlewares() {
+        for (const Class of this.middlewareClasses) {
+          if (Class === SubscriberMiddleware) continue;
+          try {
+            const instance = new Class();
+            this.addGlobalMiddleware(instance);
+          } catch (e) {
+            console.warn(`Failed to instantiate ${Class.name}:`, e);
+          }
+        }
       }
 
       getOrigin() {
         // Check for background context FIRST using API availability
-        if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getManifest) {
-            try {
-                // Background has tabs API but content scripts don't
-                if (browser.tabs && browser.tabs.query) {
-                    return "background";
-                }
-            } catch(e) {}
+        if (
+          typeof browser !== "undefined" &&
+          browser.runtime &&
+          browser.runtime.getManifest
+        ) {
+          try {
+            // Background has tabs API but content scripts don't
+            if (browser.tabs && browser.tabs.query) {
+              return "background";
+            }
+          } catch (e) {}
         }
-        
+
         // Then check for specific component markers
         if (window.__vibeReaderProxyController) return "proxy";
         if (window.__vibeReaderStealthExtractor) return "extractor";
         if (window.location?.href?.includes("popup.html")) return "popup";
-        
+
         // Fallback for Node.js style background (shouldn't happen in Firefox)
         if (typeof window === "undefined") return "background";
-        
+
         return "unknown";
       }
 
@@ -3701,7 +3613,8 @@ class DebugMiddleware extends SubscriberMiddleware {
 
         // Sort subscribers by priority
         const sortedSubscribers = allSubscribers.sort(
-                    (a, b) => (b.preferences.priority || 0) - (a.preferences.priority || 0),
+          (a, b) =>
+            (b.preferences.priority || 0) - (a.preferences.priority || 0),
         );
 
         // Process subscribers
@@ -3780,7 +3693,10 @@ class DebugMiddleware extends SubscriberMiddleware {
           const toRemove = [];
 
           subscriberSet.forEach((subscriber) => {
-                        if (subscriber.state === "disabled" && subscriber.lastActivity < cutoffTime) {
+            if (
+              subscriber.state === "disabled" &&
+              subscriber.lastActivity < cutoffTime
+            ) {
               toRemove.push(subscriber);
             }
           });
@@ -3817,13 +3733,16 @@ class DebugMiddleware extends SubscriberMiddleware {
 
           subscriberSet.forEach((subscriber) => {
             stats.totalSubscribers++;
-                        stats.byState[subscriber.state] = (stats.byState[subscriber.state] || 0) + 1;
+            stats.byState[subscriber.state] =
+              (stats.byState[subscriber.state] || 0) + 1;
 
             if (subscriber.isQuarantined) {
               stats.quarantined++;
             }
 
-                        stats.byEventType[eventType].subscribers.push(subscriber.getStats());
+            stats.byEventType[eventType].subscribers.push(
+              subscriber.getStats(),
+            );
           });
         });
 
@@ -3832,9 +3751,9 @@ class DebugMiddleware extends SubscriberMiddleware {
       // Pipeline integration methods
       addPipelineTransform(transform, options = {}) {
         if (this.pipelineProcessor) {
-        this.pipelineProcessor.use(transform, options);
+          this.pipelineProcessor.use(transform, options);
+        }
       }
-            }
 
       async processContent(htmlContent, transforms = []) {
         if (!this.contentTransformer || !this.pipelineProcessor) {
@@ -3844,7 +3763,9 @@ class DebugMiddleware extends SubscriberMiddleware {
 
         // Temporarily add transforms
         const originalTransforms = [...this.pipelineProcessor.transforms];
-                transforms.forEach((transform) => this.pipelineProcessor.use(transform));
+        transforms.forEach((transform) =>
+          this.pipelineProcessor.use(transform),
+        );
 
         try {
           const result = await this.pipelineProcessor.process(hast);
@@ -3858,24 +3779,25 @@ class DebugMiddleware extends SubscriberMiddleware {
         }
       }
 
-        getStats() {
-            const baseStats = this.getSubscriberStats();
+      getStats() {
+        const baseStats = this.getSubscriberStats();
 
-            return {
-                ...baseStats,
-                origin: this.origin,
-                crossContextRouting: this.crossContextMiddleware?.getRoutingStats(),
-                    batching: this.batchingMiddleware?.getBatchingStats(),
-                    rateLimiting: this.rateLimitMiddleware?.getRateLimitStats(),
-                    serialization: this.crossContextSerializationMiddleware?.getSerializationStats(),
-                    metrics: this.crossContextMetricsMiddleware?.getMetricsSummary(),
-                    replay: this.crossContextReplayMiddleware?.getReplayStats(),
-                    debug: this.debugMiddleware?.getDebugStatus(),
-                eventStats: Object.fromEntries(this.eventStats),
-            };
-        }
+        return {
+          ...baseStats,
+          origin: this.origin,
+          crossContextRouting: this.crossContextMiddleware?.getRoutingStats(),
+          batching: this.batchingMiddleware?.getBatchingStats(),
+          rateLimiting: this.rateLimitMiddleware?.getRateLimitStats(),
+          serialization:
+            this.crossContextSerializationMiddleware?.getSerializationStats(),
+          metrics: this.crossContextMetricsMiddleware?.getMetricsSummary(),
+          replay: this.crossContextReplayMiddleware?.getReplayStats(),
+          debug: this.debugMiddleware?.getDebugStatus(),
+          eventStats: Object.fromEntries(this.eventStats),
+        };
+      }
 
-        cleanup() {
+      cleanup() {
         // Clear all pending timers
         this.subscribers.forEach((subscriberSet) => {
           subscriberSet.forEach((subscriber) => {
@@ -3942,7 +3864,12 @@ class DebugMiddleware extends SubscriberMiddleware {
         return unsubscribe;
       }
 
-            subscribeWithTransforms(eventType, callback, transforms = [], options = {}) {
+      subscribeWithTransforms(
+        eventType,
+        callback,
+        transforms = [],
+        options = {},
+      ) {
         const enhancedOptions = {
           ...options,
           transformations: [...transforms, ...(options.transformations || [])],
@@ -3958,7 +3885,11 @@ class DebugMiddleware extends SubscriberMiddleware {
           component: this.constructor.name,
         };
 
-                return await this.subscriberManager.emit(eventType, data, enhancedContext);
+        return await this.subscriberManager.emit(
+          eventType,
+          data,
+          enhancedContext,
+        );
       }
 
       deactivate() {
@@ -3977,7 +3908,9 @@ class DebugMiddleware extends SubscriberMiddleware {
       }
 
       getSubscriberStats() {
-                return this.subscriberManager ? this.subscriberManager.getSubscriberStats() : {};
+        return this.subscriberManager
+          ? this.subscriberManager.getSubscriberStats()
+          : {};
       }
 
       getStats() {
@@ -4005,31 +3938,18 @@ class DebugMiddleware extends SubscriberMiddleware {
       SubscriberManager: SubscriberManager,
       SubscriberEnabledComponent: SubscriberEnabledComponent,
       globalManager: window.__globalSubscriberManager,
-
-      // Middleware exports
-            StateValidationMiddleware,
-            RateLimitMiddleware,
-            EventFilterMiddleware,
-            TransformationMiddleware,
-        ErrorRecoveryAndDeliveryMiddleware,
-      CrossContextRoutingMiddleware,
-            CrossContextSerializationMiddleware,
-      TerminalIntegrationMiddleware,
-      BatchingMiddleware,
-            MemoryManagementMiddleware,
-            CrossContextMetricsMiddleware,
-            CrossContextReplayMiddleware,
-            DebugMiddleware
     };
 
     window.VibeSubscriber = VibeSubscriber;
     window.SubscriberManager = window.__globalSubscriberManager;
     window.SubscriberEnabledComponent = SubscriberEnabledComponent;
-        window.SubscriberMiddleware = SubscriberMiddleware;
+    window.SubscriberMiddleware = SubscriberMiddleware;
 
     console.log("✅ VibeSubscribe v2.5 loaded with cross-context routing");
     console.log(`📡 Global manager at window.__globalSubscriberManager`);
-        console.log(`🌐 Active in ${window.__globalSubscriberManager.origin} context`);
+    console.log(
+      `🌐 Active in ${window.__globalSubscriberManager.origin} context`,
+    );
 
     true; // Return true for successful injection
   } catch (error) {
@@ -4039,7 +3959,7 @@ class DebugMiddleware extends SubscriberMiddleware {
     delete window.VibeSubscriber;
     delete window.SubscriberManager;
     delete window.SubscriberEnabledComponent;
-        delete window.SubscriberMiddleware;
+    delete window.SubscriberMiddleware;
     console.error("Failed to initialize VibeSubscribe:", error);
     throw error;
   }

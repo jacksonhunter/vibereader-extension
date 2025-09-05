@@ -54,70 +54,146 @@ if (window.__vibeReaderProxyController || window.__proxyController) {
             }
         }
 
-        // ===== TERMINAL ROUTING MIDDLEWARE =====
-        class TerminalRoutingMiddleware extends SubscriberMiddleware {
+        // ===== ENHANCED TERMINAL INTEGRATION MIDDLEWARE =====
+        class EnhancedTerminalMiddleware extends SubscriberMiddleware {
             constructor() {
-                super("TerminalRouting", 9);
-                this.routes = new Map([
-                    ["ERRORS", "error-terminal"],
-                    ["CSS", "system-terminal"],
-                    ["MEDIA", "media-terminal"],
-                    ["NETWORK", "network-terminal"],
-                    ["SYSTEM", "system-terminal"],
-                    ["IMAGES", "image-terminal"],
-                    ["VIDEOS", "video-terminal"],
-                    ["ASCII", "system-terminal"],
-                ]);
+                super('EnhancedTerminal', 8); // Runs after SimpleCategoryMiddleware
+
+                this.terminalBuffer = new Map(); // terminalId -> buffer
+                this.flushTimers = new Map();
+                this.terminalRoutes = new Map();
+
+                this.setupTerminalRoutes();
+            }
+
+            setupTerminalRoutes() {
+                // Map categories to terminal IDs
+                this.terminalRoutes.set('errors', 'error-terminal');
+                this.terminalRoutes.set('media', 'media-terminal');
+                this.terminalRoutes.set('network', 'network-terminal');
+                this.terminalRoutes.set('system', 'system-terminal');
+                this.terminalRoutes.set('default', 'main-terminal');
             }
 
             async process(eventContext) {
-                const { event, data } = eventContext;
+                const { event, data, context } = eventContext;
 
-                // Route logs to appropriate terminals
-                if (event.startsWith("log-") || event === "terminal-log") {
-                    const category = this.categorize(data.message || data.action || "");
-                    const terminalId = this.routes.get(category);
-
-                    eventContext.data = {
-                        ...data,
-                        targetTerminal: terminalId,
-                        category,
-                        icon: this.getIcon(category),
-                    };
+                if (this.shouldLogToTerminal(event, data)) {
+                    this.queueForTerminal(event, data, context);
                 }
 
                 return true;
             }
 
-            categorize(message) {
-                const lower = message.toLowerCase();
-                if (lower.includes("error") || lower.includes("failed") || lower.includes("❌"))
-                    return "ERRORS";
-                if (lower.includes("css") || lower.includes("style") || lower.includes("🎨"))
-                    return "CSS";
-                if (lower.includes(".mp4") || lower.includes("video") || lower.includes("🎬"))
-                    return "VIDEOS";
-                if (lower.includes(".jpg") || lower.includes(".png") || lower.includes("image") || lower.includes("🖼️"))
-                    return "IMAGES";
-                if (lower.includes("ascii") || lower.includes("🎯"))
-                    return "ASCII";
-                if (lower.includes("network") || lower.includes("fetch") || lower.includes("proxy"))
-                    return "NETWORK";
-                return "SYSTEM";
+            shouldLogToTerminal(event, data) {
+                // Skip logging events to prevent recursion
+                if (event.startsWith('terminal-') ||
+                    event.startsWith('log-') ||
+                    data?.[Symbol.for('bypass-logging')]) {
+                    return false;
+                }
+
+                return event.includes('error') ||
+                    event.includes('warning') ||
+                    event.includes('media') ||
+                    event.includes('extraction') ||
+                    event.includes('network') ||
+                    data?.logToTerminal !== false;
             }
 
-            getIcon(category) {
-                const icons = {
-                    ERRORS: "🔴",
-                    CSS: "🎨",
-                    MEDIA: "📦",
-                    VIDEOS: "🎬",
-                    IMAGES: "🖼️",
-                    ASCII: "🎯",
-                    NETWORK: "🌐",
-                    SYSTEM: "⚙️",
+            queueForTerminal(event, data, context) {
+                // Use category from SimpleCategoryMiddleware
+                const category = context.category || 'default';
+                const categoryMetadata = context.categoryMetadata || {};
+
+                const terminalId = categoryMetadata.terminal ||
+                    this.terminalRoutes.get(category) ||
+                    'main-terminal';
+
+                // Get or create buffer
+                if (!this.terminalBuffer.has(terminalId)) {
+                    this.terminalBuffer.set(terminalId, []);
+                }
+
+                const buffer = this.terminalBuffer.get(terminalId);
+                buffer.push({
+                    timestamp: Date.now(),
+                    level: this.getLogLevel(event, data, categoryMetadata),
+                    message: this.formatMessage(event, data),
+                    category: category,
+                    icon: categoryMetadata.icon || '📋',
+                    source: context.sourceContext || this.origin
+                });
+
+                // Schedule flush (batching)
+                this.scheduleFlush(terminalId, 100); // 100ms batch window
+            }
+
+            scheduleFlush(terminalId, delay = 100) {
+                // Clear existing timer
+                if (this.flushTimers.has(terminalId)) {
+                    clearTimeout(this.flushTimers.get(terminalId));
+                }
+
+                // Schedule new flush
+                const timer = setTimeout(() => {
+                    this.flushTerminalBuffer(terminalId);
+                    this.flushTimers.delete(terminalId);
+                }, delay);
+
+                this.flushTimers.set(terminalId, timer);
+            }
+
+            flushTerminalBuffer(terminalId) {
+                const buffer = this.terminalBuffer.get(terminalId);
+                if (!buffer || buffer.length === 0) return;
+
+                // Create batched terminal event
+                const batchedLogs = {
+                    [Symbol.for('bypass-logging')]: true,
+                    terminalId,
+                    logs: [...buffer],
+                    batchSize: buffer.length,
+                    timestamp: Date.now()
                 };
-                return icons[category] || "📋";
+
+                // Clear buffer
+                buffer.length = 0;
+
+                // Emit batched terminal update
+                if (window.__localEventBus) {
+                    window.__localEventBus.emitLocal('terminal-batch', batchedLogs);
+                }
+
+                // Send to cross-context terminals if needed
+                if (window.__crossContextBridge) {
+                    window.__crossContextBridge.sendToProxy('terminal-batch', batchedLogs);
+                }
+            }
+
+            getLogLevel(event, data, categoryMetadata) {
+                if (event.includes('error') || event.includes('failed')) return 'error';
+                if (event.includes('warn') || categoryMetadata.priority === 'high') return 'warn';
+                return 'info';
+            }
+
+            formatMessage(event, data) {
+                if (data?.message) return data.message;
+                if (data?.action) return `${event}: ${data.action}`;
+                return event;
+            }
+
+            getOrigin() {
+                if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getManifest) {
+                    try {
+                        if (browser.tabs && browser.tabs.query) return "background";
+                    } catch(e) {}
+                }
+
+                if (window.__vibeReaderProxyController) return "proxy";
+                if (window.__vibeReaderStealthExtractor) return "extractor";
+                if (window.location?.href?.includes("popup.html")) return "popup";
+                return "unknown";
             }
         }
 

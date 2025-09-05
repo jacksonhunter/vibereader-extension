@@ -20,7 +20,8 @@
       "Bash(powershell.exe:*)",
       "Bash(.run-extension.ps1)",
       "Bash(grep:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(npm run build:middleware:*)"
     ],
     "deny": [],
     "ask": []

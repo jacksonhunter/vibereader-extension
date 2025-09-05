@@ -3,286 +3,6 @@
 
 // firefox-polyfill.js - Add to background-enhanced.js before ScriptInjector class
 
-/*// ===== FIREFOX COMPATIBILITY LAYER =====
-(function() {
-    // Detect Firefox version
-    const isFirefox = typeof browser !== 'undefined' && browser.runtime?.getURL;
-    const firefoxVersion = isFirefox ? parseInt(navigator.userAgent.match(/Firefox\/(\d+)/)?.[1] || '0') : 0;
-
-    console.log(`🦊 Firefox detected: ${isFirefox}, Version: ${firefoxVersion}`);
-
-    // Polyfill browser.scripting for Firefox < 102
-    if (isFirefox && firefoxVersion < 102 && !browser.scripting) {
-        console.log('📦 Installing browser.scripting polyfill for Firefox < 102');
-
-        browser.scripting = {
-            executeScript: async function(options) {
-                const { target, files, func, args } = options;
-
-                if (!target?.tabId) {
-                    throw new Error('target.tabId is required');
-                }
-
-                try {
-                    if (files && files.length > 0) {
-                        // Execute files sequentially
-                        const results = [];
-                        for (const file of files) {
-                            const result = await browser.tabs.executeScript(target.tabId, {
-                                file: file,
-                                allFrames: target.allFrames || false,
-                                frameId: target.frameId || 0,
-                                runAt: options.runAt || 'document_idle'
-                            });
-                            results.push(result);
-                        }
-                        return results;
-                    } else if (func) {
-                        // Execute function
-                        const code = args ? `(${func.toString()})(${JSON.stringify(args)})` : `(${func.toString()})()`;
-                        return await browser.tabs.executeScript(target.tabId, {
-                            code: code,
-                            allFrames: target.allFrames || false,
-                            frameId: target.frameId || 0,
-                            runAt: options.runAt || 'document_idle'
-                        });
-                    }
-
-                    throw new Error('Either files or func must be specified');
-                } catch (error) {
-                    console.error('Polyfill executeScript error:', error);
-                    throw error;
-                }
-            },
-
-            insertCSS: async function(options) {
-                const { target, css, files } = options;
-
-                if (!target?.tabId) {
-                    throw new Error('target.tabId is required');
-                }
-
-                try {
-                    if (files && files.length > 0) {
-                        // Insert CSS files
-                        const results = [];
-                        for (const file of files) {
-                            const result = await browser.tabs.insertCSS(target.tabId, {
-                                file: file,
-                                allFrames: target.allFrames || false,
-                                frameId: target.frameId || 0,
-                                runAt: options.runAt || 'document_idle'
-                            });
-                            results.push(result);
-                        }
-                        return results;
-                    } else if (css) {
-                        // Insert CSS string
-                        return await browser.tabs.insertCSS(target.tabId, {
-                            code: css,
-                            allFrames: target.allFrames || false,
-                            frameId: target.frameId || 0,
-                            runAt: options.runAt || 'document_idle'
-                        });
-                    }
-
-                    throw new Error('Either css or files must be specified');
-                } catch (error) {
-                    console.error('Polyfill insertCSS error:', error);
-                    throw error;
-                }
-            },
-
-            removeCSS: async function(options) {
-                // Firefox doesn't have removeCSS in older versions
-                // Workaround: inject CSS that overrides previous styles
-                const { target, css, files } = options;
-
-                console.warn('removeCSS is not supported in Firefox < 102, attempting workaround');
-
-                if (css) {
-                    // Create override CSS
-                    const overrideCSS = css.replace(/([^{]+){([^}]+)}/g, '$1{ /!* removed *!/ }');
-                    return await browser.scripting.insertCSS({
-                        target,
-                        css: overrideCSS
-                    });
-                }
-
-                return { success: false, error: 'removeCSS not fully supported' };
-            }
-        };
-
-        console.log('✅ browser.scripting polyfill installed');
-    }
-
-    // Additional Firefox-specific fixes
-    if (isFirefox) {
-        // Handle manifest v2 vs v3 differences
-        if (!browser.action && browser.browserAction) {
-            browser.action = browser.browserAction;
-            console.log('✅ browser.action polyfilled to browser.browserAction');
-        }
-
-        // Handle storage API differences
-        if (browser.storage && !browser.storage.session && firefoxVersion < 115) {
-            // Polyfill session storage with local storage
-            browser.storage.session = {
-                get: browser.storage.local.get.bind(browser.storage.local),
-                set: browser.storage.local.set.bind(browser.storage.local),
-                remove: browser.storage.local.remove.bind(browser.storage.local),
-                clear: browser.storage.local.clear.bind(browser.storage.local)
-            };
-            console.log('✅ browser.storage.session polyfilled to local storage');
-        }
-    }
-})();
-
-// Enhanced ScriptInjector with Firefox compatibility
-class FirefoxCompatibleScriptInjector extends SubscriberEnabledComponent {
-    constructor() {
-        super();
-
-        this.injectionTracking = new Map();
-        this.injectionStrategies = new Map();
-        this.isFirefox = typeof browser !== 'undefined' && browser.runtime?.getURL;
-        this.firefoxVersion = this.detectFirefoxVersion();
-
-        this.setupInjectionStrategies();
-        console.log(`💉 Firefox-compatible ScriptInjector initialized (Firefox: ${this.isFirefox}, Version: ${this.firefoxVersion})`);
-    }
-
-    detectFirefoxVersion() {
-        if (!this.isFirefox) return 0;
-        return parseInt(navigator.userAgent.match(/Firefox\/(\d+)/)?.[1] || '0');
-    }
-
-    async inject(tabId, scriptType, context = {}) {
-        const injectionId = `inj-${scriptType}-${tabId}-${Date.now()}`;
-        const startTime = Date.now();
-
-        try {
-            const strategy = this.injectionStrategies.get(scriptType);
-            if (!strategy) {
-                throw new Error(`No injection strategy found for ${scriptType}`);
-            }
-
-            console.log(`💉 Injecting ${scriptType} into tab ${tabId} (Firefox: ${this.isFirefox})`);
-
-            // Use appropriate injection method
-            if (browser.scripting) {
-                // Use modern API (native or polyfilled)
-                await this.injectWithScriptingAPI(tabId, strategy.files);
-            } else {
-                // Fallback for very old browsers
-                await this.injectWithLegacyAPI(tabId, strategy.files);
-            }
-
-            const injectionTime = Date.now() - startTime;
-
-            // Track successful injection
-            this.injectionTracking.set(injectionId, {
-                injectionId,
-                tabId,
-                scriptType,
-                injectionTime,
-                success: true,
-                method: browser.scripting ? 'scripting' : 'legacy',
-                timestamp: Date.now()
-            });
-
-            this.emit('injection-completed', {
-                injectionId,
-                tabId,
-                scriptType,
-                injectionTime,
-                success: true,
-                firefox: this.isFirefox,
-                firefoxVersion: this.firefoxVersion
-            });
-
-            console.log(`✅ Injection ${scriptType} completed in ${injectionTime}ms for tab ${tabId}`);
-            return { success: true, injectionTime, injectionId };
-
-        } catch (error) {
-            const injectionTime = Date.now() - startTime;
-
-            // Track failed injection
-            this.injectionTracking.set(injectionId, {
-                injectionId,
-                tabId,
-                scriptType,
-                injectionTime,
-                success: false,
-                error: error.message,
-                timestamp: Date.now()
-            });
-
-            this.emit('injection-failed', {
-                injectionId,
-                tabId,
-                scriptType,
-                injectionTime,
-                error: error.message
-            });
-
-            console.error(`❌ Injection ${scriptType} failed for tab ${tabId}:`, error);
-            throw error;
-        }
-    }
-
-    async injectWithScriptingAPI(tabId, files) {
-        for (const file of files) {
-            await browser.scripting.executeScript({
-                target: { tabId },
-                files: [file]
-            });
-            console.log(`📄 Injected via scripting API: ${file}`);
-        }
-    }
-
-    async injectWithLegacyAPI(tabId, files) {
-        for (const file of files) {
-            await browser.tabs.executeScript(tabId, {
-                file: file,
-                runAt: 'document_idle'
-            });
-            console.log(`📄 Injected via legacy API: ${file}`);
-        }
-    }
-
-    setupInjectionStrategies() {
-        // Same strategies as before
-        this.injectionStrategies.set('proxy', {
-            files: [
-                'src/vibe-subscribe.js',
-                'src/vibe-utils.js',
-                'src/proxy-controller.js'
-            ],
-            description: 'Proxy controller for visible tab'
-        });
-
-        this.injectionStrategies.set('extractor', {
-            files: [
-                'src/vibe-subscribe.js',
-                'src/vibe-utils.js',
-                'src/unified-vibe.js',
-                'src/stealth-extractor.js'
-            ],
-            description: 'Stealth extractor for hidden tab'
-        });
-
-        this.injectionStrategies.set('debug', {
-            files: [
-                'src/vibe-subscribe.js',
-                'src/vibe-utils.js',
-                'src/debug-tools.js'
-            ],
-            description: 'Debug tools'
-        });
-    }
-}*/
-
 // ===== SMART TAB CLASS =====
 class SmartTab extends SubscriberEnabledComponent {
     constructor(tabId, config = {}) {
@@ -1579,15 +1299,47 @@ class BackgroundOrchestrator extends SubscriberEnabledComponent {
 
 // ===== INITIALIZATION =====
 // Only create in background context
-const isBackground = (typeof browser !== "undefined" && browser.runtime && browser.runtime.getManifest && browser.tabs && browser.tabs.query) || 
-                     typeof window === "undefined" ||
-                     window.__globalSubscriberManager?.origin === "background";
+window.getOrigin = function () {
+    // Check for background context FIRST using API availability
+    if (
+        typeof browser !== "undefined" &&
+        browser.runtime &&
+        browser.runtime.getManifest
+    ) {
+        try {
+            // Background has tabs API but content scripts don't
+            if (browser.tabs && browser.tabs.query) {
+                return "background";
+            }
+        } catch (e) {}
+    }
+
+    // Then check for specific component markers
+    if (window.__vibeReaderProxyController) return "proxy";
+    if (window.__vibeReaderStealthExtractor) return "extractor";
+    if (window.location?.href?.includes("popup.html")) return "popup";
+
+    // Fallback for Node.js style background (shouldn't happen in Firefox)
+    if (typeof window === "undefined") return "background";
+
+    return "unknown";
+}
+
+const isBackground =
+  (getOrigin()=== "background");
 
 if (isBackground) {
     const backgroundOrchestrator = new BackgroundOrchestrator();
     const scriptInjector = new ScriptInjector();
 
+    // Global export
+    window.__backgroundOrchestrator = backgroundOrchestrator;
+    window.__smartTabManager = backgroundOrchestrator;
+    window.__scriptInjector = scriptInjector;
+    window.ScriptInjector = ScriptInjector;
 
+    console.log('🎯 Background Orchestrator v2.5 - Smart Management Active');
+    console.log('🎭 Debug: window.__backgroundOrchestrator.getOrchestrationStatus()');
 
     if (window.__globalSubscriberManager?.debugMiddleware) {
         // Create alias for compatibility
@@ -1702,11 +1454,3 @@ if (isBackground) {
 } else {
     console.log('⭕️ Skipping Background Orchestrator - not in background context');
 }
-
-
-/*
-// Replace the old ScriptInjector with the Firefox-compatible version
-if (typeof ScriptInjector !== 'undefined') {
-    window.ScriptInjector = FirefoxCompatibleScriptInjector;
-    console.log('✅ ScriptInjector replaced with Firefox-compatible version');
-}*/
