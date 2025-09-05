@@ -134,6 +134,23 @@ if (window.__vibeReaderEnhancedUtils) {
             }
 
             determineEventCategory(eventType) {
+                // Try CategoryRegistry first
+                const categoryRegistry = this.getCategoryRegistry();
+                if (categoryRegistry) {
+                    try {
+                        const resolution = categoryRegistry.resolve(eventType, {}, { strategy: "first" });
+                        if (resolution && resolution.primary) {
+                            const categoryMeta = categoryRegistry.getCategory(resolution.primary);
+                            if (categoryMeta && categoryMeta.metadata && categoryMeta.metadata.category) {
+                                return categoryMeta.metadata.category;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('CategoryRegistry resolution failed in determineEventCategory:', error);
+                    }
+                }
+
+                // Fallback to internal categories for backward compatibility
                 for (const [pattern, category] of this.eventCategories.entries()) {
                     if (pattern.test(eventType)) {
                         return category;

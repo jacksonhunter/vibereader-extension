@@ -2780,6 +2780,7 @@ if (window.__vibeSubscribe) {
 
       constructor() {
         super("SystemSettings", 0.5); // Very high priority - runs early
+        this.categoryRegistry = null; // Will be set when registry initializes
 
         this.origin = this.detectOrigin();
 
@@ -2802,7 +2803,6 @@ if (window.__vibeSubscribe) {
 
         // Legacy debug properties for backward compatibility during transition
         this.debugSettings = new Map();
-        this.eventFilters = new Map();
         this.terminalRouting = new Map();
         this.debugSessionId = `debug-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
@@ -3136,6 +3136,139 @@ if (window.__vibeSubscribe) {
         );
       }
 
+      registerDebugCategories() {
+        // Get CategoryRegistry instance from global middlewares
+        const categoryRegistry = this.getCategoryRegistry();
+        if (!categoryRegistry) {
+          this.debug('⚠️ CategoryRegistry not available for debug category registration', 'errors');
+          return;
+        }
+
+        // Register debug categories using batch registration
+        const debugCategories = [
+          {
+            id: "debug-events",
+            patterns: ["all-events"],
+            metadata: {
+              category: "EVENT_DEBUG",
+              priority: "normal",
+              terminalTarget: "debug"
+            }
+          },
+          {
+            id: "debug-messaging", 
+            patterns: [/handle-|cross-context|message/i],
+            metadata: {
+              category: "MESSAGE_DEBUG", 
+              priority: "normal",
+              terminalTarget: "system"
+            }
+          },
+          {
+            id: "debug-injection",
+            patterns: [/inject|script/i],
+            metadata: {
+              category: "INJECTION_DEBUG",
+              priority: "normal", 
+              terminalTarget: "system"
+            }
+          },
+          {
+            id: "debug-extraction",
+            patterns: [/extract|content|media/i],
+            metadata: {
+              category: "EXTRACTION_DEBUG",
+              priority: "normal",
+              terminalTarget: "network"
+            }
+          },
+          {
+            id: "debug-performance", 
+            patterns: [/performance|metric|timing/i],
+            metadata: {
+              category: "PERFORMANCE_DEBUG",
+              priority: "high",
+              terminalTarget: "system"
+            }
+          },
+          {
+            id: "debug-errors",
+            patterns: [/error|failed|exception/i],
+            metadata: {
+              category: "ERROR_DEBUG",
+              priority: "high",
+              terminalTarget: "error"
+            }
+          },
+          {
+            id: "debug-lifecycle",
+            patterns: [/init|destroy|cleanup|lifecycle/i],
+            metadata: {
+              category: "LIFECYCLE_DEBUG", 
+              priority: "normal",
+              terminalTarget: "system"
+            }
+          },
+          {
+            id: "debug-ui",
+            patterns: [/ui-|display|theme|terminal/i],
+            metadata: {
+              category: "UI_DEBUG",
+              priority: "normal",
+              terminalTarget: "media"
+            }
+          },
+          {
+            id: "debug-cross-context",
+            patterns: [/cross-context|route|announcement/i], 
+            metadata: {
+              category: "CROSS_CONTEXT_DEBUG",
+              priority: "normal",
+              terminalTarget: "network"
+            }
+          }
+        ];
+
+        categoryRegistry.registerBatch(debugCategories);
+        this.debug(`✅ Registered ${debugCategories.length} debug categories with CategoryRegistry`, 'storage');
+      }
+
+      getCategoryRegistry() {
+        // Access CategoryRegistry through global subscriber manager
+        if (window.__globalSubscriberManager) {
+          const middlewares = window.__globalSubscriberManager.globalMiddlewares;
+          return middlewares.find(m => m.constructor.name === 'CategoryRegistryMiddleware');
+        }
+        return null;
+      }
+
+      setupCategoryRegistrySubscriptions() {
+        const categoryRegistry = this.getCategoryRegistry();
+        if (!categoryRegistry) {
+          this.debug('⚠️ CategoryRegistry not available for subscriptions', 'errors');
+          return;
+        }
+
+        // Subscribe to category-registered events
+        this.subscribeToService('category-registered', (data) => {
+          this.debug(`📂 Category registered: ${data.id} with ${data.patterns?.length || 0} patterns`, 'storage');
+        });
+
+        // Subscribe to category-updated events  
+        this.subscribeToService('category-updated', (data) => {
+          this.debug(`📝 Category updated: ${data.id}`, 'storage');
+        });
+
+        // Subscribe to category-resolved events for debugging
+        this.subscribeToService('category-resolved', (data) => {
+          if (this.debugSettings.get('showResolution')) {
+            this.debug(`🔍 Category resolved: ${data.input} → ${data.primary || 'no match'}`, 'debug');
+          }
+        });
+
+        this.debug('✅ CategoryRegistry subscriptions setup complete', 'storage');
+      }
+
       async requestUserConfirmation(message, options = {}) {
         const dialogData = {
           message,
@@ -3163,12 +3296,56 @@ if (window.__vibeSubscribe) {
         return confirm(message);
       }
 
+      // Add control methods:
+      disableCategoriesByPattern(pattern) {
+        if (!this.categoryRegistry) {
+          this.categoryRegistry =
+            window.__globalSubscriberManager?.globalMiddlewares?.find(
+              (m) => m instanceof CategoryRegistryMiddleware,
+            );
+        }
+
+        if (!this.categoryRegistry) return 0;
+
+        let disabled = 0;
+        for (const [id, category] of this.categoryRegistry.categories) {
+          if (pattern.test(id) || pattern.test(category.dimension)) {
+            this.categoryRegistry.disableCategory(id);
+            disabled++;
+          }
+        }
+
+        console.log(`🚫 Disabled ${disabled} categories matching ${pattern}`);
+        return disabled;
+      }
+
+      enableCategoriesByDimension(dimension) {
+        if (!this.categoryRegistry) return 0;
+
+        const categories =
+          this.categoryRegistry.getCategoriesInDimension(dimension);
+        categories.forEach((cat) =>
+          this.categoryRegistry.enableCategory(cat.id),
+        );
+
+        console.log(
+          `✅ Enabled ${categories.length} categories in dimension '${dimension}'`,
+        );
+        return categories.length;
+      }
+
       async initializeSystemMiddleware() {
         // Load all settings from storage
         await this.loadAllSettings();
 
         // Setup service subscriptions
         this.setupSubscriptions();
+
+        // Register debug categories with CategoryRegistry
+        this.registerDebugCategories();
+
+        // Subscribe to CategoryRegistry events
+        this.setupCategoryRegistrySubscriptions();
 
         // Setup unified auto-save system
         this.setupAutoSave();
@@ -3246,8 +3423,7 @@ if (window.__vibeSubscribe) {
               settings.vibeDebugStorage || false,
             );
 
-            // Apply filters
-            this.applyDebugFilters();
+            // Debug filters now handled by CategoryRegistry
 
             console.log(
               `🔧 Debug settings loaded:`,
@@ -3295,7 +3471,7 @@ if (window.__vibeSubscribe) {
             localSettings.autoRoute !== false,
           );
 
-          this.applyDebugFilters();
+          // Debug filters now handled by CategoryRegistry
 
           console.log("🔧 Debug settings loaded from localStorage");
         } catch (error) {
@@ -3317,94 +3493,7 @@ if (window.__vibeSubscribe) {
         this.debugSettings.set("autoRoute", true);
       }
 
-      applyDebugFilters() {
-        const rawCategories = this.debugSettings.get("categories") || [];
-        // Ensure categories is ALWAYS an array
-        const categories = this.ensureArrayValue(rawCategories, [
-          "events",
-          "errors",
-        ]);
-        const eventFilter = this.debugSettings.get("eventFilter") || [];
-
-        // Build event filters based on categories
-        this.eventFilters.clear();
-
-        categories.forEach((category) => {
-          switch (category) {
-            case "events":
-              this.eventFilters.set("all-events", {
-                route: true,
-                category: "EVENT_DEBUG",
-              });
-              break;
-            case "messaging":
-              this.eventFilters.set(/handle-|cross-context|message/i, {
-                route: true,
-                category: "MESSAGE_DEBUG",
-              });
-              break;
-            case "injection":
-              this.eventFilters.set(/inject|script/i, {
-                route: true,
-                category: "INJECTION_DEBUG",
-              });
-              break;
-            case "extraction":
-              this.eventFilters.set(/extract|content|media/i, {
-                route: true,
-                category: "EXTRACTION_DEBUG",
-              });
-              break;
-            case "performance":
-              this.eventFilters.set(/performance|metric|timing/i, {
-                route: true,
-                category: "PERFORMANCE_DEBUG",
-              });
-              break;
-            case "errors":
-              this.eventFilters.set(/error|failed|exception/i, {
-                route: true,
-                category: "ERROR_DEBUG",
-              });
-              break;
-            case "lifecycle":
-              this.eventFilters.set(/init|destroy|cleanup|lifecycle/i, {
-                route: true,
-                category: "LIFECYCLE_DEBUG",
-              });
-              break;
-            case "ui":
-              this.eventFilters.set(/ui-|display|theme|terminal/i, {
-                route: true,
-                category: "UI_DEBUG",
-              });
-              break;
-            case "cross-context":
-              this.eventFilters.set(/cross-context|route|announcement/i, {
-                route: true,
-                category: "CROSS_CONTEXT_DEBUG",
-              });
-              break;
-          }
-        });
-
-        // Add specific event filters
-        eventFilter.forEach((eventPattern) => {
-          try {
-            const regex = new RegExp(eventPattern, "i");
-            this.eventFilters.set(regex, {
-              route: true,
-              category: "CUSTOM_DEBUG",
-            });
-          } catch (error) {
-            // Exact match fallback
-            this.eventFilters.set(eventPattern, {
-              route: true,
-              category: "CUSTOM_DEBUG",
-            });
-          }
-        });
-      }
+      // applyDebugFilters() method removed - now using CategoryRegistry for debug categorization
 
       setupStorageListeners() {
         if (
@@ -3503,41 +3592,45 @@ if (window.__vibeSubscribe) {
           return false;
         }
 
-        // Check against filters
-        for (const [pattern, config] of this.eventFilters.entries()) {
-          if (pattern === "all-events") {
-            return config.route;
-          }
-
-          if (pattern instanceof RegExp) {
-            if (pattern.test(event)) {
-              return config.route;
-            }
-          } else if (typeof pattern === "string") {
-            if (event.includes(pattern)) {
-              return config.route;
-            }
-          }
-        }
-
-        return false;
+        // Filtering now handled by CategoryRegistry in getRouteInfo()
+        const routeInfo = this.getRouteInfo(event);
+        return routeInfo.terminalTarget !== "debug"; // Route if not just debug terminal
       }
 
       getRouteInfo(event) {
-        for (const [pattern, config] of this.eventFilters.entries()) {
-          if (
-            pattern === "all-events" ||
-            (pattern instanceof RegExp && pattern.test(event)) ||
-            (typeof pattern === "string" && event.includes(pattern))
-          ) {
-            return {
-              category: config.category,
-              priority: config.priority || "normal",
-            };
+        // Use CategoryRegistry to resolve debug routing information
+        const categoryRegistry = this.getCategoryRegistry();
+        
+        if (categoryRegistry) {
+          try {
+            // Query CategoryRegistry for event categorization
+            const resolution = categoryRegistry.resolve(event, {}, { strategy: "first" });
+            
+            if (resolution && resolution.primary) {
+              const categoryMeta = categoryRegistry.getCategory(resolution.primary);
+              if (categoryMeta && categoryMeta.metadata) {
+                return {
+                  category: categoryMeta.metadata.category || "DEBUG",
+                  priority: categoryMeta.metadata.priority || "normal",
+                  terminalTarget: categoryMeta.metadata.terminalTarget || "debug"
+                };
+              }
+            }
+          } catch (error) {
+            console.warn('CategoryRegistry resolution failed in getRouteInfo:', error);
           }
         }
-
-        return { category: "DEBUG", priority: "normal" };
+        
+        // Fallback to legacy logic for backward compatibility
+        // Check if event matches common patterns manually
+        if (event.includes('error') || event.includes('failed') || event.includes('exception')) {
+          return { category: "ERROR_DEBUG", priority: "high", terminalTarget: "error" };
+        }
+        if (event.includes('performance') || event.includes('metric') || event.includes('timing')) {
+          return { category: "PERFORMANCE_DEBUG", priority: "high", terminalTarget: "system" };
+        }
+        
+        return { category: "DEBUG", priority: "normal", terminalTarget: "debug" };
       }
 
       formatDebugMessage(event, data, context) {
@@ -3710,10 +3803,38 @@ if (window.__vibeSubscribe) {
 
       // Simple debug wrapper for backward compatibility
       debug(message, category = "storage") {
-        this.debugEvent(message, {}, {
-          category: category.toUpperCase() + "_DEBUG",
-          priority: category === "errors" ? "high" : "normal"
-        });
+        // Use CategoryRegistry to resolve debug category and routing info
+        const categoryRegistry = this.getCategoryRegistry();
+        let resolvedCategory = category.toUpperCase() + "_DEBUG";
+        let priority = category === "errors" ? "high" : "normal";
+        let terminalTarget = "debug";
+
+        if (categoryRegistry) {
+          try {
+            // Query CategoryRegistry for category resolution
+            const resolution = categoryRegistry.resolve(message, { category }, { strategy: "first" });
+            if (resolution && resolution.primary) {
+              const categoryMeta = categoryRegistry.getCategory(resolution.primary);
+              if (categoryMeta && categoryMeta.metadata) {
+                resolvedCategory = categoryMeta.metadata.category || resolvedCategory;
+                priority = categoryMeta.metadata.priority || priority;
+                terminalTarget = categoryMeta.metadata.terminalTarget || terminalTarget;
+              }
+            }
+          } catch (error) {
+            console.warn('CategoryRegistry resolution failed for debug message:', error);
+          }
+        }
+
+        this.debugEvent(
+          message,
+          {},
+          {
+            category: resolvedCategory,
+            priority: priority,
+            terminalTarget: terminalTarget
+          },
+        );
       }
 
       // Public API for manual debug routing
@@ -3776,7 +3897,7 @@ if (window.__vibeSubscribe) {
           enabled: this.debugSettings.get("enabled"),
           origin: this.origin,
           settings: Object.fromEntries(this.debugSettings),
-          filters: this.eventFilters.size,
+          filters: "CategoryRegistry", // Now using centralized registry
           routing: Object.fromEntries(this.terminalRouting),
           sessionId: this.debugSessionId,
         };
@@ -3806,650 +3927,1092 @@ if (window.__vibeSubscribe) {
      *   parent: 'images'
      * });
      */
-      /**
-       * CategoryRegistryMiddleware - N-dimensional categorization system
-       *
-       * @description
-       * A high-performance categorization middleware that supports multiple dimensions,
-       * hierarchical relationships, and pluggable resolution strategies. Optimized for
-       * the common case (simple pattern matching) while supporting complex scenarios.
-       *
-       * @example
-       * // Simple usage - just pattern matching
-       * registry.register('errors', /error|fail|exception/i);
-       *
-       * // With metadata for routing
-       * registry.register('media-events', /media|image|video/i, {
-       *   terminal: 'media-terminal',
-       *   icon: '📺'
-       * });
-       *
-       * // Hierarchical categories
-       * registry.register('raster-images', /\.(jpe?g|png|gif)/i, {
-       *   parent: 'images'
-       * });
-       */
-      class CategoryRegistryMiddleware extends SubscriberMiddleware {
-          static _ = this.register
-
-          constructor() {
-              super('CategoryRegistry', 1); // Run early in pipeline
-
-              /**
-               * @typedef {Object} Category
-               * @property {string} id - Unique identifier
-               * @property {RegExp[]} patterns - Compiled regex patterns (fast)
-               * @property {Function} [validator] - Optional async validator
-               * @property {string} [dimension='default'] - Category dimension/namespace
-               * @property {string} [parent] - Parent category ID for hierarchy
-               * @property {Object} metadata - Arbitrary metadata for routing/display
-               * @property {Set<string>} [children] - Child category IDs
-               */
-
-              /** @type {Map<string, Category>} Core registry storage */
-              this.categories = new Map();
-
-              /** @type {Map<string, Set<string>>} dimension -> categoryIds mapping */
-              this.dimensions = new Map();
-
-              /** @type {Map<string, Set<string>>} parent -> children mapping */
-              this.hierarchy = new Map();
-
-              /**
-               * Resolution strategies - ordered by performance
-               * @type {Map<string, Function>}
-               */
-              this.strategies = new Map([
-                  ['first', this.resolveFirst.bind(this)],      // Fastest - returns first match
-                  ['specific', this.resolveSpecific.bind(this)], // Default - most specific match
-                  ['all', this.resolveAll.bind(this)],           // Returns all matches
-                  ['hierarchical', this.resolveHierarchical.bind(this)] // With parent/child
-              ]);
-
-              /** @type {string} Current execution context */
-              this.origin = this.detectOrigin();
-
-              // Initialize with standard categories
-              this.setupStandardCategories();
-          }
-
-          /**
-           * Register a new category with smart defaults
-           *
-           * @param {string} id - Unique category identifier
-           * @param {RegExp|string|RegExp[]} patterns - Pattern(s) to match
-           * @param {Object} [options={}] - Configuration options
-           * @param {string} [options.dimension='default'] - Category dimension
-           * @param {string} [options.parent] - Parent category for hierarchy
-           * @param {Function} [options.validator] - Async validation function
-           * @param {Object} [options.metadata={}] - Arbitrary metadata
-           * @param {number} [options.priority=0] - Resolution priority (higher = first)
-           * @returns {string} The registered category ID
-           *
-           * @example
-           * // Simple pattern
-           * registry.register('errors', /error/i);
-           *
-           * // Multiple patterns with metadata
-           * registry.register('high-res', [/4k/i, /uhd/i], {
-           *   metadata: { quality: 'high' }
-           * });
-           *
-           * // With parent hierarchy
-           * registry.register('jpeg', /\.jpe?g$/i, {
-           *   parent: 'images',
-           *   metadata: { mimeType: 'image/jpeg' }
-           * });
-           */
-          register(id, patterns, options = {}) {
-              // Normalize patterns to array of RegExp
-              const normalizedPatterns = this.normalizePatterns(patterns);
-
-              // Create category object
-              const category = {
-                  id,
-                  patterns: normalizedPatterns,
-                  dimension: options.dimension || 'default',
-                  parent: options.parent,
-                  validator: options.validator,
-                  metadata: options.metadata || {},
-                  priority: options.priority || 0,
-                  children: new Set()
-              };
-
-              // Store in registry
-              this.categories.set(id, category);
-
-              // Index by dimension
-              if (!this.dimensions.has(category.dimension)) {
-                  this.dimensions.set(category.dimension, new Set());
-              }
-              this.dimensions.get(category.dimension).add(id);
-
-              // Update hierarchy
-              if (category.parent) {
-                  this.establishHierarchy(category.parent, id);
-              }
-
-              return id;
-          }
-
-          /**
-           * Establish parent-child relationship
-           * @private
-           */
-          establishHierarchy(parentId, childId) {
-              // Ensure parent exists
-              if (!this.categories.has(parentId)) {
-                  // Auto-create parent category
-                  this.register(parentId, [], {
-                      metadata: { synthetic: true }
-                  });
-              }
-
-              // Add to hierarchy map
-              if (!this.hierarchy.has(parentId)) {
-                  this.hierarchy.set(parentId, new Set());
-              }
-              this.hierarchy.get(parentId).add(childId);
-
-              // Update parent's children set
-              const parent = this.categories.get(parentId);
-              if (parent) {
-                  parent.children.add(childId);
-              }
-
-              // Update child's parent reference
-              const child = this.categories.get(childId);
-              if (child) {
-                  child.parent = parentId;
-              }
-          }
-
-          /**
-           * Main middleware process function
-           * Categorizes events and adds results to context
-           */
-          async process(eventContext) {
-              const { event, data, context } = eventContext;
-
-              // Determine resolution strategy (default: 'specific')
-              const strategy = context.categoryStrategy || 'specific';
-
-              // Build test data for categorization
-              const testData = this.buildTestData(event, data);
-
-              // Resolve categories using specified strategy
-              const resolution = await this.resolve(testData, strategy, context);
-
-              // Add results to context for downstream middleware
-              eventContext.context.category = resolution.primary; // Primary category
-              eventContext.context.categories = resolution.all;    // All matches
-              eventContext.context.categoryMetadata = resolution.metadata;
-
-              return true; // Continue processing
-          }
-
-          /**
-           * Resolve categories for given data
-           *
-           * @param {Object|string} data - Data to categorize
-           * @param {string} [strategy='specific'] - Resolution strategy
-           * @param {Object} [context={}] - Additional context
-           * @returns {Promise<Object>} Resolution result
-           */
-          async resolve(data, strategy = 'specific', context = {}) {
-              const resolver = this.strategies.get(strategy) || this.strategies.get('specific');
-              return await resolver(data, context);
-          }
-
-          /**
-           * STRATEGY: First match (fastest)
-           * Returns immediately on first pattern match
-           *
-           * @performance O(n) worst case, O(1) best case
-           */
-          async resolveFirst(data, context) {
-              const testStrings = this.extractTestStrings(data);
-
-              for (const [id, category] of this.categories) {
-                  // Apply dimension filter if specified
-                  if (context.dimension && category.dimension !== context.dimension) {
-                      continue;
-                  }
-
-                  // Fast pattern check
-                  if (this.testPatterns(category.patterns, testStrings)) {
-                      return {
-                          primary: id,
-                          all: [id],
-                          metadata: category.metadata,
-                          strategy: 'first'
-                      };
-                  }
-              }
-
-              return { primary: null, all: [], metadata: {}, strategy: 'first' };
-          }
-
-          /**
-           * STRATEGY: Most specific (default)
-           * Returns the most specific match based on pattern count and priority
-           *
-           * @performance O(n) - tests all categories but no validators
-           */
-          async resolveSpecific(data, context) {
-              const testStrings = this.extractTestStrings(data);
-              const matches = [];
-
-              for (const [id, category] of this.categories) {
-                  // Apply dimension filter
-                  if (context.dimension && category.dimension !== context.dimension) {
-                      continue;
-                  }
-
-                  // Count matching patterns
-                  const matchCount = this.countMatchingPatterns(category.patterns, testStrings);
-
-                  if (matchCount > 0) {
-                      matches.push({
-                          id,
-                          category,
-                          specificity: matchCount * 1000 + category.priority, // Combine pattern count and priority
-                          matchCount
-                      });
-                  }
-              }
-
-              // Sort by specificity (most specific first)
-              matches.sort((a, b) => b.specificity - a.specificity);
-
-              if (matches.length > 0) {
-                  const best = matches[0];
-                  return {
-                      primary: best.id,
-                      all: matches.map(m => m.id),
-                      metadata: best.category.metadata,
-                      specificity: best.specificity,
-                      strategy: 'specific'
-                  };
-              }
-
-              return { primary: null, all: [], metadata: {}, strategy: 'specific' };
-          }
-
-          /**
-           * STRATEGY: All matches
-           * Returns all matching categories with optional validation
-           *
-           * @performance O(n) + async validators if present
-           */
-          async resolveAll(data, context) {
-              const testStrings = this.extractTestStrings(data);
-              const matches = [];
-
-              for (const [id, category] of this.categories) {
-                  // Apply dimension filter
-                  if (context.dimension && category.dimension !== context.dimension) {
-                      continue;
-                  }
-
-                  // Pattern check
-                  const matchCount = this.countMatchingPatterns(category.patterns, testStrings);
-
-                  if (matchCount > 0) {
-                      // Run validator if present (only for matches)
-                      let validated = true;
-                      if (category.validator && !context.skipValidators) {
-                          try {
-                              validated = await category.validator(data, context);
-                          } catch (error) {
-                              console.warn(`Validator failed for ${id}:`, error);
-                              validated = false;
-                          }
-                      }
-
-                      if (validated) {
-                          matches.push({
-                              id,
-                              metadata: category.metadata,
-                              dimension: category.dimension,
-                              matchCount,
-                              validated: category.validator ? true : undefined
-                          });
-                      }
-                  }
-              }
-
-              // Sort by match count
-              matches.sort((a, b) => b.matchCount - a.matchCount);
-
-              return {
-                  primary: matches[0]?.id || null,
-                  all: matches.map(m => m.id),
-                  matches, // Full match details
-                  strategy: 'all'
-              };
-          }
-
-          /**
-           * STRATEGY: Hierarchical
-           * Returns matches organized by parent-child relationships
-           */
-          async resolveHierarchical(data, context) {
-              // First get all matches
-              const allMatches = await this.resolveAll(data, context);
-
-              // Build hierarchy tree
-              const tree = {};
-              const processed = new Set();
-
-              for (const matchId of allMatches.all) {
-                  const category = this.categories.get(matchId);
-                  if (!category) continue;
-
-                  // Find root of hierarchy
-                  let root = matchId;
-                  let current = category;
-                  while (current.parent && this.categories.has(current.parent)) {
-                      root = current.parent;
-                      current = this.categories.get(current.parent);
-                  }
-
-                  // Build tree from root
-                  if (!processed.has(root)) {
-                      tree[root] = this.buildHierarchyTree(root, allMatches.all);
-                      processed.add(root);
-                  }
-              }
-
-              return {
-                  primary: allMatches.primary,
-                  all: allMatches.all,
-                  tree,
-                  strategy: 'hierarchical'
-              };
-          }
-
-          /**
-           * Build hierarchy tree for a root category
-           * @private
-           */
-          buildHierarchyTree(rootId, matchedIds) {
-              const node = {
-                  id: rootId,
-                  matched: matchedIds.includes(rootId),
-                  metadata: this.categories.get(rootId)?.metadata || {},
-                  children: []
-              };
-
-              const children = this.hierarchy.get(rootId);
-              if (children) {
-                  for (const childId of children) {
-                      if (matchedIds.includes(childId) || this.hierarchy.has(childId)) {
-                          node.children.push(this.buildHierarchyTree(childId, matchedIds));
-                      }
-                  }
-              }
-
-              return node;
-          }
-
-          /**
-           * Normalize patterns to RegExp array
-           * @private
-           */
-          normalizePatterns(patterns) {
-              if (!patterns) return [];
-              if (!Array.isArray(patterns)) patterns = [patterns];
-
-              return patterns.map(pattern => {
-                  if (pattern instanceof RegExp) return pattern;
-                  if (typeof pattern === 'string') {
-                      // Escape special regex chars and make case-insensitive
-                      const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                      return new RegExp(escaped, 'i');
-                  }
-                  return null;
-              }).filter(Boolean);
-          }
-
-          /**
-           * Build testable data from event context
-           * @private
-           */
-          buildTestData(event, data) {
-              return {
-                  event,
-                  action: data?.action,
-                  message: data?.message,
-                  type: data?.type,
-                  url: data?.url,
-                  src: data?.src,
-                  raw: data
-              };
-          }
-
-          /**
-           * Extract strings for pattern testing
-           * @private
-           */
-          extractTestStrings(data) {
-              const strings = [];
-
-              if (typeof data === 'string') {
-                  strings.push(data);
-              } else if (data && typeof data === 'object') {
-                  // Add string properties
-                  Object.values(data).forEach(value => {
-                      if (typeof value === 'string') {
-                          strings.push(value);
-                      }
-                  });
-
-                  // Add stringified version for deep matching
-                  try {
-                      strings.push(JSON.stringify(data));
-                  } catch (e) {
-                      // Ignore circular references
-                  }
-              }
-
-              return strings;
-          }
-
-          /**
-           * Test if any pattern matches any test string
-           * @private
-           * @performance Optimized with early return
-           */
-          testPatterns(patterns, testStrings) {
-              for (const pattern of patterns) {
-                  for (const str of testStrings) {
-                      if (pattern.test(str)) {
-                          return true;
-                      }
-                  }
-              }
-              return false;
-          }
-
-          /**
-           * Count how many patterns match
-           * @private
-           */
-          countMatchingPatterns(patterns, testStrings) {
-              let count = 0;
-              for (const pattern of patterns) {
-                  for (const str of testStrings) {
-                      if (pattern.test(str)) {
-                          count++;
-                          break; // Each pattern counts once
-                      }
-                  }
-              }
-              return count;
-          }
-
-          /**
-           * Detect current execution context
-           * @private
-           */
-          detectOrigin() {
-              if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getManifest) {
-                  try {
-                      if (browser.tabs && browser.tabs.query) return "background";
-                  } catch(e) {}
-              }
-
-              if (window.__vibeReaderProxyController) return "proxy";
-              if (window.__vibeReaderStealthExtractor) return "extractor";
-              if (window.location?.href?.includes("popup.html")) return "popup";
-
-              return "unknown";
-          }
-
-          /**
-           * Setup standard categories based on context
-           * @private
-           */
-          setupStandardCategories() {
-              // Universal categories
-              this.register('errors', /error|fail|exception|❌/i, {
-                  metadata: { icon: '🔴', priority: 'high' }
-              });
-
-              this.register('warnings', /warn|slow|timeout|⚠/i, {
-                  metadata: { icon: '⚠️', priority: 'medium' }
-              });
-
-              this.register('success', /success|complete|done|✅/i, {
-                  metadata: { icon: '✅', priority: 'normal' }
-              });
-
-              // Context-specific categories
-              if (this.origin === 'proxy') {
-                  this.setupProxyCategories();
-              } else if (this.origin === 'extractor') {
-                  this.setupExtractorCategories();
-              } else if (this.origin === 'background') {
-                  this.setupBackgroundCategories();
-              }
-          }
-
-          setupProxyCategories() {
-              // Terminal routing
-              this.register('terminal-errors', /error|fail|exception/i, {
-                  dimension: 'terminal',
-                  metadata: { terminal: 'error-terminal', icon: '🔴' }
-              });
-
-              this.register('terminal-media', /media|image|video/i, {
-                  dimension: 'terminal',
-                  metadata: { terminal: 'media-terminal', icon: '📺' }
-              });
-
-              this.register('terminal-network', /network|fetch|proxy/i, {
-                  dimension: 'terminal',
-                  metadata: { terminal: 'network-terminal', icon: '🌐' }
-              });
-          }
-
-          setupExtractorCategories() {
-              // Content types with hierarchy
-              this.register('images', [], {
-                  dimension: 'content',
-                  metadata: { type: 'media' }
-              });
-
-              this.register('jpeg', /\.jpe?g$/i, {
-                  dimension: 'content',
-                  parent: 'images',
-                  metadata: { mimeType: 'image/jpeg' }
-              });
-
-              this.register('png', /\.png$/i, {
-                  dimension: 'content',
-                  parent: 'images',
-                  metadata: { mimeType: 'image/png' }
-              });
-
-              this.register('videos', [], {
-                  dimension: 'content',
-                  metadata: { type: 'media' }
-              });
-
-              this.register('mp4', /\.mp4$/i, {
-                  dimension: 'content',
-                  parent: 'videos',
-                  metadata: { mimeType: 'video/mp4' }
-              });
-          }
-
-          setupBackgroundCategories() {
-              // System events
-              this.register('lifecycle', /init|create|destroy|cleanup/i, {
-                  dimension: 'system',
-                  metadata: { importance: 'high' }
-              });
-
-              this.register('session', /session|activate|deactivate/i, {
-                  dimension: 'system',
-                  metadata: { trackable: true }
-              });
-          }
-
-          /**
-           * Public API for components to query categories
-           */
-
-          /**
-           * Get all categories in a dimension
-           * @param {string} dimension - Dimension name
-           * @returns {Array} Category objects
-           */
-          getCategoriesInDimension(dimension) {
-              const ids = this.dimensions.get(dimension) || new Set();
-              return Array.from(ids).map(id => this.categories.get(id)).filter(Boolean);
-          }
-
-          /**
-           * Get category by ID
-           * @param {string} id - Category ID
-           * @returns {Object|null} Category object
-           */
-          getCategory(id) {
-              return this.categories.get(id) || null;
-          }
-
-          /**
-           * Get children of a category
-           * @param {string} parentId - Parent category ID
-           * @returns {Array} Child category IDs
-           */
-          getChildren(parentId) {
-              return Array.from(this.hierarchy.get(parentId) || []);
-          }
-
-          /**
-           * Get statistics about registered categories
-           * @returns {Object} Statistics
-           */
-          getStats() {
-              return {
-                  totalCategories: this.categories.size,
-                  dimensions: Array.from(this.dimensions.keys()),
-                  hierarchies: this.hierarchy.size,
-                  byDimension: Object.fromEntries(
-                      Array.from(this.dimensions.entries()).map(([dim, ids]) => [dim, ids.size])
-                  )
-              };
-          }
+    /**
+     * CategoryRegistryMiddleware - N-dimensional categorization system
+     *
+     * @description
+     * A high-performance categorization middleware that supports multiple dimensions,
+     * hierarchical relationships, and pluggable resolution strategies. Optimized for
+     * the common case (simple pattern matching) while supporting complex scenarios.
+     *
+     * @example
+     * // Simple usage - just pattern matching
+     * registry.register('errors', /error|fail|exception/i);
+     *
+     * // With metadata for routing
+     * registry.register('media-events', /media|image|video/i, {
+     *   terminal: 'media-terminal',
+     *   icon: '📺'
+     * });
+     *
+     * // Hierarchical categories
+     * registry.register('raster-images', /\.(jpe?g|png|gif)/i, {
+     *   parent: 'images'
+     * });
+     */
+    /**
+     * CategoryRegistryMiddleware - N-dimensional categorization system
+     * Clean Implementation v3.0
+     *
+     * @description
+     * A categorization middleware that supports multiple dimensions,
+     * hierarchical relationships, and pluggable resolution strategies.
+     */
+    class CategoryRegistryMiddleware extends SubscriberMiddleware {
+      static _ = this.register; // Enable auto-registration with SubscriberMiddleware
+
+      constructor() {
+        super("CategoryRegistry", 1); // Run early in pipeline
+
+        /**
+         * @typedef {Object} Category
+         * @property {string} id - Unique identifier
+         * @property {RegExp[]} patterns - Compiled regex patterns
+         * @property {Function} [validator] - Optional async validator
+         * @property {string} [dimension='default'] - Category dimension/namespace
+         * @property {string} [parent] - Parent category ID for hierarchy
+         * @property {Object} metadata - Arbitrary metadata for routing/display
+         * @property {Set<string>} [children] - Child category IDs
+         * @property {number} priority - Resolution priority (higher = first)
+         */
+
+        /** @type {Map<string, Category>} Core registry storage */
+        this.categories = new Map();
+
+        /** @type {Map<string, Set<string>>} dimension -> categoryIds mapping */
+        this.dimensions = new Map();
+
+        /** @type {Map<string, Set<string>>} parent -> children mapping */
+        this.hierarchy = new Map();
+
+        /**
+         * Resolution strategies
+         * @type {Map<string, Function>}
+         */
+        this.strategies = new Map([
+          ["first", this.resolveFirst.bind(this)], // Returns first match
+          ["specific", this.resolveSpecific.bind(this)], // Most specific match (default)
+          ["all", this.resolveAll.bind(this)], // Returns all matches
+          ["hierarchical", this.resolveHierarchical.bind(this)], // With parent/child
+        ]);
+
+        /** @type {string} Current execution context */
+        this.origin = this.detectOrigin();
+
+        /** @type {number} Default validator timeout in ms */
+        this.validatorTimeout = 1000;
+
+        // Initialize with standard categories
+        this.setupStandardCategories();
+
+        console.log(
+          `📊 CategoryRegistryMiddleware initialized in ${this.origin} context`,
+        );
       }
 
-    // Export for use
-    if (typeof window !== "undefined") {
-      window.CategoryRegistryMiddleware = CategoryRegistryMiddleware;
+      /**
+       * Register a new category
+       *
+       * @param {string} id - Unique category identifier
+       * @param {RegExp|string|RegExp[]} patterns - Pattern(s) to match
+       * @param {Object} [options={}] - Configuration options
+       * @returns {string} The registered category ID
+       */
+      register(id, patterns, options = {}) {
+        // Validate inputs
+        if (!id || typeof id !== "string") {
+          throw new Error("Category ID must be a non-empty string");
+        }
+
+        // Warn if overwriting
+        if (this.categories.has(id)) {
+          console.warn(`⚠️ Overwriting existing category: ${id}`);
+        }
+
+        // Normalize patterns to array of RegExp
+        const normalizedPatterns = this.normalizePatterns(patterns);
+
+        // Create category object
+        const category = {
+          id,
+          patterns: normalizedPatterns,
+          dimension: options.dimension || "default",
+          parent: options.parent,
+          validator: options.validator,
+          metadata: options.metadata || {},
+          priority: options.priority || 0,
+          children: new Set(),
+          enabled: options.enabled !== false, // Default to true
+        };
+
+        // Store in registry
+        this.categories.set(id, category);
+
+        // Index by dimension
+        if (!this.dimensions.has(category.dimension)) {
+          this.dimensions.set(category.dimension, new Set());
+        }
+        this.dimensions.get(category.dimension).add(id);
+
+        // Update hierarchy if parent specified
+        if (category.parent) {
+          this.establishHierarchy(category.parent, id);
+        }
+
+        return id;
+      }
+
+      /**
+       * Register multiple categories at once
+       *
+       * @param {Array<Object>} categorySpecs - Array of category specifications
+       * @returns {Array<string>} Array of registered category IDs
+       *
+       * @example
+       * registry.registerBatch([
+       *   { id: 'errors', patterns: /error/i, options: { priority: 10 } },
+       *   { id: 'warnings', patterns: /warn/i, options: { priority: 5 } }
+       * ]);
+       */
+      // Add public methods to control it:
+      enableCategory(id) {
+        const category = this.categories.get(id);
+        if (category) {
+          category.enabled = true;
+          return true;
+        }
+        return false;
+      }
+
+      disableCategory(id) {
+        const category = this.categories.get(id);
+        if (category) {
+          category.enabled = false;
+          return true;
+        }
+        return false;
+      }
+
+      toggleCategory(id) {
+        const category = this.categories.get(id);
+        if (category) {
+          category.enabled = !category.enabled;
+          return category.enabled;
+        }
+        return null;
+      }
+
+      registerBatch(categorySpecs) {
+        const registered = [];
+
+        for (const spec of categorySpecs) {
+          const { id, patterns, options = {} } = spec;
+
+          if (!id) {
+            console.warn("Skipping category without ID:", spec);
+            continue;
+          }
+
+          try {
+            this.register(id, patterns || [], options);
+            registered.push(id);
+          } catch (error) {
+            console.error(`Failed to register category ${id}:`, error);
+          }
+        }
+
+        return registered;
+      }
+
+      /**
+       * Establish parent-child relationship with circular reference protection
+       * @private
+       */
+      establishHierarchy(parentId, childId) {
+        // Prevent self-parenting
+        if (parentId === childId) {
+          console.warn(`⚠️ Cannot set ${childId} as its own parent`);
+          return;
+        }
+
+        // Check for circular reference
+        let current = parentId;
+        const visited = new Set([childId]);
+
+        while (current) {
+          if (visited.has(current)) {
+            throw new Error(
+              `🔄 Circular hierarchy detected: ${childId} -> ${parentId}`,
+            );
+          }
+          visited.add(current);
+          const parentCategory = this.categories.get(current);
+          current = parentCategory?.parent;
+        }
+
+        // Ensure parent exists (auto-create if needed)
+        if (!this.categories.has(parentId)) {
+          // Auto-create parent category as a container
+          this.register(parentId, [], {
+            metadata: { synthetic: true },
+          });
+        }
+
+        // Add to hierarchy map
+        if (!this.hierarchy.has(parentId)) {
+          this.hierarchy.set(parentId, new Set());
+        }
+        this.hierarchy.get(parentId).add(childId);
+
+        // Update parent's children set
+        const parent = this.categories.get(parentId);
+        if (parent) {
+          parent.children.add(childId);
+        }
+
+        // Update child's parent reference
+        const child = this.categories.get(childId);
+        if (child) {
+          child.parent = parentId;
+        }
+      }
+
+      /**
+       * Main middleware process function
+       */
+      async process(eventContext) {
+        const { event, data, context } = eventContext;
+
+        // Determine resolution strategy (default: 'specific')
+        const strategy = context.categoryStrategy || "specific";
+
+        // Build test data for categorization
+        const testData = this.buildTestData(event, data);
+
+        // Resolve categories using specified strategy
+        const resolution = await this.resolve(testData, strategy, context);
+
+        // Add results to context for downstream middleware
+        eventContext.context.category = resolution.primary;
+        eventContext.context.categories = resolution.all;
+        eventContext.context.categoryMetadata = resolution.metadata;
+        eventContext.context.categoryDimension = resolution.dimension;
+        eventContext.context.categoryHierarchy = resolution.hierarchy;
+
+        return true; // Continue processing
+      }
+
+      /**
+       * Resolve categories for given data
+       */
+      async resolve(data, strategy = "specific", context = {}) {
+        const resolver =
+          this.strategies.get(strategy) || this.strategies.get("specific");
+        return await resolver(data, context);
+      }
+
+      /**
+       * STRATEGY: First match (fastest)
+       * Returns immediately on first pattern match
+       */
+      async resolveFirst(data, context) {
+        const testStrings = this.extractTestStrings(data);
+
+        for (const [id, category] of this.categories) {
+          if (!category.enabled) continue;
+
+          // Apply dimension filter if specified
+          if (context.dimension && category.dimension !== context.dimension) {
+            continue;
+          }
+
+          // Pattern check
+          if (this.testPatterns(category.patterns, testStrings)) {
+            // Run validator if present
+            if (category.validator && !context.skipValidators) {
+              try {
+                const valid = await this.validateWithTimeout(
+                  category.validator,
+                  data,
+                  context,
+                  this.validatorTimeout,
+                );
+                if (!valid) continue; // Skip if validation fails
+              } catch (error) {
+                console.warn(`Validator failed for ${id}:`, error);
+                continue;
+              }
+            }
+
+            return {
+              primary: id,
+              all: [id],
+              metadata: category.metadata,
+              dimension: category.dimension,
+              strategy: "first",
+            };
+          }
+        }
+
+        return {
+          primary: null,
+          all: [],
+          metadata: {},
+          dimension: null,
+          strategy: "first",
+        };
+      }
+
+      /**
+       * STRATEGY: Most specific (default)
+       * Returns the most specific match based on pattern count and priority
+       */
+      async resolveSpecific(data, context) {
+        const testStrings = this.extractTestStrings(data);
+        const matches = [];
+
+        for (const [id, category] of this.categories) {
+          if (!category.enabled) continue;
+
+          // Apply dimension filter
+          if (context.dimension && category.dimension !== context.dimension) {
+            continue;
+          }
+
+          // Count matching patterns
+          const matchCount = this.countMatchingPatterns(
+            category.patterns,
+            testStrings,
+          );
+
+          if (matchCount > 0) {
+            // Run validator if present
+            let validated = true;
+            if (category.validator && !context.skipValidators) {
+              try {
+                validated = await this.validateWithTimeout(
+                  category.validator,
+                  data,
+                  context,
+                  this.validatorTimeout,
+                );
+              } catch (error) {
+                console.warn(`Validator failed for ${id}:`, error);
+                validated = false;
+              }
+            }
+
+            if (validated) {
+              matches.push({
+                id,
+                category,
+                specificity: matchCount * 1000 + category.priority,
+                matchCount,
+              });
+            }
+          }
+        }
+
+        // Sort by specificity (most specific first)
+        matches.sort((a, b) => b.specificity - a.specificity);
+
+        if (matches.length > 0) {
+          const best = matches[0];
+
+          return {
+            primary: best.id,
+            all: matches.map((m) => m.id),
+            metadata: best.category.metadata,
+            dimension: best.category.dimension,
+            specificity: best.specificity,
+            strategy: "specific",
+          };
+        }
+
+        return {
+          primary: null,
+          all: [],
+          metadata: {},
+          dimension: null,
+          strategy: "specific",
+        };
+      }
+
+      /**
+       * STRATEGY: All matches
+       * Returns all matching categories with validation
+       */
+      async resolveAll(data, context) {
+        const testStrings = this.extractTestStrings(data);
+        const matches = [];
+
+        for (const [id, category] of this.categories) {
+          if (!category.enabled) continue;
+          // Apply dimension filter
+          if (context.dimension && category.dimension !== context.dimension) {
+            continue;
+          }
+
+          // Pattern check
+          const matchCount = this.countMatchingPatterns(
+            category.patterns,
+            testStrings,
+          );
+
+          if (matchCount > 0) {
+            // Run validator if present
+            let validated = true;
+            if (category.validator && !context.skipValidators) {
+              try {
+                validated = await this.validateWithTimeout(
+                  category.validator,
+                  data,
+                  context,
+                  this.validatorTimeout,
+                );
+              } catch (error) {
+                console.warn(`Validator failed for ${id}:`, error);
+                validated = false;
+              }
+            }
+
+            if (validated) {
+              matches.push({
+                id,
+                metadata: category.metadata,
+                dimension: category.dimension,
+                matchCount,
+                validated: category.validator ? true : undefined,
+                priority: category.priority,
+              });
+            }
+          }
+        }
+
+        // Sort by match count, then priority
+        matches.sort((a, b) => {
+          if (b.matchCount !== a.matchCount) {
+            return b.matchCount - a.matchCount;
+          }
+          return b.priority - a.priority;
+        });
+
+        return {
+          primary: matches[0]?.id || null,
+          all: matches.map((m) => m.id),
+          matches, // Full match details
+          dimension: matches[0]?.dimension || null,
+          strategy: "all",
+        };
+      }
+
+      /**
+       * STRATEGY: Hierarchical
+       * Returns matches organized by parent-child relationships
+       */
+      async resolveHierarchical(data, context) {
+        // First get all matches
+        const allMatches = await this.resolveAll(data, context);
+
+        // Build hierarchy tree
+        const tree = {};
+        const processed = new Set();
+        const hierarchyInfo = [];
+
+        for (const matchId of allMatches.all) {
+          if (!category.enabled) continue;
+
+          const category = this.categories.get(matchId);
+          if (!category) continue;
+
+          // Find root of hierarchy
+          let root = matchId;
+          let current = category;
+          const path = [matchId];
+
+          while (current.parent && this.categories.has(current.parent)) {
+            root = current.parent;
+            path.unshift(current.parent);
+            current = this.categories.get(current.parent);
+          }
+
+          // Build tree from root
+          if (!processed.has(root)) {
+            tree[root] = this.buildHierarchyTree(root, allMatches.all);
+            processed.add(root);
+          }
+
+          // Add hierarchy info
+          hierarchyInfo.push({
+            id: matchId,
+            root,
+            path,
+            depth: path.length - 1,
+          });
+        }
+
+        return {
+          primary: allMatches.primary,
+          all: allMatches.all,
+          tree,
+          hierarchy: hierarchyInfo,
+          dimension: allMatches.dimension,
+          strategy: "hierarchical",
+        };
+      }
+
+      /**
+       * Build hierarchy tree for a root category
+       * @private
+       */
+      buildHierarchyTree(rootId, matchedIds) {
+        const node = {
+          id: rootId,
+          matched: matchedIds.includes(rootId),
+          metadata: this.categories.get(rootId)?.metadata || {},
+          children: [],
+        };
+
+        const children = this.hierarchy.get(rootId);
+        if (children) {
+          for (const childId of children) {
+            if (matchedIds.includes(childId) || this.hierarchy.has(childId)) {
+              node.children.push(this.buildHierarchyTree(childId, matchedIds));
+            }
+          }
+        }
+
+        return node;
+      }
+
+      /**
+       * Run validator with timeout protection
+       * @private
+       */
+      async validateWithTimeout(validator, data, context, timeout = 1000) {
+        return Promise.race([
+          validator(data, context),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Validation timeout")), timeout),
+          ),
+        ]);
+      }
+
+      /**
+       * Normalize patterns to RegExp array
+       * @private
+       */
+      normalizePatterns(patterns) {
+        if (!patterns) return [];
+        if (!Array.isArray(patterns)) patterns = [patterns];
+
+        return patterns
+          .map((pattern) => {
+            if (pattern instanceof RegExp) return pattern;
+            if (typeof pattern === "string") {
+              // Escape special regex chars and make case-insensitive
+              const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              return new RegExp(escaped, "i");
+            }
+            return null;
+          })
+          .filter(Boolean);
+      }
+
+      /**
+       * Build testable data from event context
+       * @private
+       */
+      buildTestData(event, data) {
+        return {
+          event,
+          action: data?.action,
+          message: data?.message,
+          type: data?.type,
+          url: data?.url,
+          src: data?.src,
+          error: data?.error,
+          level: data?.level,
+          raw: data,
+        };
+      }
+
+      /**
+       * Extract strings for pattern testing
+       * Test strings are the string values from the data object that we test regex patterns against
+       * @private
+       */
+      extractTestStrings(data) {
+        const strings = [];
+
+        if (typeof data === "string") {
+          strings.push(data);
+        } else if (data && typeof data === "object") {
+          // Add specific string properties
+          if (data.event) strings.push(data.event);
+          if (data.action) strings.push(data.action);
+          if (data.message) strings.push(data.message);
+          if (data.type) strings.push(data.type);
+          if (data.url) strings.push(data.url);
+          if (data.src) strings.push(data.src);
+          if (data.error) strings.push(data.error);
+          if (data.level) strings.push(data.level);
+
+          // Add any other string values (limited depth)
+          for (const value of Object.values(data)) {
+            if (typeof value === "string" && !strings.includes(value)) {
+              strings.push(value);
+            }
+          }
+        }
+
+        return strings;
+      }
+
+      /**
+       * Test if any pattern matches any test string
+       * @private
+       */
+      testPatterns(patterns, testStrings) {
+        for (const pattern of patterns) {
+          for (const str of testStrings) {
+            if (pattern.test(str)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      /**
+       * Count how many patterns match
+       * @private
+       */
+      countMatchingPatterns(patterns, testStrings) {
+        let count = 0;
+        for (const pattern of patterns) {
+          for (const str of testStrings) {
+            if (pattern.test(str)) {
+              count++;
+              break; // Each pattern counts once
+            }
+          }
+        }
+        return count;
+      }
+
+      /**
+       * Detect current execution context
+       * @private
+       */
+      detectOrigin() {
+        if (
+          typeof browser !== "undefined" &&
+          browser.runtime &&
+          browser.runtime.getManifest
+        ) {
+          try {
+            if (browser.tabs && browser.tabs.query) return "background";
+          } catch (e) {}
+        }
+
+        if (window.__vibeReaderProxyController) return "proxy";
+        if (window.__vibeReaderStealthExtractor) return "extractor";
+        if (window.location?.href?.includes("popup.html")) return "popup";
+
+        return "unknown";
+      }
+
+      /**
+       * Setup standard categories based on context
+       * @private
+       */
+      setupStandardCategories() {
+        // Use batch registration for standard categories
+        const universalCategories = [
+          {
+            id: "errors",
+            patterns: /error|fail|exception|❌/i,
+            options: {
+              metadata: { icon: "🔴", priority: "high", level: "error" },
+            },
+          },
+          {
+            id: "warnings",
+            patterns: /warn|slow|timeout|⚠/i,
+            options: {
+              metadata: { icon: "⚠️", priority: "medium", level: "warn" },
+            },
+          },
+          {
+            id: "success",
+            patterns: /success|complete|done|✅/i,
+            options: {
+              metadata: { icon: "✅", priority: "normal", level: "info" },
+            },
+          },
+          {
+            id: "debug",
+            patterns: /debug|trace|verbose/i,
+            options: {
+              metadata: { icon: "🐛", priority: "low", level: "debug" },
+            },
+          },
+          {
+            id: "high-frequency",
+            patterns: /scroll|mousemove|resize/i,
+            options: {
+              metadata: { throttle: 16, batchStrategy: "replace" },
+            },
+          },
+          {
+            id: "batchable",
+            patterns: /media-discovered|content-update|terminal-log/i,
+            options: {
+              metadata: { batchStrategy: "accumulate", delay: 100 },
+            },
+          },
+        ];
+
+        this.registerBatch(universalCategories);
+
+        // Context-specific categories
+        if (this.origin === "proxy") {
+          this.setupProxyCategories();
+        } else if (this.origin === "extractor") {
+          this.setupExtractorCategories();
+        } else if (this.origin === "background") {
+          this.setupBackgroundCategories();
+        }
+
+        console.log(
+          `📋 Initialized ${this.categories.size} standard categories for ${this.origin}`,
+        );
+      }
+
+      setupProxyCategories() {
+        this.registerBatch([
+          {
+            id: "terminal-errors",
+            patterns: /error|fail|exception/i,
+            options: {
+              dimension: "terminal",
+              metadata: {
+                terminal: "error-terminal",
+                icon: "🔴",
+                level: "error",
+              },
+            },
+          },
+          {
+            id: "terminal-media",
+            patterns: /media|image|video/i,
+            options: {
+              dimension: "terminal",
+              metadata: {
+                terminal: "media-terminal",
+                icon: "📺",
+                level: "info",
+              },
+            },
+          },
+          {
+            id: "terminal-network",
+            patterns: /network|fetch|proxy/i,
+            options: {
+              dimension: "terminal",
+              metadata: {
+                terminal: "network-terminal",
+                icon: "🌐",
+                level: "info",
+              },
+            },
+          },
+          {
+            id: "display-text",
+            patterns: /text|content|article/i,
+            options: {
+              dimension: "display",
+              metadata: { panel: "text-panel", renderer: "text" },
+            },
+          },
+          {
+            id: "display-media",
+            patterns: /media|image|video/i,
+            options: {
+              dimension: "display",
+              metadata: { panel: "media-panel", renderer: "media" },
+            },
+          },
+        ]);
+      }
+
+      setupExtractorCategories() {
+        // Content type hierarchy
+        this.registerBatch([
+          {
+            id: "content",
+            patterns: [],
+            options: {
+              dimension: "content",
+              metadata: { type: "root" },
+            },
+          },
+          {
+            id: "media",
+            patterns: [],
+            options: {
+              dimension: "content",
+              parent: "content",
+              metadata: { type: "media" },
+            },
+          },
+          {
+            id: "images",
+            patterns: [],
+            options: {
+              dimension: "content",
+              parent: "media",
+              metadata: { type: "image" },
+            },
+          },
+          {
+            id: "jpeg",
+            patterns: /\.jpe?g$/i,
+            options: {
+              dimension: "content",
+              parent: "images",
+              metadata: {
+                mimeType: "image/jpeg",
+                extensions: [".jpg", ".jpeg"],
+              },
+            },
+          },
+          {
+            id: "png",
+            patterns: /\.png$/i,
+            options: {
+              dimension: "content",
+              parent: "images",
+              metadata: { mimeType: "image/png", extensions: [".png"] },
+            },
+          },
+          {
+            id: "extraction-start",
+            patterns: /extract.*start|begin.*extract/i,
+            options: {
+              dimension: "extraction",
+              metadata: { phase: "start" },
+            },
+          },
+          {
+            id: "extraction-complete",
+            patterns: /extract.*complete|finish.*extract/i,
+            options: {
+              dimension: "extraction",
+              metadata: { phase: "complete" },
+            },
+          },
+        ]);
+      }
+
+      setupBackgroundCategories() {
+        this.registerBatch([
+          {
+            id: "lifecycle",
+            patterns: /init|create|destroy|cleanup/i,
+            options: {
+              dimension: "system",
+              metadata: { importance: "high", trackable: true },
+            },
+          },
+          {
+            id: "session",
+            patterns: /session|activate|deactivate/i,
+            options: {
+              dimension: "system",
+              metadata: { trackable: true },
+            },
+          },
+          {
+            id: "cross-context",
+            patterns: /handle-|route-|cross-context/i,
+            options: {
+              dimension: "messaging",
+              metadata: { crossContext: true },
+            },
+          },
+          {
+            id: "tab-created",
+            patterns: /tab.*create|new.*tab/i,
+            options: {
+              dimension: "tabs",
+              metadata: { action: "create" },
+            },
+          },
+          {
+            id: "tab-updated",
+            patterns: /tab.*update|modify.*tab/i,
+            options: {
+              dimension: "tabs",
+              metadata: { action: "update" },
+            },
+          },
+        ]);
+      }
+
+      /**
+       * Public API Methods
+       */
+
+      /**
+       * Get all categories in a dimension
+       */
+      getCategoriesInDimension(dimension) {
+        const ids = this.dimensions.get(dimension) || new Set();
+        return Array.from(ids)
+          .map((id) => this.categories.get(id))
+          .filter(Boolean);
+      }
+
+      /**
+       * Get category by ID
+       */
+      getCategory(id) {
+        return this.categories.get(id) || null;
+      }
+
+      /**
+       * Update category metadata
+       */
+      updateCategory(id, updates) {
+        const category = this.categories.get(id);
+        if (!category) return false;
+
+        // Update allowed fields
+        if (updates.metadata) {
+          Object.assign(category.metadata, updates.metadata);
+        }
+        if (updates.priority !== undefined) {
+          category.priority = updates.priority;
+        }
+        if (updates.validator !== undefined) {
+          category.validator = updates.validator;
+        }
+
+        return true;
+      }
+
+      /**
+       * Get children of a category
+       */
+      getChildren(parentId) {
+        return Array.from(this.hierarchy.get(parentId) || []);
+      }
+
+      /**
+       * Get ancestors of a category
+       */
+      getAncestors(childId) {
+        const ancestors = [];
+        let current = this.categories.get(childId);
+
+        while (current?.parent) {
+          ancestors.push(current.parent);
+          current = this.categories.get(current.parent);
+        }
+
+        return ancestors;
+      }
+
+      /**
+       * Check if category has specific ancestor
+       */
+      hasAncestor(childId, ancestorId) {
+        let current = this.categories.get(childId);
+
+        while (current?.parent) {
+          if (current.parent === ancestorId) return true;
+          current = this.categories.get(current.parent);
+        }
+
+        return false;
+      }
+
+      /**
+       * Clear all categories (with option to keep standards)
+       */
+      clear(keepStandard = true) {
+        this.categories.clear();
+        this.dimensions.clear();
+        this.hierarchy.clear();
+
+        if (keepStandard) {
+          this.setupStandardCategories();
+        }
+      }
+
+      /**
+       * Get statistics about registered categories
+       */
+      getStats() {
+        const stats = {
+          totalCategories: this.categories.size,
+          dimensions: Array.from(this.dimensions.keys()),
+          hierarchies: this.hierarchy.size,
+          origin: this.origin,
+          byDimension: {},
+        };
+
+        // Categories by dimension
+        for (const [dim, ids] of this.dimensions.entries()) {
+          stats.byDimension[dim] = ids.size;
+        }
+
+        return stats;
+      }
+
+      /**
+       * Debug method to visualize hierarchy
+       */
+      visualizeHierarchy(rootId = null) {
+        const lines = [];
+        const visited = new Set();
+
+        const drawNode = (id, prefix = "", isLast = true) => {
+          const category = this.categories.get(id);
+          if (!category || visited.has(id)) return;
+
+          visited.add(id);
+
+          const connector = isLast ? "└── " : "├── ";
+          const info = `${category.id} (${category.dimension})`;
+          lines.push(prefix + connector + info);
+
+          const children = Array.from(category.children);
+          const childPrefix = prefix + (isLast ? "    " : "│   ");
+
+          children.forEach((childId, index) => {
+            drawNode(childId, childPrefix, index === children.length - 1);
+          });
+        };
+
+        if (rootId) {
+          drawNode(rootId);
+        } else {
+          // Find all roots (categories without parents)
+          const roots = Array.from(this.categories.values())
+            .filter((c) => !c.parent)
+            .sort((a, b) => a.dimension.localeCompare(b.dimension));
+
+          roots.forEach((category, index) => {
+            if (index > 0) lines.push("");
+            drawNode(category.id, "", true);
+          });
+        }
+
+        return lines.join("\n");
+      }
     }
 
     // =====  SUBSCRIBER MANAGER =====

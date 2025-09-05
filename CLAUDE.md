@@ -709,3 +709,138 @@ The following Tailwind CSS enhancements are deferred until middleware foundation
 26. `Triggering lazy content discovery` (in NETMON terminal)
 
 **DO NOT use unicode in console or dump logs.**
+- Looking through the codebase, I've identified several sophisticated categorization systems. Here's a comprehensive breakdown:
+
+## Primary Categorization Classes
+
+### 1. **CategoryRegistryMiddleware** (vibe-subscribe.js)
+The most advanced categorization system with N-dimensional support.
+
+**Search Methods:**
+- RegExp pattern matching with multiple patterns per category
+- Hierarchical parent-child relationships
+- Multiple resolution strategies (first/specific/all/hierarchical)
+
+**Categories:**
+```javascript
+// Universal
+'errors': /error|fail|exception|❌/i
+'warnings': /warn|slow|timeout|⚠/i  
+'success': /success|complete|done|✅/i
+
+// Context-specific with dimensions
+Proxy: 'terminal-errors', 'terminal-media', 'terminal-network'
+Extractor: 'images' → ['jpeg', 'png'], 'videos' → ['mp4']
+Background: 'lifecycle', 'session'
+```
+
+### 2. **LocalEventBus** (vibe-utils.js)
+Event categorization with RegExp-based routing.
+
+**Categories:**
+```javascript
+UI: /^(ui|display|render)/i
+DATA: /^(data|content|extract)/i
+USER: /^(user|click|input|key)/i
+DOM: /^(dom|mutation|change)/i
+PERFORMANCE: /^(performance|metric|timing)/i
+DEBUG: /^(error|warn|debug)/i
+LIFECYCLE: /^(lifecycle|init|destroy)/i
+LOCAL: /^(local|internal|private)/i
+```
+
+**Filter Strategies:**
+- `highFrequency`: throttle scroll/mouse/DOM events at 16ms
+- `batchable`: batch UI/data updates at 100ms
+- `priority`: immediate processing for errors/clicks
+
+### 3. **VibeSystemMiddleware** (vibe-subscribe.js)
+Debug categorization with pattern-based filtering.
+
+**Debug Categories:**
+```javascript
+'events' → all events
+'messaging' → /handle-|cross-context|message/i
+'injection' → /inject|script/i
+'extraction' → /extract|content|media/i
+'performance' → /performance|metric|timing/i
+'errors' → /error|failed|exception/i
+'lifecycle' → /init|destroy|cleanup|lifecycle/i
+'ui' → /ui-|display|theme|terminal/i
+'cross-context' → /cross-context|route|announcement/i
+```
+
+### 4. **EnhancedTerminalMiddleware** (proxy-controller.js)
+Routes events to specific terminals based on category.
+
+**Terminal Routing Map:**
+```javascript
+'errors' → 'error-terminal'
+'media' → 'media-terminal'
+'network' → 'network-terminal'
+'system' → 'system-terminal'
+'default' → 'main-terminal'
+```
+
+**Categorization Logic:**
+- Checks for "error"/"failed" → ERROR
+- Contains "media"/"image"/"video" → MEDIA
+- Contains "extraction"/"proxy" → NETWORK
+- Default → SYSTEM
+
+### 5. **Content Segmentation** (unified-vibe.js)
+DOM content scoring and segmentation.
+
+**Segment Categories:**
+```javascript
+// Pattern-based
+'navigation': /nav|menu|breadcrumb/i
+'sidebar': /sidebar|aside|widget/i
+'comments': /comment|discuss|reply/i
+'metadata': /author|byline|dateline|publish|meta/i
+
+// Score-based
+'main': score > 200
+'secondary': score > 50
+```
+
+**Scoring Algorithm:**
+- Tag weights: article(50), main(40), section(20), p(10)
+- Positive indicators: `/article|content|main|post/i` (+25)
+- Negative indicators: `/sidebar|footer|nav|ad/i` (-25)
+- Text length bonuses: >500 chars (+20), >1000 chars (+30)
+
+### 6. **BatchingMiddleware** (vibe-subscribe.js)
+Event batching strategies by type.
+
+**Batching Configuration:**
+```javascript
+'extraction-progress': {strategy: 'replace', delay: 200}
+'media-discovered': {strategy: 'accumulate', delay: 150}
+'dom-mutation': {strategy: 'replace', delay: 100}
+'scroll-event': {strategy: 'replace', delay: 50}
+'content-updated': {strategy: 'merge', delay: 300}
+'terminal-log': {strategy: 'accumulate', delay: 100}
+```
+
+### 7. **MessageBridge** (vibe-utils.js)
+Cross-context message routing.
+
+**Routing Strategies:**
+```javascript
+'content-extraction': {source: ['background','proxy'], target: 'extractor'}
+'content-display': {source: ['extractor','background'], target: 'proxy'}
+'user-command': {source: ['proxy','popup'], target: 'background'}
+'system-notification': {source: 'background', target: ['proxy','extractor','popup']}
+```
+
+## Search/Match Methods Summary
+
+1. **RegExp Testing**: Primary method for flexible pattern matching
+2. **String.includes()**: Simple substring checking
+3. **Scoring Algorithms**: Weighted scoring for content quality
+4. **Hierarchical Resolution**: Parent-child category relationships
+5. **Multi-dimensional Namespacing**: Categories organized by context/dimension
+6. **Priority-based Selection**: Resolution by specificity and priority scores
+
+The system uses a layered approach where events flow through multiple categorization layers, each adding metadata that downstream components can use for routing, filtering, batching, or display decisions.
