@@ -439,8 +439,6 @@ class BackgroundOrchestrator extends SubscriberEnabledComponent {
         // Core state management
         this.smartTabs = new Map();                    // SmartTab instances
         this.activeSessions = new Map();               // Active vibe sessions
-        this.persistentStorage = new Map();            // Persistent data storage
-        this.interfaceStates = new Map();              // Interface state tracking
 
         // Background-specific capabilities
         this.messageRouter = new Map();                // Message routing rules
@@ -638,24 +636,8 @@ class BackgroundOrchestrator extends SubscriberEnabledComponent {
     }
 
     async initializeStorage() {
-        try {
-            if (browser.storage && browser.storage.local) {
-                const stored = await browser.storage.local.get();
-
-                // Restore interface states
-                if (stored.interfaceStates) {
-                    this.interfaceStates = new Map(Object.entries(stored.interfaceStates));
-                    console.log(`📦 Restored ${this.interfaceStates.size} interface states from storage`);
-                }
-
-                // Restore other persistent data
-                if (stored.persistentData) {
-                    this.persistentStorage = new Map(Object.entries(stored.persistentData));
-                }
-            }
-        } catch (error) {
-            console.warn('Failed to initialize storage:', error);
-        }
+        // Storage initialization is now handled by VibeSystemMiddleware
+        console.log('🔧 Storage initialization delegated to VibeSystemMiddleware');
     }
 
     initializePopupHandling() {
@@ -918,44 +900,49 @@ class BackgroundOrchestrator extends SubscriberEnabledComponent {
         }
     }
 
-    // ===== STORAGE MANAGEMENT =====
-
+    // ===== SETTINGS DELEGATION TO VIBE SYSTEM MIDDLEWARE =====
+    
     async storeInterfaceState(data) {
         const {key, state} = data;
-
-        this.interfaceStates.set(key, {
-            ...state,
-            timestamp: Date.now(),
-            origin: 'orchestrator'
-        });
-
-        this.orchestrationMetrics.storageOperations++;
-
-        // Persist to browser storage
-        try {
-            if (browser.storage && browser.storage.local) {
-                const interfaceStatesObj = Object.fromEntries(this.interfaceStates);
-                await browser.storage.local.set({interfaceStates: interfaceStatesObj});
+        
+        // Delegate to VibeSystemMiddleware
+        if (window.__globalSubscriberManager) {
+            const vibeSystem = window.__globalSubscriberManager.getVibeSystemMiddleware();
+            if (vibeSystem) {
+                await vibeSystem.saveSetting('system', `interface.${key}`, {
+                    ...state,
+                    timestamp: Date.now(),
+                    origin: 'orchestrator'
+                });
+                
+                this.orchestrationMetrics.storageOperations++;
+                console.log(`💾 Delegated interface state storage: ${key}`);
+                return {success: true};
             }
-
-            console.log(`💾 Stored interface state: ${key}`);
-            return {success: true};
-
-        } catch (error) {
-            console.error('Failed to store interface state:', error);
-            return {success: false, error: error.message};
         }
+        
+        console.warn('VibeSystemMiddleware not available for interface state storage');
+        return {success: false, error: 'VibeSystemMiddleware not available'};
     }
 
     async loadInterfaceState(key) {
-        const state = this.interfaceStates.get(key);
-
-        if (state) {
-            console.log(`📖 Loaded interface state: ${key}`);
-            return {success: true, state};
-        } else {
-            return {success: false, error: 'State not found'};
+        // Delegate to VibeSystemMiddleware
+        if (window.__globalSubscriberManager) {
+            const vibeSystem = window.__globalSubscriberManager.getVibeSystemMiddleware();
+            if (vibeSystem) {
+                const state = vibeSystem.getSetting('system', `interface.${key}`);
+                
+                if (state) {
+                    console.log(`📖 Delegated interface state load: ${key}`);
+                    return {success: true, state};
+                } else {
+                    return {success: false, error: 'State not found'};
+                }
+            }
         }
+        
+        console.warn('VibeSystemMiddleware not available for interface state loading');
+        return {success: false, error: 'VibeSystemMiddleware not available'};
     }
 
     handleStorageChange(changes, area) {
@@ -964,10 +951,11 @@ class BackgroundOrchestrator extends SubscriberEnabledComponent {
         // Emit storage change events for interested components
         this.emit('storage-changed', {changes, area});
 
-        // Handle specific storage change types
+        // Handle VibeSystemMiddleware storage keys
         Object.keys(changes).forEach(key => {
-            if (key === 'interfaceStates') {
-                this.emit('interface-states-changed', changes[key]);
+            if (key.startsWith('vibeSystemSettings') || key.startsWith('vibeUISettings') || 
+                key.startsWith('vibeMiddlewareSettings') || key.startsWith('vibeExtractorSettings')) {
+                this.emit('vibe-settings-changed', {key, change: changes[key]});
             }
         });
     }
@@ -1120,7 +1108,7 @@ class BackgroundOrchestrator extends SubscriberEnabledComponent {
                 visibleTab: this.smartTabs.get(session.visibleTabId)?.getStatus(),
                 hiddenTab: this.smartTabs.get(session.hiddenTabId)?.getStatus()
             })),
-            interfaceStates: Object.fromEntries(this.interfaceStates),
+            // interfaceStates now managed by VibeSystemMiddleware
             orchestrationMetrics: {...this.orchestrationMetrics},
             smartTabStats: Array.from(this.smartTabs.values()).map(tab => tab.getStatus()),
             memoryStats: this.getMemoryStats(),
@@ -1205,9 +1193,8 @@ class BackgroundOrchestrator extends SubscriberEnabledComponent {
             }
         }
 
-        // 3. Clear storage caches
-        this.interfaceStates.clear();
-        this.persistentStorage.clear();
+        // 3. Storage cleanup is now handled by VibeSystemMiddleware
+        console.log('🔧 Storage cleanup delegated to VibeSystemMiddleware');
 
         // 4. Force garbage collection notification
         this.emit('memory-cleanup-complete', {
@@ -1276,8 +1263,7 @@ class BackgroundOrchestrator extends SubscriberEnabledComponent {
         return {
             smartTabs: Array.from(this.smartTabs.values()).map(tab => tab.getStatus()),
             activeSessions: Array.from(this.activeSessions.values()),
-            interfaceStates: this.interfaceStates.size,
-            persistentStorage: this.persistentStorage.size,
+            // interfaceStates and persistentStorage now managed by VibeSystemMiddleware
             orchestrationMetrics: { ...this.orchestrationMetrics },
             crossContextStats: this.getCrossContextInfo(),
             memoryStats: this.getMemoryStats()
@@ -1291,8 +1277,8 @@ class BackgroundOrchestrator extends SubscriberEnabledComponent {
         return {
             totalTabMemoryMB: tabMemory,
             managedTabs: this.smartTabs.size,
-            activeSessions: this.activeSessions.size,
-            storedStates: this.interfaceStates.size
+            activeSessions: this.activeSessions.size
+            // storedStates now managed by VibeSystemMiddleware
         };
     }
 }
@@ -1346,7 +1332,7 @@ if (isBackground) {
         window.__vibeDebugMiddleware = window.__globalSubscriberManager.debugMiddleware;
 
         // Enhanced debug interface with proper references
-        window.vibeDebug = {
+        window.vibeSystem = {
             // Core functionality
             enable: (categories) => window.__globalSubscriberManager?.debugMiddleware?.enableDebug(categories),
             disable: () => window.__globalSubscriberManager?.debugMiddleware?.enableDebug(false),

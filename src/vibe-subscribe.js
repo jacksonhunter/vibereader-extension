@@ -1686,7 +1686,7 @@ if (window.__vibeSubscribe) {
     }
 
     // ===== MINIMAL PERFORMANCE TRACKER =====
-    class MinimalPerformanceMiddleware extends SubscriberMiddleware {
+    class PerformanceMiddleware extends SubscriberMiddleware {
       static _ = this.register;
 
       constructor() {
@@ -2775,13 +2775,32 @@ if (window.__vibeSubscribe) {
     }
 
     // ===== ADVANCED DEBUG MIDDLEWARE =====
-    class DebugMiddleware extends SubscriberMiddleware {
+    class VibeSystemMiddleware extends SubscriberMiddleware {
       static _ = this.register;
 
       constructor() {
-        super("AdvancedDebug", 0.5); // Very high priority - runs early
+        super("SystemSettings", 0.5); // Very high priority - runs early
 
         this.origin = this.detectOrigin();
+
+        // Context-logical settings structure
+        this.settings = {
+          system: new Map(), // autoActivate, debug.*, background orchestration, session data
+          ui: new Map(), // theme, mediaMode, sideScrolls, vibeRain, display settings
+          middleware: new Map(), // Cross-context middleware configuration
+          extractor: new Map(), // Content extraction + proxy settings
+          cache: new Map(), // Non-settings browser storage with TTL
+        };
+
+        this.storageKeys = {
+          system: "vibeSystemSettings",
+          ui: "vibeUISettings",
+          middleware: "vibeMiddlewareSettings",
+          extractor: "vibeExtractorSettings",
+          cache: "vibeCacheStorage",
+        };
+
+        // Legacy debug properties for backward compatibility during transition
         this.debugSettings = new Map();
         this.eventFilters = new Map();
         this.terminalRouting = new Map();
@@ -2801,7 +2820,9 @@ if (window.__vibeSubscribe) {
           "cross-context": "CROSS_CONTEXT_DEBUG",
         };
 
-        this.initializeDebugMiddleware();
+        this.hasUnsavedChanges = false;
+
+        this.initializeSystemMiddleware();
       }
 
       ensureArrayValue(value, defaultValue = []) {
@@ -2828,8 +2849,331 @@ if (window.__vibeSubscribe) {
         return "unknown";
       }
 
-      async initializeDebugMiddleware() {
-        // Load debug settings from storage
+      // Core storage methods with nested key support
+      async loadAllSettings() {
+        if (!browser.storage?.sync) return;
+
+        try {
+          const allKeys = Object.values(this.storageKeys);
+          const data = await browser.storage.sync.get(allKeys);
+
+          // Load each settings category
+          Object.entries(this.storageKeys).forEach(([category, storageKey]) => {
+            if (data[storageKey]) {
+              const parsedSettings =
+                typeof data[storageKey] === "string"
+                  ? JSON.parse(data[storageKey])
+                  : data[storageKey];
+
+              // Convert object to Map for consistent interface
+              this.settings[category].clear();
+              Object.entries(parsedSettings).forEach(([key, value]) => {
+                this.settings[category].set(key, value);
+              });
+            }
+          });
+
+          this.debug(`📁 Loaded all settings for ${this.origin}`, "storage");
+        } catch (error) {
+          this.debug(`❌ Failed to load settings: ${error.message}`, "errors");
+        }
+      }
+
+      async saveSetting(category, key, value) {
+        if (!this.settings[category]) {
+          throw new Error(`Invalid settings category: ${category}`);
+        }
+
+        // Set in memory
+        this.settings[category].set(key, value);
+
+        // Schedule auto-save instead of immediate save
+        this.scheduleAutoSave(category);
+
+        // Notify subscribers
+        this.notifySettingsSubscribers(category, key, value);
+
+        this.debug(
+          `💾 Scheduled save for setting: ${category}.${key}`,
+          "storage",
+        );
+      }
+
+      getSetting(category, key, defaultValue = null) {
+        if (!this.settings[category]) {
+          this.debug(`⚠️ Invalid settings category: ${category}`, "errors");
+          return defaultValue;
+        }
+
+        return this.settings[category].get(key) ?? defaultValue;
+      }
+
+      async saveNestedSetting(path, value) {
+        const pathParts = path.split(".");
+        if (pathParts.length < 2) {
+          throw new Error(
+            `Invalid nested path: ${path}. Must be at least category.key`,
+          );
+        }
+
+        const [category, ...keyParts] = pathParts;
+        const key = keyParts.join(".");
+
+        await this.saveSetting(category, key, value);
+      }
+
+      getNestedSetting(path, defaultValue = null) {
+        const pathParts = path.split(".");
+        if (pathParts.length < 2) {
+          this.debug(`⚠️ Invalid nested path: ${path}`, "errors");
+          return defaultValue;
+        }
+
+        const [category, ...keyParts] = pathParts;
+        const key = keyParts.join(".");
+
+        return this.getSetting(category, key, defaultValue);
+      }
+
+      async saveCategory(category) {
+        if (!browser.storage?.sync || !this.settings[category]) return;
+
+        try {
+          const storageKey = this.storageKeys[category];
+          const settingsObj = Object.fromEntries(this.settings[category]);
+
+          await browser.storage.sync.set({
+            [storageKey]: JSON.stringify(settingsObj),
+          });
+
+          this.debug(`💾 Saved category: ${category}`, "storage");
+        } catch (error) {
+          this.debug(
+            `❌ Failed to save category ${category}: ${error.message}`,
+            "errors",
+          );
+        }
+      }
+
+      // Unified auto-save system
+      setupAutoSave() {
+        this.autoSaveConfig = {
+          enabled: true,
+          debounceTime: 1000, // 1 second debounce
+          batchSaveTime: 5000, // Batch saves every 5 seconds
+          maxRetries: 3,
+        };
+
+        this.pendingSaves = new Set();
+        this.saveTimers = new Map();
+        this.batchSaveTimer = null;
+
+        // Setup batch save interval
+        this.setupBatchSave();
+
+        this.debug(
+          `⚡ Auto-save system initialized with ${this.autoSaveConfig.debounceTime}ms debounce`,
+          "storage",
+        );
+      }
+
+      setupBatchSave() {
+        if (this.batchSaveTimer) {
+          clearInterval(this.batchSaveTimer);
+        }
+
+        this.batchSaveTimer = setInterval(async () => {
+          if (this.pendingSaves.size > 0) {
+            await this.processBatchSaves();
+          }
+        }, this.autoSaveConfig.batchSaveTime);
+      }
+
+      async processBatchSaves() {
+        const categoriesToSave = Array.from(this.pendingSaves);
+        this.pendingSaves.clear();
+
+        this.debug(
+          `🔄 Processing batch save for categories: ${categoriesToSave.join(", ")}`,
+          "storage",
+        );
+
+        const savePromises = categoriesToSave.map(async (category) => {
+          try {
+            await this.saveCategory(category);
+            return { category, success: true };
+          } catch (error) {
+            this.debug(
+              `❌ Batch save failed for ${category}: ${error.message}`,
+              "errors",
+            );
+            return { category, success: false, error };
+          }
+        });
+
+        const results = await Promise.allSettled(savePromises);
+        const failed = results.filter(
+          (r) => r.status === "rejected" || !r.value.success,
+        );
+
+        if (failed.length > 0) {
+          this.debug(
+            `⚠️ ${failed.length} batch saves failed, will retry`,
+            "storage",
+          );
+          failed.forEach((f) => {
+            if (f.value) this.pendingSaves.add(f.value.category);
+          });
+        }
+      }
+
+      scheduleAutoSave(category) {
+        if (!this.autoSaveConfig.enabled) return;
+
+        // Add to pending saves
+        this.pendingSaves.add(category);
+
+        // Clear existing timer for this category
+        if (this.saveTimers.has(category)) {
+          clearTimeout(this.saveTimers.get(category));
+        }
+
+        // Setup debounced save
+        const timer = setTimeout(async () => {
+          if (this.pendingSaves.has(category)) {
+            try {
+              await this.saveCategory(category);
+              this.pendingSaves.delete(category);
+              this.debug(`⚡ Auto-saved category: ${category}`, "storage");
+            } catch (error) {
+              this.debug(
+                `❌ Auto-save failed for ${category}: ${error.message}`,
+                "errors",
+              );
+            }
+          }
+          this.saveTimers.delete(category);
+        }, this.autoSaveConfig.debounceTime);
+
+        this.saveTimers.set(category, timer);
+      }
+
+      async flushAllPendingSaves() {
+        // Clear all timers
+        this.saveTimers.forEach((timer) => clearTimeout(timer));
+        this.saveTimers.clear();
+
+        // Save all pending categories immediately
+        if (this.pendingSaves.size > 0) {
+          await this.processBatchSaves();
+        }
+
+        this.debug(`🏁 Flushed all pending saves`, "storage");
+      }
+
+      // Service subscription management
+      setupSubscriptions() {
+        this.subscribers = {
+          settings: new Set(), // Components that need settings updates
+          dialog: new Set(), // Components that handle user confirmations
+          cache: new Set(), // Components that manage temporary storage
+        };
+
+        this.debug(
+          `📝 Setup service subscriptions for ${this.origin}`,
+          "storage",
+        );
+      }
+
+      subscribeToService(service, callback) {
+        if (!this.subscribers[service]) {
+          this.debug(`⚠️ Invalid service subscription: ${service}`, "errors");
+          return false;
+        }
+
+        this.subscribers[service].add(callback);
+        this.debug(`➕ Added subscriber to ${service} service`, "storage");
+        return true;
+      }
+
+      unsubscribeFromService(service, callback) {
+        if (!this.subscribers[service]) return false;
+
+        const removed = this.subscribers[service].delete(callback);
+        if (removed) {
+          this.debug(
+            `➖ Removed subscriber from ${service} service`,
+            "storage",
+          );
+        }
+        return removed;
+      }
+
+      notifySettingsSubscribers(category, key, value) {
+        const settingsData = {
+          category,
+          key,
+          value,
+          fullPath: `${category}.${key}`,
+          timestamp: Date.now(),
+          origin: this.origin,
+        };
+
+        this.subscribers.settings.forEach((callback) => {
+          try {
+            callback(settingsData);
+          } catch (error) {
+            this.debug(
+              `❌ Settings subscriber error: ${error.message}`,
+              "errors",
+            );
+          }
+        });
+
+        this.debug(
+          `📢 Notified ${this.subscribers.settings.size} settings subscribers`,
+          "storage",
+        );
+      }
+
+      async requestUserConfirmation(message, options = {}) {
+        const dialogData = {
+          message,
+          options,
+          timestamp: Date.now(),
+          origin: this.origin,
+        };
+
+        // Try dialog service subscribers first
+        for (const callback of this.subscribers.dialog) {
+          try {
+            const result = await callback(dialogData);
+            if (result !== undefined) {
+              return result;
+            }
+          } catch (error) {
+            this.debug(
+              `❌ Dialog subscriber error: ${error.message}`,
+              "errors",
+            );
+          }
+        }
+
+        // Fallback to browser confirm if no dialog service available
+        return confirm(message);
+      }
+
+      async initializeSystemMiddleware() {
+        // Load all settings from storage
+        await this.loadAllSettings();
+
+        // Setup service subscriptions
+        this.setupSubscriptions();
+
+        // Setup unified auto-save system
+        this.setupAutoSave();
+
+        // Legacy debug support - Load debug settings from storage
         await this.loadDebugSettings();
 
         // Setup storage listeners
@@ -2844,7 +3188,7 @@ if (window.__vibeSubscribe) {
         }, 30000); // Every 30 seconds
 
         console.log(
-          `🐛 Advanced Debug Middleware initialized in ${this.origin} context`,
+          `🔧 VibeSystemMiddleware initialized in ${this.origin} context`,
         );
       }
 
@@ -3364,6 +3708,14 @@ if (window.__vibeSubscribe) {
         }
       }
 
+      // Simple debug wrapper for backward compatibility
+      debug(message, category = "storage") {
+        this.debugEvent(message, {}, {
+          category: category.toUpperCase() + "_DEBUG",
+          priority: category === "errors" ? "high" : "normal"
+        });
+      }
+
       // Public API for manual debug routing
       debugEvent(event, data, options = {}) {
         if (this.debugSettings.get("enabled")) {
@@ -3431,6 +3783,675 @@ if (window.__vibeSubscribe) {
       }
     }
 
+    /**
+     * CategoryRegistryMiddleware - N-dimensional categorization system
+     *
+     * @description
+     * A high-performance categorization middleware that supports multiple dimensions,
+     * hierarchical relationships, and pluggable resolution strategies. Optimized for
+     * the common case (simple pattern matching) while supporting complex scenarios.
+     *
+     * @example
+     * // Simple usage - just pattern matching
+     * registry.register('errors', /error|fail|exception/i);
+     *
+     * // With metadata for routing
+     * registry.register('media-events', /media|image|video/i, {
+     *   terminal: 'media-terminal',
+     *   icon: '📺'
+     * });
+     *
+     * // Hierarchical categories
+     * registry.register('raster-images', /\.(jpe?g|png|gif)/i, {
+     *   parent: 'images'
+     * });
+     */
+      /**
+       * CategoryRegistryMiddleware - N-dimensional categorization system
+       *
+       * @description
+       * A high-performance categorization middleware that supports multiple dimensions,
+       * hierarchical relationships, and pluggable resolution strategies. Optimized for
+       * the common case (simple pattern matching) while supporting complex scenarios.
+       *
+       * @example
+       * // Simple usage - just pattern matching
+       * registry.register('errors', /error|fail|exception/i);
+       *
+       * // With metadata for routing
+       * registry.register('media-events', /media|image|video/i, {
+       *   terminal: 'media-terminal',
+       *   icon: '📺'
+       * });
+       *
+       * // Hierarchical categories
+       * registry.register('raster-images', /\.(jpe?g|png|gif)/i, {
+       *   parent: 'images'
+       * });
+       */
+      class CategoryRegistryMiddleware extends SubscriberMiddleware {
+          static _ = this.register
+
+          constructor() {
+              super('CategoryRegistry', 1); // Run early in pipeline
+
+              /**
+               * @typedef {Object} Category
+               * @property {string} id - Unique identifier
+               * @property {RegExp[]} patterns - Compiled regex patterns (fast)
+               * @property {Function} [validator] - Optional async validator
+               * @property {string} [dimension='default'] - Category dimension/namespace
+               * @property {string} [parent] - Parent category ID for hierarchy
+               * @property {Object} metadata - Arbitrary metadata for routing/display
+               * @property {Set<string>} [children] - Child category IDs
+               */
+
+              /** @type {Map<string, Category>} Core registry storage */
+              this.categories = new Map();
+
+              /** @type {Map<string, Set<string>>} dimension -> categoryIds mapping */
+              this.dimensions = new Map();
+
+              /** @type {Map<string, Set<string>>} parent -> children mapping */
+              this.hierarchy = new Map();
+
+              /**
+               * Resolution strategies - ordered by performance
+               * @type {Map<string, Function>}
+               */
+              this.strategies = new Map([
+                  ['first', this.resolveFirst.bind(this)],      // Fastest - returns first match
+                  ['specific', this.resolveSpecific.bind(this)], // Default - most specific match
+                  ['all', this.resolveAll.bind(this)],           // Returns all matches
+                  ['hierarchical', this.resolveHierarchical.bind(this)] // With parent/child
+              ]);
+
+              /** @type {string} Current execution context */
+              this.origin = this.detectOrigin();
+
+              // Initialize with standard categories
+              this.setupStandardCategories();
+          }
+
+          /**
+           * Register a new category with smart defaults
+           *
+           * @param {string} id - Unique category identifier
+           * @param {RegExp|string|RegExp[]} patterns - Pattern(s) to match
+           * @param {Object} [options={}] - Configuration options
+           * @param {string} [options.dimension='default'] - Category dimension
+           * @param {string} [options.parent] - Parent category for hierarchy
+           * @param {Function} [options.validator] - Async validation function
+           * @param {Object} [options.metadata={}] - Arbitrary metadata
+           * @param {number} [options.priority=0] - Resolution priority (higher = first)
+           * @returns {string} The registered category ID
+           *
+           * @example
+           * // Simple pattern
+           * registry.register('errors', /error/i);
+           *
+           * // Multiple patterns with metadata
+           * registry.register('high-res', [/4k/i, /uhd/i], {
+           *   metadata: { quality: 'high' }
+           * });
+           *
+           * // With parent hierarchy
+           * registry.register('jpeg', /\.jpe?g$/i, {
+           *   parent: 'images',
+           *   metadata: { mimeType: 'image/jpeg' }
+           * });
+           */
+          register(id, patterns, options = {}) {
+              // Normalize patterns to array of RegExp
+              const normalizedPatterns = this.normalizePatterns(patterns);
+
+              // Create category object
+              const category = {
+                  id,
+                  patterns: normalizedPatterns,
+                  dimension: options.dimension || 'default',
+                  parent: options.parent,
+                  validator: options.validator,
+                  metadata: options.metadata || {},
+                  priority: options.priority || 0,
+                  children: new Set()
+              };
+
+              // Store in registry
+              this.categories.set(id, category);
+
+              // Index by dimension
+              if (!this.dimensions.has(category.dimension)) {
+                  this.dimensions.set(category.dimension, new Set());
+              }
+              this.dimensions.get(category.dimension).add(id);
+
+              // Update hierarchy
+              if (category.parent) {
+                  this.establishHierarchy(category.parent, id);
+              }
+
+              return id;
+          }
+
+          /**
+           * Establish parent-child relationship
+           * @private
+           */
+          establishHierarchy(parentId, childId) {
+              // Ensure parent exists
+              if (!this.categories.has(parentId)) {
+                  // Auto-create parent category
+                  this.register(parentId, [], {
+                      metadata: { synthetic: true }
+                  });
+              }
+
+              // Add to hierarchy map
+              if (!this.hierarchy.has(parentId)) {
+                  this.hierarchy.set(parentId, new Set());
+              }
+              this.hierarchy.get(parentId).add(childId);
+
+              // Update parent's children set
+              const parent = this.categories.get(parentId);
+              if (parent) {
+                  parent.children.add(childId);
+              }
+
+              // Update child's parent reference
+              const child = this.categories.get(childId);
+              if (child) {
+                  child.parent = parentId;
+              }
+          }
+
+          /**
+           * Main middleware process function
+           * Categorizes events and adds results to context
+           */
+          async process(eventContext) {
+              const { event, data, context } = eventContext;
+
+              // Determine resolution strategy (default: 'specific')
+              const strategy = context.categoryStrategy || 'specific';
+
+              // Build test data for categorization
+              const testData = this.buildTestData(event, data);
+
+              // Resolve categories using specified strategy
+              const resolution = await this.resolve(testData, strategy, context);
+
+              // Add results to context for downstream middleware
+              eventContext.context.category = resolution.primary; // Primary category
+              eventContext.context.categories = resolution.all;    // All matches
+              eventContext.context.categoryMetadata = resolution.metadata;
+
+              return true; // Continue processing
+          }
+
+          /**
+           * Resolve categories for given data
+           *
+           * @param {Object|string} data - Data to categorize
+           * @param {string} [strategy='specific'] - Resolution strategy
+           * @param {Object} [context={}] - Additional context
+           * @returns {Promise<Object>} Resolution result
+           */
+          async resolve(data, strategy = 'specific', context = {}) {
+              const resolver = this.strategies.get(strategy) || this.strategies.get('specific');
+              return await resolver(data, context);
+          }
+
+          /**
+           * STRATEGY: First match (fastest)
+           * Returns immediately on first pattern match
+           *
+           * @performance O(n) worst case, O(1) best case
+           */
+          async resolveFirst(data, context) {
+              const testStrings = this.extractTestStrings(data);
+
+              for (const [id, category] of this.categories) {
+                  // Apply dimension filter if specified
+                  if (context.dimension && category.dimension !== context.dimension) {
+                      continue;
+                  }
+
+                  // Fast pattern check
+                  if (this.testPatterns(category.patterns, testStrings)) {
+                      return {
+                          primary: id,
+                          all: [id],
+                          metadata: category.metadata,
+                          strategy: 'first'
+                      };
+                  }
+              }
+
+              return { primary: null, all: [], metadata: {}, strategy: 'first' };
+          }
+
+          /**
+           * STRATEGY: Most specific (default)
+           * Returns the most specific match based on pattern count and priority
+           *
+           * @performance O(n) - tests all categories but no validators
+           */
+          async resolveSpecific(data, context) {
+              const testStrings = this.extractTestStrings(data);
+              const matches = [];
+
+              for (const [id, category] of this.categories) {
+                  // Apply dimension filter
+                  if (context.dimension && category.dimension !== context.dimension) {
+                      continue;
+                  }
+
+                  // Count matching patterns
+                  const matchCount = this.countMatchingPatterns(category.patterns, testStrings);
+
+                  if (matchCount > 0) {
+                      matches.push({
+                          id,
+                          category,
+                          specificity: matchCount * 1000 + category.priority, // Combine pattern count and priority
+                          matchCount
+                      });
+                  }
+              }
+
+              // Sort by specificity (most specific first)
+              matches.sort((a, b) => b.specificity - a.specificity);
+
+              if (matches.length > 0) {
+                  const best = matches[0];
+                  return {
+                      primary: best.id,
+                      all: matches.map(m => m.id),
+                      metadata: best.category.metadata,
+                      specificity: best.specificity,
+                      strategy: 'specific'
+                  };
+              }
+
+              return { primary: null, all: [], metadata: {}, strategy: 'specific' };
+          }
+
+          /**
+           * STRATEGY: All matches
+           * Returns all matching categories with optional validation
+           *
+           * @performance O(n) + async validators if present
+           */
+          async resolveAll(data, context) {
+              const testStrings = this.extractTestStrings(data);
+              const matches = [];
+
+              for (const [id, category] of this.categories) {
+                  // Apply dimension filter
+                  if (context.dimension && category.dimension !== context.dimension) {
+                      continue;
+                  }
+
+                  // Pattern check
+                  const matchCount = this.countMatchingPatterns(category.patterns, testStrings);
+
+                  if (matchCount > 0) {
+                      // Run validator if present (only for matches)
+                      let validated = true;
+                      if (category.validator && !context.skipValidators) {
+                          try {
+                              validated = await category.validator(data, context);
+                          } catch (error) {
+                              console.warn(`Validator failed for ${id}:`, error);
+                              validated = false;
+                          }
+                      }
+
+                      if (validated) {
+                          matches.push({
+                              id,
+                              metadata: category.metadata,
+                              dimension: category.dimension,
+                              matchCount,
+                              validated: category.validator ? true : undefined
+                          });
+                      }
+                  }
+              }
+
+              // Sort by match count
+              matches.sort((a, b) => b.matchCount - a.matchCount);
+
+              return {
+                  primary: matches[0]?.id || null,
+                  all: matches.map(m => m.id),
+                  matches, // Full match details
+                  strategy: 'all'
+              };
+          }
+
+          /**
+           * STRATEGY: Hierarchical
+           * Returns matches organized by parent-child relationships
+           */
+          async resolveHierarchical(data, context) {
+              // First get all matches
+              const allMatches = await this.resolveAll(data, context);
+
+              // Build hierarchy tree
+              const tree = {};
+              const processed = new Set();
+
+              for (const matchId of allMatches.all) {
+                  const category = this.categories.get(matchId);
+                  if (!category) continue;
+
+                  // Find root of hierarchy
+                  let root = matchId;
+                  let current = category;
+                  while (current.parent && this.categories.has(current.parent)) {
+                      root = current.parent;
+                      current = this.categories.get(current.parent);
+                  }
+
+                  // Build tree from root
+                  if (!processed.has(root)) {
+                      tree[root] = this.buildHierarchyTree(root, allMatches.all);
+                      processed.add(root);
+                  }
+              }
+
+              return {
+                  primary: allMatches.primary,
+                  all: allMatches.all,
+                  tree,
+                  strategy: 'hierarchical'
+              };
+          }
+
+          /**
+           * Build hierarchy tree for a root category
+           * @private
+           */
+          buildHierarchyTree(rootId, matchedIds) {
+              const node = {
+                  id: rootId,
+                  matched: matchedIds.includes(rootId),
+                  metadata: this.categories.get(rootId)?.metadata || {},
+                  children: []
+              };
+
+              const children = this.hierarchy.get(rootId);
+              if (children) {
+                  for (const childId of children) {
+                      if (matchedIds.includes(childId) || this.hierarchy.has(childId)) {
+                          node.children.push(this.buildHierarchyTree(childId, matchedIds));
+                      }
+                  }
+              }
+
+              return node;
+          }
+
+          /**
+           * Normalize patterns to RegExp array
+           * @private
+           */
+          normalizePatterns(patterns) {
+              if (!patterns) return [];
+              if (!Array.isArray(patterns)) patterns = [patterns];
+
+              return patterns.map(pattern => {
+                  if (pattern instanceof RegExp) return pattern;
+                  if (typeof pattern === 'string') {
+                      // Escape special regex chars and make case-insensitive
+                      const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                      return new RegExp(escaped, 'i');
+                  }
+                  return null;
+              }).filter(Boolean);
+          }
+
+          /**
+           * Build testable data from event context
+           * @private
+           */
+          buildTestData(event, data) {
+              return {
+                  event,
+                  action: data?.action,
+                  message: data?.message,
+                  type: data?.type,
+                  url: data?.url,
+                  src: data?.src,
+                  raw: data
+              };
+          }
+
+          /**
+           * Extract strings for pattern testing
+           * @private
+           */
+          extractTestStrings(data) {
+              const strings = [];
+
+              if (typeof data === 'string') {
+                  strings.push(data);
+              } else if (data && typeof data === 'object') {
+                  // Add string properties
+                  Object.values(data).forEach(value => {
+                      if (typeof value === 'string') {
+                          strings.push(value);
+                      }
+                  });
+
+                  // Add stringified version for deep matching
+                  try {
+                      strings.push(JSON.stringify(data));
+                  } catch (e) {
+                      // Ignore circular references
+                  }
+              }
+
+              return strings;
+          }
+
+          /**
+           * Test if any pattern matches any test string
+           * @private
+           * @performance Optimized with early return
+           */
+          testPatterns(patterns, testStrings) {
+              for (const pattern of patterns) {
+                  for (const str of testStrings) {
+                      if (pattern.test(str)) {
+                          return true;
+                      }
+                  }
+              }
+              return false;
+          }
+
+          /**
+           * Count how many patterns match
+           * @private
+           */
+          countMatchingPatterns(patterns, testStrings) {
+              let count = 0;
+              for (const pattern of patterns) {
+                  for (const str of testStrings) {
+                      if (pattern.test(str)) {
+                          count++;
+                          break; // Each pattern counts once
+                      }
+                  }
+              }
+              return count;
+          }
+
+          /**
+           * Detect current execution context
+           * @private
+           */
+          detectOrigin() {
+              if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getManifest) {
+                  try {
+                      if (browser.tabs && browser.tabs.query) return "background";
+                  } catch(e) {}
+              }
+
+              if (window.__vibeReaderProxyController) return "proxy";
+              if (window.__vibeReaderStealthExtractor) return "extractor";
+              if (window.location?.href?.includes("popup.html")) return "popup";
+
+              return "unknown";
+          }
+
+          /**
+           * Setup standard categories based on context
+           * @private
+           */
+          setupStandardCategories() {
+              // Universal categories
+              this.register('errors', /error|fail|exception|❌/i, {
+                  metadata: { icon: '🔴', priority: 'high' }
+              });
+
+              this.register('warnings', /warn|slow|timeout|⚠/i, {
+                  metadata: { icon: '⚠️', priority: 'medium' }
+              });
+
+              this.register('success', /success|complete|done|✅/i, {
+                  metadata: { icon: '✅', priority: 'normal' }
+              });
+
+              // Context-specific categories
+              if (this.origin === 'proxy') {
+                  this.setupProxyCategories();
+              } else if (this.origin === 'extractor') {
+                  this.setupExtractorCategories();
+              } else if (this.origin === 'background') {
+                  this.setupBackgroundCategories();
+              }
+          }
+
+          setupProxyCategories() {
+              // Terminal routing
+              this.register('terminal-errors', /error|fail|exception/i, {
+                  dimension: 'terminal',
+                  metadata: { terminal: 'error-terminal', icon: '🔴' }
+              });
+
+              this.register('terminal-media', /media|image|video/i, {
+                  dimension: 'terminal',
+                  metadata: { terminal: 'media-terminal', icon: '📺' }
+              });
+
+              this.register('terminal-network', /network|fetch|proxy/i, {
+                  dimension: 'terminal',
+                  metadata: { terminal: 'network-terminal', icon: '🌐' }
+              });
+          }
+
+          setupExtractorCategories() {
+              // Content types with hierarchy
+              this.register('images', [], {
+                  dimension: 'content',
+                  metadata: { type: 'media' }
+              });
+
+              this.register('jpeg', /\.jpe?g$/i, {
+                  dimension: 'content',
+                  parent: 'images',
+                  metadata: { mimeType: 'image/jpeg' }
+              });
+
+              this.register('png', /\.png$/i, {
+                  dimension: 'content',
+                  parent: 'images',
+                  metadata: { mimeType: 'image/png' }
+              });
+
+              this.register('videos', [], {
+                  dimension: 'content',
+                  metadata: { type: 'media' }
+              });
+
+              this.register('mp4', /\.mp4$/i, {
+                  dimension: 'content',
+                  parent: 'videos',
+                  metadata: { mimeType: 'video/mp4' }
+              });
+          }
+
+          setupBackgroundCategories() {
+              // System events
+              this.register('lifecycle', /init|create|destroy|cleanup/i, {
+                  dimension: 'system',
+                  metadata: { importance: 'high' }
+              });
+
+              this.register('session', /session|activate|deactivate/i, {
+                  dimension: 'system',
+                  metadata: { trackable: true }
+              });
+          }
+
+          /**
+           * Public API for components to query categories
+           */
+
+          /**
+           * Get all categories in a dimension
+           * @param {string} dimension - Dimension name
+           * @returns {Array} Category objects
+           */
+          getCategoriesInDimension(dimension) {
+              const ids = this.dimensions.get(dimension) || new Set();
+              return Array.from(ids).map(id => this.categories.get(id)).filter(Boolean);
+          }
+
+          /**
+           * Get category by ID
+           * @param {string} id - Category ID
+           * @returns {Object|null} Category object
+           */
+          getCategory(id) {
+              return this.categories.get(id) || null;
+          }
+
+          /**
+           * Get children of a category
+           * @param {string} parentId - Parent category ID
+           * @returns {Array} Child category IDs
+           */
+          getChildren(parentId) {
+              return Array.from(this.hierarchy.get(parentId) || []);
+          }
+
+          /**
+           * Get statistics about registered categories
+           * @returns {Object} Statistics
+           */
+          getStats() {
+              return {
+                  totalCategories: this.categories.size,
+                  dimensions: Array.from(this.dimensions.keys()),
+                  hierarchies: this.hierarchy.size,
+                  byDimension: Object.fromEntries(
+                      Array.from(this.dimensions.entries()).map(([dim, ids]) => [dim, ids.size])
+                  )
+              };
+          }
+      }
+
+    // Export for use
+    if (typeof window !== "undefined") {
+      window.CategoryRegistryMiddleware = CategoryRegistryMiddleware;
+    }
+
     // =====  SUBSCRIBER MANAGER =====
     class SubscriberManager {
       constructor() {
@@ -3439,8 +4460,7 @@ if (window.__vibeSubscribe) {
         this.eventStats = new Map();
         this.isDestroyed = false;
         this.origin = this.getOrigin();
-        this.middlewareClasses =
-          SubscriberMiddleware.getAllMiddlewareClasses();
+        this.middlewareClasses = SubscriberMiddleware.getAllMiddlewareClasses();
         console.log(
           "Found middleware:",
           this.middlewareClasses.map((c) => c.name),
@@ -3814,6 +4834,18 @@ if (window.__vibeSubscribe) {
             middleware.destroy();
           }
         });
+      }
+
+      getVibeSystemMiddleware() {
+        // Find the VibeSystemMiddleware instance in globalMiddlewares
+        for (const middleware of this.globalMiddlewares) {
+          if (middleware.constructor.name === "VibeSystemMiddleware") {
+            return middleware;
+          }
+        }
+
+        console.warn("VibeSystemMiddleware not found in global middlewares");
+        return null;
       }
 
       destroy() {

@@ -5,16 +5,24 @@ class VibeReaderPopup {
   constructor() {
     this.currentTab = null;
     this.isActive = false;
-    this.settings = {
-      // Core settings (saved to extension)
-      theme: "nightdrive",
+    
+    // Settings mapped to VibeSystemMiddleware namespaces
+    this.systemSettings = {
+      // System-level settings
+      autoActivate: true,
+      'debug.enabled': false,
+      'debug.verbosity': 'normal'
+    };
+    
+    this.uiSettings = {
+      // UI-specific settings
+      theme: "nightdrive", 
       mediaMode: "emoji", // 'emoji', 'ascii', 'normal'
       sideScrolls: true,
-      vibeRain: false,
-      autoActivate: true,
+      vibeRain: false
     };
 
-    // Popup-specific settings (saved separately)
+    // Popup-specific UI state (not persisted via VibeSystemMiddleware)
     this.popupState = {
       lastCheckedTab: null,
       settingsPanelOpen: false,
@@ -29,6 +37,14 @@ class VibeReaderPopup {
     this.autoSaveInterval = null;
 
     this.init();
+  }
+
+  // Helper method for backward compatibility - combines all settings
+  get combinedSettings() {
+    return {
+      ...this.systemSettings,
+      ...this.uiSettings
+    };
   }
 
   async init() {
@@ -59,35 +75,48 @@ class VibeReaderPopup {
 
   async loadAllSettings() {
     try {
-      const stored = await browser.storage.sync.get({
-        vibeReaderSettings: {},
-        vibeReaderPopupState: {},
-      });
+      // Load from VibeSystemMiddleware storage keys
+      const stored = await browser.storage.sync.get([
+        'vibeSystemSettings',
+        'vibeUISettings',
+        'vibeReaderPopupState' // Keep popup state for backward compatibility
+      ]);
 
-      // Load extension settings
-      if (stored.vibeReaderSettings) {
-        this.settings = { ...this.settings, ...stored.vibeReaderSettings };
+      // Parse and load system settings
+      if (stored.vibeSystemSettings) {
+        const systemData = typeof stored.vibeSystemSettings === 'string' 
+          ? JSON.parse(stored.vibeSystemSettings) 
+          : stored.vibeSystemSettings;
+        this.systemSettings = { ...this.systemSettings, ...systemData };
       }
 
-      // Load popup state
+      // Parse and load UI settings
+      if (stored.vibeUISettings) {
+        const uiData = typeof stored.vibeUISettings === 'string' 
+          ? JSON.parse(stored.vibeUISettings) 
+          : stored.vibeUISettings;
+        this.uiSettings = { ...this.uiSettings, ...uiData };
+      }
+
+      // Load popup state (legacy support)
       if (stored.vibeReaderPopupState) {
         this.popupState = {
           ...this.popupState,
           ...stored.vibeReaderPopupState,
         };
       }
-      // Load debug mode state
-      const debugState = await browser.storage.local.get("vibeDebugEnabled");
+
+      // Load debug checkbox state
       const debugCheckbox = document.getElementById("vibe-debug");
-      // TODO: Change default to false once web-ext persistent settings work properly
-      if (debugCheckbox && (debugState.vibeDebugEnabled !== undefined ? debugState.vibeDebugEnabled : true)) {
-        debugCheckbox.checked = true;
+      if (debugCheckbox) {
+        debugCheckbox.checked = this.systemSettings['debug.enabled'] || false;
       }
 
       this.updateSettingsUI();
 
-      console.log("📦 Settings loaded:", {
-        settings: this.settings,
+      console.log("📦 Settings loaded from VibeSystemMiddleware:", {
+        systemSettings: this.systemSettings,
+        uiSettings: this.uiSettings,
         popupState: this.popupState,
       });
     } catch (error) {
@@ -104,14 +133,16 @@ class VibeReaderPopup {
 
     const doSave = async () => {
       try {
-        // Save both extension settings and popup state
+        // Save to VibeSystemMiddleware storage keys
         await browser.storage.sync.set({
-          vibeReaderSettings: this.settings,
-          vibeReaderPopupState: this.popupState,
+          vibeSystemSettings: JSON.stringify(this.systemSettings),
+          vibeUISettings: JSON.stringify(this.uiSettings),
+          vibeReaderPopupState: this.popupState, // Keep popup state separate
         });
 
-        console.log("💾 Settings saved:", {
-          settings: this.settings,
+        console.log("💾 Settings saved to VibeSystemMiddleware:", {
+          systemSettings: this.systemSettings,
+          uiSettings: this.uiSettings,
           popupState: this.popupState,
         });
 
@@ -412,19 +443,36 @@ class VibeReaderPopup {
   }
 
   async updateSetting(key, value) {
-    const oldValue = this.settings[key];
-    this.settings[key] = value;
+    let oldValue;
+    
+    // Determine which namespace the setting belongs to
+    if (['autoActivate', 'debug.enabled', 'debug.verbosity'].includes(key) || key.startsWith('debug.')) {
+      oldValue = this.systemSettings[key];
+      this.systemSettings[key] = value;
+    } else if (['theme', 'mediaMode', 'sideScrolls', 'vibeRain'].includes(key)) {
+      oldValue = this.uiSettings[key]; 
+      this.uiSettings[key] = value;
+    } else {
+      console.warn(`Unknown setting key: ${key}`);
+      return;
+    }
+    
     this.settingsChanged = true;
 
     // Save settings with debouncing
     await this.saveAllSettings();
 
-    // Send update to content script
+    // Send update to content script with combined settings
     if (this.currentTab) {
       try {
+        const combinedSettings = {
+          ...this.systemSettings,
+          ...this.uiSettings
+        };
+        
         await browser.tabs.sendMessage(this.currentTab.id, {
           action: "updateSettings",
-          settings: this.settings,
+          settings: combinedSettings,
         });
       } catch (error) {
         console.log("Content script not ready for settings update");
@@ -525,7 +573,7 @@ class VibeReaderPopup {
 
   cycleTheme() {
     const themes = ["nightdrive", "neon-surge", "outrun-storm", "strange-days"];
-    const currentIndex = themes.indexOf(this.settings.theme);
+    const currentIndex = themes.indexOf(this.uiSettings.theme);
     const nextIndex = (currentIndex + 1) % themes.length;
 
     this.updateSetting("theme", themes[nextIndex]);
@@ -589,9 +637,14 @@ class VibeReaderPopup {
     // Send update to content script
     if (this.currentTab) {
       try {
+        const combinedSettings = {
+          ...this.systemSettings,
+          ...this.uiSettings
+        };
+        
         await browser.tabs.sendMessage(this.currentTab.id, {
           action: "updateSettings",
-          settings: this.settings,
+          settings: combinedSettings,
         });
       } catch (error) {
         console.log("Content script not ready for settings update");
@@ -606,9 +659,10 @@ class VibeReaderPopup {
 
   exportSettings() {
     const exportData = {
-      version: "2.0.0",
+      version: "2.1.0", // Updated version for new structure
       timestamp: Date.now(),
-      settings: this.settings,
+      systemSettings: this.systemSettings,
+      uiSettings: this.uiSettings,
       popupState: this.popupState,
       lastCheckedTab: this.popupState.lastCheckedTab,
     };
@@ -641,7 +695,25 @@ class VibeReaderPopup {
 
           // Validate version compatibility
           if (imported.version && imported.version.startsWith("2.")) {
-            this.settings = { ...this.settings, ...imported.settings };
+            // Handle both old and new format imports
+            if (imported.systemSettings && imported.uiSettings) {
+              // New format (v2.1+)
+              this.systemSettings = { ...this.systemSettings, ...imported.systemSettings };
+              this.uiSettings = { ...this.uiSettings, ...imported.uiSettings };
+            } else if (imported.settings) {
+              // Legacy format (v2.0) - map to new namespaces
+              const legacy = imported.settings;
+              
+              // Map to system settings
+              if (legacy.autoActivate !== undefined) this.systemSettings.autoActivate = legacy.autoActivate;
+              
+              // Map to UI settings 
+              if (legacy.theme !== undefined) this.uiSettings.theme = legacy.theme;
+              if (legacy.mediaMode !== undefined) this.uiSettings.mediaMode = legacy.mediaMode;
+              if (legacy.sideScrolls !== undefined) this.uiSettings.sideScrolls = legacy.sideScrolls;
+              if (legacy.vibeRain !== undefined) this.uiSettings.vibeRain = legacy.vibeRain;
+            }
+            
             this.popupState = { ...this.popupState, ...imported.popupState };
 
             this.settingsChanged = true;
@@ -684,13 +756,12 @@ class VibeReaderPopup {
   }
 
   updateSettingsUI() {
-    document.getElementById("theme-select").value = this.settings.theme;
-    document.getElementById("media-mode").value =
-      this.settings.mediaMode || "emoji";
-    document.getElementById("side-scrolls").checked = this.settings.sideScrolls;
-    document.getElementById("vibe-rain").checked = this.settings.vibeRain;
-    document.getElementById("auto-activate").checked =
-      this.settings.autoActivate;
+    // Update UI elements using new namespace structure
+    document.getElementById("theme-select").value = this.uiSettings.theme;
+    document.getElementById("media-mode").value = this.uiSettings.mediaMode || "emoji";
+    document.getElementById("side-scrolls").checked = this.uiSettings.sideScrolls;
+    document.getElementById("vibe-rain").checked = this.uiSettings.vibeRain;
+    document.getElementById("auto-activate").checked = this.systemSettings.autoActivate;
 
     // Update advanced settings if they exist
     const closeOnActivate = document.getElementById("close-on-activate");
